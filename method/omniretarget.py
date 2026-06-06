@@ -58,6 +58,20 @@ def object_frame(points: np.ndarray, obj: dict | None) -> np.ndarray:
     return points - np.array(obj["center"], dtype=float)
 
 
+def object_contact_target(source_point: np.ndarray, obj: dict) -> np.ndarray:
+    """Project a source contact point to the contacted box surface."""
+    center = np.array(obj["center"], dtype=float)
+    sx, sz = np.array(obj["size"], dtype=float)
+    local = source_point - center
+    if abs(local[0] / max(sx, 1e-8)) >= abs(local[1] / max(sz, 1e-8)):
+        x = center[0] + np.sign(local[0] if local[0] != 0 else 1.0) * sx / 2
+        z = np.clip(source_point[1], center[1] - sz / 2, center[1] + sz / 2)
+    else:
+        x = np.clip(source_point[0], center[0] - sx / 2, center[0] + sx / 2)
+        z = center[1] + np.sign(local[1] if local[1] != 0 else 1.0) * sz / 2
+    return np.array([x, z], dtype=float)
+
+
 def stance_feet(src_prev: np.ndarray, src: np.ndarray, dt: float, task_name: str) -> list[str]:
     out = []
     for name in FOOT_NAMES:
@@ -125,6 +139,11 @@ def solve_frame(task: dict, t: int, q_prev: np.ndarray, prev_fk: np.ndarray | No
         if "hand" in name:
             idx = NAME_TO_IDX[name]
             constraints.append({"type": "eq", "fun": lambda q, idx=idx: robot.fk(q)[idx, 1] - terrain_height(robot.fk(q)[idx, 0], task["task"])})
+    if obj:
+        for name in task["contacts"][t].get("object", []):
+            idx = NAME_TO_IDX[name]
+            target = object_contact_target(source[idx], obj)
+            constraints.append({"type": "eq", "fun": lambda q, idx=idx, target=target: robot.fk(q)[idx] - target})
 
     def constraint_violation(q: np.ndarray) -> float:
         violation = 0.0

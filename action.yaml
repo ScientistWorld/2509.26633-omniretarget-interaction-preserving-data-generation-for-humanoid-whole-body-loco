@@ -1,6 +1,6 @@
-# Final audited state: packaged kinematic core reproduction, conservative milestone.
-action: done
+# CPU audit job for object-contact constraint improvement.
+action: submit
 gpus: 0
-test: false
+test: true
 milestone: core_claim
-notes: "Final verification passed for a partial scaled kinematic gym. Milestone is core_claim; higher milestones need original-scale solver/assets, augmentation, or RL."
+notes: "Regenerate packaged reproduction after adding object hand-contact equality constraints; expect object contact preservation to improve while keeping hard constraints satisfied."

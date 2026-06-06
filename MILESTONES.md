@@ -22,3 +22,7 @@
 - Final verification cleaned method-agnostic documentation and restored the local keypoint IK baseline to official scores as a substitute comparator.
 - `python validate.py --compare` passes after the verification fixes.
 - Workspace is ready as a partial gym for the scaled kinematic retargeting problem; higher milestones require original-scale assets, solver fidelity, augmentation, or downstream RL.
+
+### [2026-06-06 08:26] - core_claim
+- Added a method-side hard object-contact constraint for labeled hand-object contacts to improve the object interaction benefit metric.
+- Submitted a CPU audit job to regenerate packaged reproduction, train-slice scores, and test-slice scores before considering any milestone change.
