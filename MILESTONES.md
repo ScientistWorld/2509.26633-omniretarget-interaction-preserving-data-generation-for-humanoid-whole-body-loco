@@ -49,4 +49,4 @@
 - The diagnostic keypoint IK baseline still failed the relevant interaction/constraint metrics, confirming the evaluation distinguishes the proposed method from a simple baseline.
 
 ## Stop Justification
-- Stopped at `core_claim_plus`: the Table II kinematic retargeting claim is reproduced on both implemented settings. Downstream RL policy training and full Unitree/Drake experiments require simulator assets and released code that are not available in this workspace.
+- Completed at milestone `core_claim_plus`.
