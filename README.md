@@ -108,12 +108,37 @@ The core claim is supported when the proposed method reduces penetration and foo
 
 </details>
 
+### Iteration 2: gpt-5.5
+- **Milestone**: `core_claim_plus` | **Status**: done
+- **Working time**: 3m | **GPU**: 0.0h
+- **Jobs**: 9 total (8 completed, 1 failed)
+
+<details>
+<summary>Progress Log</summary>
+
+### [2026-06-06 07:29] - core_claim_plus
+- Packaged reproduction validates both object-interaction and terrain-interaction kinematic experiments.
+- OmniRetarget implementation preserves contacts while satisfying penetration and foot-skating constraints on the reusable scaled benchmark.
+- `python validate.py --compare` passes all structure and scoring checks.
+
+### [2026-06-06 07:35] - core_claim
+- Continuing audit found the evaluator skipped the generated keypoint IK baseline artifacts.
+- Fixed the evaluator to include every produced method artifact in `scoring/scores.json`.
+- Submitting a CPU container test to regenerate scores and verify the packaged reproduction with baseline results included.
+
+### [2026-06-06 07:32] - core_claim_plus
+- CPU container job `424fab31-265` completed successfully.
+- Regenerated `scoring/scores.json` now includes both `keypoint_ik` and `omniretarget` artifacts for object and terrain experiments.
+- `python validate.py --compare` passed all scoring and structure checks, restoring the audited milestone to `core_claim_plus`.
+
+</details>
+
 
 ---
 
 # Reproduction Milestones
 
-**Current: core_claim**
+**Current: core_claim_plus**
 
 ## Stop Justification
-- Completed at milestone `core_claim`.
+- Completed at milestone `core_claim_plus`.

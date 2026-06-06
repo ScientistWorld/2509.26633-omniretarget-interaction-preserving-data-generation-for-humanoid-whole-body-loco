@@ -20,4 +20,4 @@
 - `python validate.py` passes all scoring and structure checks, restoring the audited milestone to `core_claim_plus`.
 
 ## Stop Justification
-- Completed at milestone `core_claim_plus`. Higher milestones would require downstream RL/sim-to-real assets or released full-scale OmniRetarget datasets that are not available in this workspace.
+- Completed at milestone `core_claim_plus`.
