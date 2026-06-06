@@ -5,11 +5,13 @@
       "weight": 0.5,
       "primary_metric": "penetration_duration",
       "metrics": {
-        "penetration_duration": {"higher_is_better": false, "coefficient": -1.0},
-        "max_penetration_cm": {"higher_is_better": false, "coefficient": -0.5},
-        "foot_skating_duration": {"higher_is_better": false, "coefficient": -0.8},
-        "max_foot_skating_cm_s": {"higher_is_better": false, "coefficient": -0.4},
-        "contact_preservation": {"higher_is_better": true, "coefficient": 0.8}
+        "penetration_duration": {"higher_is_better": false, "coefficient": -1.0, "description": "Fraction of scored frames with robot body penetration into terrain or carried object."},
+        "max_penetration_cm": {"higher_is_better": false, "coefficient": -0.5, "description": "Worst penetration depth in centimeters across scored frames."},
+        "foot_skating_duration": {"higher_is_better": false, "coefficient": -0.8, "description": "Fraction of source stance-foot events where the retargeted foot slips."},
+        "max_foot_skating_cm_s": {"higher_is_better": false, "coefficient": -0.4, "description": "Maximum retargeted stance-foot slip speed in centimeters per second."},
+        "contact_preservation": {"higher_is_better": true, "coefficient": 0.8, "description": "Fraction of requested object and hand-terrain contacts preserved within tolerance."},
+        "pelvis_path_error_cm": {"higher_is_better": false, "coefficient": -0.35, "description": "Mean pelvis displacement-path error in centimeters after aligning the initial pelvis position."},
+        "motion_velocity_error_cm_s": {"higher_is_better": false, "coefficient": -0.25, "description": "Mean keypoint velocity mismatch to the source motion in centimeters per second."}
       },
       "results": {
         "PHC": {"type": "baseline", "penetration_duration": 0.68, "max_penetration_cm": 5.11, "foot_skating_duration": 0.05, "max_foot_skating_cm_s": 1.40, "contact_preservation": 0.96},
@@ -23,11 +25,13 @@
       "weight": 0.5,
       "primary_metric": "penetration_duration",
       "metrics": {
-        "penetration_duration": {"higher_is_better": false, "coefficient": -1.0},
-        "max_penetration_cm": {"higher_is_better": false, "coefficient": -0.5},
-        "foot_skating_duration": {"higher_is_better": false, "coefficient": -0.8},
-        "max_foot_skating_cm_s": {"higher_is_better": false, "coefficient": -0.4},
-        "contact_preservation": {"higher_is_better": true, "coefficient": 0.8}
+        "penetration_duration": {"higher_is_better": false, "coefficient": -1.0, "description": "Fraction of scored frames with robot body penetration into terrain."},
+        "max_penetration_cm": {"higher_is_better": false, "coefficient": -0.5, "description": "Worst terrain penetration depth in centimeters across scored frames."},
+        "foot_skating_duration": {"higher_is_better": false, "coefficient": -0.8, "description": "Fraction of source stance-foot events where the retargeted foot slips."},
+        "max_foot_skating_cm_s": {"higher_is_better": false, "coefficient": -0.4, "description": "Maximum retargeted stance-foot slip speed in centimeters per second."},
+        "contact_preservation": {"higher_is_better": true, "coefficient": 0.8, "description": "Fraction of requested hand-terrain contacts preserved within tolerance."},
+        "pelvis_path_error_cm": {"higher_is_better": false, "coefficient": -0.35, "description": "Mean pelvis displacement-path error in centimeters after aligning the initial pelvis position."},
+        "motion_velocity_error_cm_s": {"higher_is_better": false, "coefficient": -0.25, "description": "Mean keypoint velocity mismatch to the source motion in centimeters per second."}
       },
       "results": {
         "PHC": {"type": "baseline", "penetration_duration": 0.66, "max_penetration_cm": 7.74, "foot_skating_duration": 0.15, "max_foot_skating_cm_s": 2.03, "contact_preservation": 0.45},

@@ -72,6 +72,7 @@ def task_metrics(task: dict, output: dict) -> dict[str, float]:
 
     indices = split_indices(len(pts))
     dt = float(task["dt"])
+    src = np.array(task["source_keypoints"], dtype=float)
     pen_depths = []
     pen_frames = 0
     for t in indices:
@@ -90,19 +91,17 @@ def task_metrics(task: dict, output: dict) -> dict[str, float]:
     skate_speeds = []
     stance_count = 0
     skate_count = 0
-    src = np.array(task["source_keypoints"], dtype=float)
-    for t in indices:
-        if t == 0:
-            continue
+    for prev_t, t in zip(indices, indices[1:]):
+        dt_gap = (t - prev_t) * dt
         for foot in ("left_foot", "right_foot"):
             idx = NAME_TO_IDX[foot]
-            src_v = abs(src[t, idx, 0] - src[t - 1, idx, 0]) / dt
-            prev_h = terrain_height(src[t - 1, idx, 0], task["task"])
+            src_v = abs(src[t, idx, 0] - src[prev_t, idx, 0]) / dt_gap
+            prev_h = terrain_height(src[prev_t, idx, 0], task["task"])
             cur_h = terrain_height(src[t, idx, 0], task["task"])
             same_surface = abs(cur_h - prev_h) < 0.05
             if src_v < 0.35 and same_surface and src[t, idx, 1] <= cur_h + 0.03:
                 stance_count += 1
-                v = np.linalg.norm(pts[t, idx] - pts[t - 1, idx]) / dt
+                v = np.linalg.norm(pts[t, idx] - pts[prev_t, idx]) / dt_gap
                 skate_speeds.append(v)
                 skate_count += int(v > 0.01)
 
@@ -122,12 +121,28 @@ def task_metrics(task: dict, output: dict) -> dict[str, float]:
             p = pts[t, NAME_TO_IDX[name]]
             contact_hit += int(abs(p[1] - terrain_height(p[0], task["task"])) < 0.08)
 
+    pelvis_idx = NAME_TO_IDX["pelvis"]
+    src_origin = src[indices[0], pelvis_idx]
+    pts_origin = pts[indices[0], pelvis_idx]
+    src_pelvis_path = src[indices, pelvis_idx] - src_origin
+    pts_pelvis_path = pts[indices, pelvis_idx] - pts_origin
+    pelvis_path_error = np.linalg.norm(pts_pelvis_path - src_pelvis_path, axis=1)
+
+    velocity_errors = []
+    for prev_t, t in zip(indices, indices[1:]):
+        dt_gap = (t - prev_t) * dt
+        output_velocity = (pts[t] - pts[prev_t]) / dt_gap
+        source_velocity = (src[t] - src[prev_t]) / dt_gap
+        velocity_errors.append(np.linalg.norm(output_velocity - source_velocity, axis=1))
+
     return {
         "penetration_duration": float(pen_frames / max(1, len(indices))),
         "max_penetration_cm": float(100.0 * max(pen_depths or [0.0])),
         "foot_skating_duration": float(skate_count / max(1, stance_count)),
         "max_foot_skating_cm_s": float(100.0 * max(skate_speeds or [0.0])),
         "contact_preservation": float(contact_hit / max(1, contact_desired)),
+        "pelvis_path_error_cm": float(100.0 * np.mean(pelvis_path_error)),
+        "motion_velocity_error_cm_s": float(100.0 * np.mean(velocity_errors)) if velocity_errors else 0.0,
     }
 
 
