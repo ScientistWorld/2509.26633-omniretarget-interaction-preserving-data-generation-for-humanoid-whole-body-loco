@@ -1,8 +1,8 @@
 # IMPORTANT: Once you set action to 'submit' or 'done', STOP immediately.
 # Do NOT sleep, poll, or wait for jobs. The system reads this file
 # only after your turn ends. Sleeping blocks the entire pipeline.
-action: done
+action: submit
 gpus: 0
-test: false
-milestone: core_claim_plus
-notes: "Packaged reproduction is complete through core_claim_plus; validate.py --compare passes and scores.json contains object and terrain kinematic results."
+test: true
+milestone: core_claim
+notes: "CPU container test after evaluator audit fix: rerun scripts/reproduce.sh so scores.json includes both keypoint_ik baseline and omniretarget results."
