@@ -33,6 +33,8 @@ Current revision tightens scoring integrity before the next audit job: `eval/` n
 
 Job `9e421c18-e41` verified the hardened trusted-task evaluator computed the expected metrics, but failed validation because the local `keypoint_ik` diagnostic baseline was written into `scores.json` while it is not a paper-reported method in `reference.json`. The evaluator now writes `keypoint_ik` and other extra artifacts to `scoring/diagnostics.json` and keeps `scores.json` restricted to methods present in `reference.json`.
 
+Job `f03c43a4-801` passed the packaged CPU audit after the diagnostics split. `scripts/reproduce.sh` runs baseline artifacts, OmniRetarget artifacts, standalone evaluation, and `python validate.py --compare` successfully in the compute container. Final `scores.json` reports the reproduced paper-method entries only: OmniRetarget achieves `0.00` penetration duration, approximately `0 cm` max penetration, `0.00` foot-skating duration, approximately `0 cm/s` max foot skating, and `1.00` contact preservation on both object and terrain substitute tasks. The diagnostic keypoint IK baseline remains in `scoring/diagnostics.json` and preserves the non-triviality check without polluting paper-reference scores.
+
 ## Remaining
 
 - Downstream RL policy learning and full Unitree/Drake retargeting are not reproduced because the required simulator assets, robot-specific setup, and released OmniRetarget code are unavailable.
@@ -51,6 +53,7 @@ Job `9e421c18-e41` verified the hardened trusted-task evaluator computed the exp
 - Job `10633b10-ff5` showed that the discontinuous synthetic step could classify near-boundary hand support as penetration and that retrying from a fresh initial pose could break a previous stance foot. The terrain is now a ramped step, and retries remain anchored to the previous frame.
 - Job `8f7aad22-38d` passed the packaged reproduction and no remaining issue blocks the reusable kinematic gym.
 - The local keypoint IK baseline is a diagnostic baseline for the synthetic substitute tasks, not a reproduced PHC/GMR/VideoMimic paper baseline. It appears in `scoring/diagnostics.json`, while `scoring/scores.json` is restricted to paper-reference method names so `validate.py` remains strict.
+- Job `f03c43a4-801` confirmed the final packaging and scoring contract in the compute container.
 
 ## Deviations from Paper
 
