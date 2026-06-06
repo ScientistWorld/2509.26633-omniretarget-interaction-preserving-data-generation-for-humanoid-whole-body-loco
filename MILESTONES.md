@@ -1,6 +1,6 @@
 # Reproduction Milestones
 
-**Current: none**
+**Current: method_runs**
 
 ## Progress Log
 
@@ -13,6 +13,11 @@
 - Reviewed failed job `bd8cb121-d23`.
 - Diagnosed a packaging/import failure before algorithm execution: `ModuleNotFoundError: No module named 'data'`.
 - Added package initializers and script-level `PYTHONPATH` export before resubmission.
+
+### [2026-06-06 03:35] - method_runs
+- Job `d59dfd81-fe3` executed the full reproduction script successfully.
+- Generated synthetic object and terrain tasks, ran the keypoint IK baseline, ran the OmniRetarget interaction-mesh optimizer, evaluated artifacts, and passed `validate.py --compare`.
+- Current results show the algorithm runs end-to-end, but object penetration duration and terrain contact preservation are not yet sufficient for `core_claim`.
 
 ## Stop Justification
 - Not stopped.

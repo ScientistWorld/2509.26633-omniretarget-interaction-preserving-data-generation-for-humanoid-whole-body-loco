@@ -54,12 +54,12 @@ def object_frame(points: np.ndarray, obj: dict | None) -> np.ndarray:
     return points - np.array(obj["center"], dtype=float)
 
 
-def stance_feet(src_prev: np.ndarray, src: np.ndarray, dt: float) -> list[str]:
+def stance_feet(src_prev: np.ndarray, src: np.ndarray, dt: float, task_name: str) -> list[str]:
     out = []
     for name in FOOT_NAMES:
         idx = NAME_TO_IDX[name]
         horiz_v = abs(src[idx, 0] - src_prev[idx, 0]) / dt
-        if horiz_v < 0.35 and src[idx, 1] <= terrain_height(src[idx, 0], "object_carry") + 0.03:
+        if horiz_v < 0.12 and src[idx, 1] <= terrain_height(src[idx, 0], task_name) + 0.03:
             out.append(name)
     return out
 
@@ -103,14 +103,18 @@ def solve_frame(task: dict, t: int, q_prev: np.ndarray, prev_fk: np.ndarray | No
                 sx, sz = np.array(obj["size"])
                 dx = abs(p[0] - c[0]) - sx / 2
                 dz = abs(p[1] - c[1]) - sz / 2
-                vals.append(max(dx, dz) + 0.01)
+                vals.append(max(dx, dz))
         return np.array(vals)
 
     constraints.append({"type": "ineq", "fun": nonpenetration})
     if t > 0 and prev_fk is not None:
-        for foot in stance_feet(np.array(task["source_keypoints"][t - 1]), source, dt):
+        for foot in stance_feet(np.array(task["source_keypoints"][t - 1]), source, dt, task["task"]):
             idx = NAME_TO_IDX[foot]
             constraints.append({"type": "eq", "fun": lambda q, idx=idx: robot.fk(q)[idx] - prev_fk[idx]})
+    for name in task["contacts"][t].get("terrain", []):
+        if "hand" in name:
+            idx = NAME_TO_IDX[name]
+            constraints.append({"type": "eq", "fun": lambda q, idx=idx: robot.fk(q)[idx, 1] - terrain_height(robot.fk(q)[idx, 0], task["task"])})
 
     res = minimize(objective, q0, method="SLSQP", bounds=bounds, constraints=constraints,
                    options={"maxiter": 90, "ftol": 1e-7, "disp": False})
