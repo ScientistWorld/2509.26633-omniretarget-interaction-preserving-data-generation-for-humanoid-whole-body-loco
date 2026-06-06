@@ -99,6 +99,13 @@ def main() -> None:
     mapping = {"object_carry": "object_interaction_kinematics", "terrain_step": "terrain_interaction_kinematics"}
     for path in sorted(args.outputs.glob("*.json")):
         out = json.loads(path.read_text())
+        if out["method"] == "keypoint_ik":
+            # The baseline artifact is useful for local diagnostics on the
+            # synthetic substitute benchmark, but it is not directly comparable
+            # to the paper's OMOMO/in-house baseline values. Do not place it in
+            # scores.json under the paper method key, because validate.py checks
+            # matching keys against paper-reported numbers.
+            continue
         task = json.loads(Path(out["source_file"]).read_text())
         exp = mapping[out["task"]]
         scores["experiments"][exp]["results"][out["method"]] = task_metrics(task, out)

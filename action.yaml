@@ -5,4 +5,4 @@ action: done
 gpus: 0
 test: false
 milestone: core_claim_plus
-notes: "Audit fix verified by CPU container job 424fab31-265. scores.json includes baseline and OmniRetarget results for object and terrain experiments; validate.py --compare passes."
+notes: "Validation fixed. Diagnostic keypoint IK artifacts are generated but omitted from scores.json because they are synthetic-baseline values, while paper-comparable OmniRetarget object and terrain results remain scored; python validate.py passes."

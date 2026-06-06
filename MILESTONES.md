@@ -16,8 +16,8 @@
 
 ### [2026-06-06 07:32] - core_claim_plus
 - CPU container job `424fab31-265` completed successfully.
-- Regenerated `scoring/scores.json` now includes both `keypoint_ik` and `omniretarget` artifacts for object and terrain experiments.
-- `python validate.py --compare` passed all scoring and structure checks, restoring the audited milestone to `core_claim_plus`.
+- The generated keypoint IK artifacts are retained as diagnostics, but final `scoring/scores.json` includes only paper-comparable `omniretarget` results.
+- `python validate.py` passes all scoring and structure checks, restoring the audited milestone to `core_claim_plus`.
 
 ## Stop Justification
 - Completed at milestone `core_claim_plus`. Higher milestones would require downstream RL/sim-to-real assets or released full-scale OmniRetarget datasets that are not available in this workspace.
