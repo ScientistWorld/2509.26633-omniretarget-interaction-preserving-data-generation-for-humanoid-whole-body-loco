@@ -3,4 +3,4 @@ action: done
 gpus: 0
 test: false
 milestone: core_claim_plus
-notes: "Parity frame split over two synthetic tasks; 28 train values and 28 test values; primary metric is continuous contact_preservation and validates on train/test; terrain penetration is saturated but contact/skating/fidelity remain discriminative."
+notes: "Packaging audit passed: synthetic tracked data needs no external downloads, no shared paths found, and validation passes."
