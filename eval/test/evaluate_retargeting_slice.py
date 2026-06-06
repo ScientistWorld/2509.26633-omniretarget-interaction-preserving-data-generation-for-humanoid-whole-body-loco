@@ -184,13 +184,11 @@ def score_outputs(outputs: Path, train_scores: Path) -> tuple[dict, dict]:
             raise ValueError(f"Duplicate artifact for method={method!r}, task={task_name!r}")
         seen.add(key)
 
-        exp = EXPERIMENTS[task_name]
-        if expected is not None and method not in expected.get(exp, set()):
-            continue
-
         task = json.loads(TRUSTED_TASKS[task_name].read_text())
+        exp = EXPERIMENTS[task_name]
         metrics = task_metrics(task, out)
-        scores["experiments"][exp]["results"][method] = metrics
+        if expected is None or method in expected.get(exp, set()):
+            scores["experiments"][exp]["results"][method] = metrics
         diagnostics["experiments"][exp]["results"][method] = {
             "slice": SLICE,
             "task": task_name,

@@ -79,27 +79,42 @@ def task_metrics(task: dict, output: dict) -> dict[str, float]:
                 skate_speeds.append(v)
                 skate_count += int(v > 0.01)
 
-    contact_desired = 0
-    contact_hit = 0
+    contact_scores = []
     for t, contact in enumerate(task["contacts"]):
         obj = task["objects"][t]
         for hand in contact.get("object", []):
             if not obj:
                 continue
-            contact_desired += 1
+            tolerance = 0.055
             d = rect_signed_distance(pts[t, NAME_TO_IDX[hand]], np.array(obj["center"]), np.array(obj["size"]))
-            contact_hit += int(abs(d) < 0.055)
+            contact_scores.append(max(0.0, 1.0 - abs(d) / tolerance))
         for name in [n for n in contact.get("terrain", []) if "hand" in n]:
-            contact_desired += 1
+            tolerance = 0.08
             p = pts[t, NAME_TO_IDX[name]]
-            contact_hit += int(abs(p[1] - terrain_height(p[0], task["task"])) < 0.08)
+            d = abs(p[1] - terrain_height(p[0], task["task"]))
+            contact_scores.append(max(0.0, 1.0 - d / tolerance))
+
+    pelvis_idx = NAME_TO_IDX["pelvis"]
+    src_origin = src[0, pelvis_idx]
+    pts_origin = pts[0, pelvis_idx]
+    src_pelvis_path = src[:, pelvis_idx] - src_origin
+    pts_pelvis_path = pts[:, pelvis_idx] - pts_origin
+    pelvis_path_error = np.linalg.norm(pts_pelvis_path - src_pelvis_path, axis=1)
+
+    velocity_errors = []
+    for t in range(1, len(pts)):
+        output_velocity = (pts[t] - pts[t - 1]) / dt
+        source_velocity = (src[t] - src[t - 1]) / dt
+        velocity_errors.append(np.linalg.norm(output_velocity - source_velocity, axis=1))
 
     return {
         "penetration_duration": float(pen_frames / len(pts)),
         "max_penetration_cm": float(100.0 * max(pen_depths or [0.0])),
         "foot_skating_duration": float(skate_count / max(1, stance_count)),
         "max_foot_skating_cm_s": float(100.0 * max(skate_speeds or [0.0])),
-        "contact_preservation": float(contact_hit / max(1, contact_desired)),
+        "contact_preservation": float(np.mean(contact_scores)) if contact_scores else 0.0,
+        "pelvis_path_error_cm": float(100.0 * np.mean(pelvis_path_error)),
+        "motion_velocity_error_cm_s": float(100.0 * np.mean(velocity_errors)) if velocity_errors else 0.0,
     }
 
 

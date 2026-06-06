@@ -146,7 +146,16 @@ def task_metrics(task: dict, output: dict) -> dict[str, float]:
     }
 
 
-def score_outputs(outputs: Path) -> tuple[dict, dict]:
+def reference_methods(reference: Path) -> dict[str, set[str]]:
+    data = json.loads(reference.read_text())
+    return {
+        exp: set(spec["results"].keys())
+        for exp, spec in data["experiments"].items()
+    }
+
+
+def score_outputs(outputs: Path, reference: Path) -> tuple[dict, dict]:
+    allowed_methods = reference_methods(reference)
     scores = {"experiments": {exp: {"results": {}} for exp in sorted(set(EXPERIMENTS.values()))}}
     diagnostics = {
         "slice": SLICE,
@@ -169,7 +178,8 @@ def score_outputs(outputs: Path) -> tuple[dict, dict]:
         task = json.loads(TRUSTED_TASKS[task_name].read_text())
         exp = EXPERIMENTS[task_name]
         metrics = task_metrics(task, out)
-        scores["experiments"][exp]["results"][method] = metrics
+        if method in allowed_methods[exp]:
+            scores["experiments"][exp]["results"][method] = metrics
         diagnostics["experiments"][exp]["results"][method] = {
             "slice": SLICE,
             "task": task_name,
@@ -185,9 +195,10 @@ def main() -> None:
     parser.add_argument("--outputs", type=Path, default=Path("checkpoints/retargeting"))
     parser.add_argument("--score-out", type=Path, default=Path("scoring/scores_train.json"))
     parser.add_argument("--diagnostics-out", type=Path, default=Path("scoring/diagnostics_train.json"))
+    parser.add_argument("--reference", type=Path, default=Path("scoring/reference.json"))
     args = parser.parse_args()
 
-    scores, diagnostics = score_outputs(args.outputs)
+    scores, diagnostics = score_outputs(args.outputs, args.reference)
     args.score_out.parent.mkdir(parents=True, exist_ok=True)
     args.diagnostics_out.parent.mkdir(parents=True, exist_ok=True)
     args.score_out.write_text(json.dumps(scores, indent=2))

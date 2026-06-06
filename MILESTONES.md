@@ -1,6 +1,6 @@
 # Reproduction Milestones
 
-**Current: core_claim_plus**
+**Current: core_claim**
 
 ## Progress Log
 
@@ -13,3 +13,7 @@
 - Compute job `f03c43a4-801` passed `scripts/reproduce.sh` and `python validate.py --compare` in the container.
 - Final scoring keeps paper-reference `omniretarget` results in `scoring/scores.json` and local substitute-task diagnostics in `scoring/diagnostics.json`.
 - No packaging issue remains for the reusable kinematic reproduction gym.
+
+### [2026-06-06 08:18] - core_claim
+- Independent audit confirmed that the implementation captures the OmniRetarget interaction-mesh constrained retargeting core, but the SciPy SLSQP solver and planar synthetic benchmark are significant scale deviations from the paper's Drake sequential SOCP and Unitree datasets.
+- Final milestone is conservatively set to `core_claim`: the terrain interaction benchmark preserves contact while enforcing no penetration and no skating; object interaction preserves hard constraints but has lower normalized contact score under the stricter metric.

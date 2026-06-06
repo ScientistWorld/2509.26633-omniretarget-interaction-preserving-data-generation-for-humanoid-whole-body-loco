@@ -1,6 +1,6 @@
-# Train/test scoring has been inspected; no further jobs needed.
+# Final audited state: packaged kinematic core reproduction, conservative milestone.
 action: done
 gpus: 0
 test: false
-milestone: core_claim_plus
-notes: "Packaging audit passed: synthetic tracked data needs no external downloads, no shared paths found, and validation passes."
+milestone: core_claim
+notes: "Core OmniRetarget interaction-mesh constrained retargeting is implemented and validated on the terrain substitute task. Validation passes; higher milestones need faithful SOCP/URDF, augmentation, or RL."
