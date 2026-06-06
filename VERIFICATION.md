@@ -2,27 +2,27 @@
 
 ## Initial Assessment
 
-The workspace contained a working scaled reproduction and had previously claimed `core_claim_plus`, but a closer audit found that the implementation and benchmark are substantially scaled down: SciPy SLSQP on a planar humanoid and synthetic tasks rather than the paper's Drake sequential SOCP, Unitree assets, and original datasets. The code does implement the central interaction-preserving constrained retargeting computation, but the evidence does not justify `core_claim_plus`.
+The workspace started this final check at `core_claim`. The claimed milestone is justified for a scaled kinematic gym: the reproduced method runs end to end, writes reusable artifacts, and the evaluator measures interaction-retargeting quality from those artifacts rather than rerunning the method. The implementation is not an original-scale reproduction of the paper's full Unitree/Drake/RL stack, so the previous downgrade from `core_claim_plus` to `core_claim` was appropriate.
 
 ## Issues Found
 
-- **Critical:** Method-agnostic documentation leaked solution-specific framing in `briefing/evaluation.md`, `scoring/EXPERIMENTS.md`, and `scoring/DIRECTION.md`.
-- **Critical:** Official scores omitted the local baseline, leaving the gym without an official non-trivial comparator even though diagnostics showed one.
-- **Minor:** The official evaluator registered only methods listed in `reference.json`; current reproducibility is acceptable after registering the local baseline, but future agents should use registered method keys for strict validation.
-- **Minor:** The git tree still reports unrelated system-file noise: `README.md` and `manifest.json` are character devices, and tracked `trajectory/turn_*.jsonl` files appear deleted. These are outside the reproduction files and were not changed.
+- Minor: Generated job logs and raw trajectory transcripts were tracked in git. These are system artifacts and do not belong in the reusable gym.
+- Minor: A late object-contact constraint edit was present after the accepted scores were produced. Audit jobs showed it did not improve the object contact metric and worsened skating, so it should not be part of the final method.
+- Minor: The root has pre-existing system-file noise in `README.md` and `manifest.json` that appears as special-file modifications in git status. I did not alter these unrelated system files.
+- Limitation: The object-interaction benchmark still has weaker normalized contact preservation than the diagnostic keypoint baseline, although the reproduced method satisfies the hard penetration and skating constraints. This supports `core_claim`, but not a higher milestone.
 
 ## Fixes Applied
 
-- Rewrote method-agnostic documentation to describe only the task, metrics, constraints, and allowed research direction without naming the paper's specific construction.
-- Registered `keypoint_ik` as a substitute local baseline in `scoring/reference.json` without inventing paper-reported metric values.
-- Restored `keypoint_ik` metrics in `scoring/scores.json`, `scoring/scores_train.json`, and `scoring/scores_test.json` from existing diagnostic outputs.
-- Re-ran `python validate.py --compare`; all scoring and structure checks pass.
+- Removed tracked generated `jobs/` logs and `trajectory/` raw transcripts, and added `jobs/` to `.gitignore`.
+- Removed the unverified object-contact equality constraint attempt from `method/omniretarget.py`, restoring consistency with the validated packaged scores.
+- Updated `PROGRESS.md` and `MILESTONES.md` to document the rejected audit attempt and the conservative final milestone.
+- Re-ran `python validate.py --compare`; validation passes, including scoring schema checks, import separation, train/test wiring checks, and method-output-based evaluation checks.
 
 ## Final Judgment
 
-The workspace is ready for partial gym use. It is meaningful for improving a scaled kinematic retargeting benchmark with object and terrain interaction, and it has train/test slices plus a non-trivial local baseline. It is not a full paper reproduction: original datasets, robot models, sequential SOCP implementation, augmentation experiments, and downstream RL are absent.
+The workspace is ready as a partial research gym for the scaled kinematic interaction-retargeting problem. Improve-mode agents can build on the packaged method and scores, while from-scratch agents can use the method-agnostic problem, data, evaluation, and scoring documents without depending on `method/`.
 
 - Milestone: core_claim
 - Ready for gym use: partial
 - Confidence: medium
-- Key limitation: scaled synthetic planar kinematics only
+- Key limitation: scaled synthetic planar kinematics only; the original robot assets, Drake sequential SOCP solver stack, augmentation regime, and downstream RL claims are not reproduced.

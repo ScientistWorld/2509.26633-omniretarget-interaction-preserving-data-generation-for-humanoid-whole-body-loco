@@ -1,6 +1,3 @@
-# CPU audit job for object-contact constraint improvement.
-action: submit
-gpus: 0
-test: true
+action: done
 milestone: core_claim
-notes: "Regenerate packaged reproduction after adding object hand-contact equality constraints; expect object contact preservation to improve while keeping hard constraints satisfied."
+notes: "Final verification passed for a partial scaled kinematic gym; generated logs cleaned and unverified contact-constraint attempt removed."

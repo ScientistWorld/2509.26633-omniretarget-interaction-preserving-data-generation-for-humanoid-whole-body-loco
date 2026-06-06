@@ -37,7 +37,7 @@ Job `f03c43a4-801` passed the packaged CPU audit after the diagnostics split. `s
 
 Current final scoring supports `core_claim` conservatively. On `terrain_interaction_kinematics`, OmniRetarget achieves `0.00` penetration duration, approximately `0 cm` max penetration, `0.00` foot-skating duration, approximately `0 cm/s` max foot skating, and `1.00` normalized contact preservation. On `object_interaction_kinematics`, OmniRetarget achieves near-zero penetration and skating, but the stricter normalized contact score is `0.705`, below the paper's reported `0.96`; this is useful evidence for the hard-constraint part of the method but not enough to claim an additional milestone.
 
-Current revision adds explicit object-surface equality constraints for labeled hand-object contacts in the OmniRetarget optimizer. This keeps the interaction-mesh Laplacian objective intact while strengthening the paper's contact-preservation claim on the object benchmark. A CPU audit job is being submitted to regenerate all scores in the container before changing any milestone claim.
+Final verification rejected an attempted object-contact equality constraint: CPU audit jobs showed it did not improve the object contact score and introduced extra foot skating. The final method is therefore the last validated interaction-mesh constrained optimizer without that additional unscored constraint.
 
 ## Remaining
 
@@ -59,7 +59,7 @@ Current revision adds explicit object-surface equality constraints for labeled h
 - The local keypoint IK baseline is a diagnostic baseline for the synthetic substitute tasks, not a reproduced PHC/GMR/VideoMimic paper baseline. It appears in `scoring/diagnostics.json`, while `scoring/scores.json` is restricted to paper-reference method names so `validate.py` remains strict.
 - Job `f03c43a4-801` confirmed the packaged reproduction in the compute container. A subsequent audit found stale reference/split-score inconsistencies; these are now fixed and `python validate.py --compare` passes locally.
 - Final milestone is downgraded from `core_claim_plus` to `core_claim` because the implementation uses SciPy SLSQP on planar synthetic data, and no augmentation or downstream RL experiment is scored.
-- The latest object-contact constraint change is unverified until the next compute job finishes; stale `scoring/scores.json` should not be used to judge that change.
+- An attempted object-contact equality constraint was tested and removed because it worsened the scored trajectory constraints; the retained scores correspond to the validated pre-attempt method.
 
 ## Deviations from Paper
 
