@@ -6,4 +6,4 @@ This experiment checks whether retargeted motion can maintain hand contact with 
 
 ## terrain_interaction_kinematics
 
-This experiment checks whether retargeted motion can traverse a step-like terrain while keeping stance feet and support hands stable. It evaluates the paper's claim that terrain interaction can be preserved while enforcing hard kinematic feasibility.
+This experiment checks whether retargeted motion can traverse a ramped step-like terrain while keeping stance feet and support hands stable. It evaluates the paper's claim that terrain interaction can be preserved while enforcing hard kinematic feasibility.

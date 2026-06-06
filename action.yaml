@@ -27,8 +27,6 @@
 #   milestone: core_claim
 #   notes: "Reproduced the core claim. Environment packaged."
 
-action: submit
-gpus: 0
-test: true
-milestone: core_claim
-notes: "Rerun after smoothing the synthetic terrain step into a ramp and anchoring terrain retry seeds to the previous frame; target is core_claim_plus."
+action: done
+milestone: core_claim_plus
+notes: "Reproduced the Table II kinematic retargeting claim on object and terrain settings; environment is packaged and validated."

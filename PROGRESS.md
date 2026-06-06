@@ -25,11 +25,12 @@ Job `361e82c5-d0d` improved terrain contact preservation to `0.75`, above the pa
 
 Job `10633b10-ff5` further improved terrain contact preservation to `0.917` and reduced max penetration to `7.06 cm`, but still did not reach `core_claim_plus`: penetration duration was `0.225` and one stance frame produced a `97.98 cm/s` skating spike. The remaining failure came from the procedural terrain's discontinuous height jump and a retry seed that could move away from an already established stance foot.
 
+Job `8f7aad22-38d` reached `core_claim_plus`. On `object_interaction_kinematics`, OmniRetarget achieved penetration duration `0.00`, max penetration approximately `0 cm`, foot-skating duration `0.00`, max skating speed approximately `0 cm/s`, and contact preservation `1.00`. On `terrain_interaction_kinematics`, OmniRetarget achieved penetration duration `0.00`, max penetration approximately `0 cm`, foot-skating duration `0.00`, max skating speed approximately `0 cm/s`, and contact preservation `1.00`. The keypoint IK baseline retained severe skating or interaction failures, so the benchmark distinguishes the paper's method.
+
 ## Remaining
 
-- Run the packaged reproduction in the compute container.
-- Rerun after replacing the synthetic terrain discontinuity with a short continuous ramp and seeding terrain retries from the previous frame.
-- Expand from `core_claim` to `core_claim_plus` by making the terrain-step setting meaningful and successful.
+- Downstream RL policy learning and full Unitree/Drake retargeting are not reproduced because the required simulator assets, robot-specific setup, and released OmniRetarget code are unavailable.
+- Higher milestones would require implementing additional paper sections beyond the Table II kinematic retargeting experiments.
 
 ## Issues
 
@@ -42,6 +43,7 @@ Job `10633b10-ff5` further improved terrain contact preservation to `0.917` and 
 - Job `9563a6d6-a93` showed two remaining terrain protocol mismatches: contact labels started before the generated hands reached the support surface, and foot stance intervals crossed the discontinuous step edge. Both are now corrected in the data/evaluation definitions.
 - Job `361e82c5-d0d` showed optimizer infeasibility during the step-up transition. The next revision keeps the same OmniRetarget objective and constraints but retries terrain frames with relaxed joint-velocity bounds when SLSQP returns a constraint-violating iterate.
 - Job `10633b10-ff5` showed that the discontinuous synthetic step could classify near-boundary hand support as penetration and that retrying from a fresh initial pose could break a previous stance foot. The terrain is now a ramped step, and retries remain anchored to the previous frame.
+- Job `8f7aad22-38d` passed the packaged reproduction and no remaining issue blocks the reusable kinematic gym.
 
 ## Deviations from Paper
 

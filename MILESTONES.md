@@ -1,6 +1,6 @@
 # Reproduction Milestones
 
-**Current: core_claim**
+**Current: core_claim_plus**
 
 ## Progress Log
 
@@ -43,5 +43,10 @@
 - Diagnosed the remaining issue as a discontinuous synthetic terrain edge plus retry seeding that could abandon an established stance foot.
 - Changed the procedural terrain to a continuous ramped step and anchored retry seeds to the previous frame.
 
+### [2026-06-06 05:05] - core_claim_plus
+- Job `8f7aad22-38d` reproduced the kinematic retargeting claim on both object and terrain interaction settings.
+- OmniRetarget achieved zero penetration duration, near-zero maximum penetration, zero foot skating, and full contact preservation on both reproduced settings.
+- The keypoint IK baseline still failed the relevant interaction/constraint metrics, confirming the evaluation distinguishes the proposed method from a simple baseline.
+
 ## Stop Justification
-- Not stopped.
+- Stopped at `core_claim_plus`: the Table II kinematic retargeting claim is reproduced on both implemented settings. Downstream RL policy training and full Unitree/Drake experiments require simulator assets and released code that are not available in this workspace.
