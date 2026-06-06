@@ -19,5 +19,9 @@
 - Generated synthetic object and terrain tasks, ran the keypoint IK baseline, ran the OmniRetarget interaction-mesh optimizer, evaluated artifacts, and passed `validate.py --compare`.
 - Current results show the algorithm runs end-to-end, but object penetration duration and terrain contact preservation are not yet sufficient for `core_claim`.
 
+### [2026-06-06 03:50] - method_runs
+- Job `e0708e5b-dfc` fixed object penetration and preserved object contact, but foot-skating metrics still failed due to a stance-threshold mismatch between method and evaluator.
+- Aligned the optimizer's stance detector with the evaluation threshold before resubmission.
+
 ## Stop Justification
 - Not stopped.

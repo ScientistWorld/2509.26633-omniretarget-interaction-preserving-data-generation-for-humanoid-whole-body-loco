@@ -15,10 +15,12 @@ Job `d59dfd81-fe3` produced the first reproduced scores. On `object_interaction_
 
 On `terrain_interaction_kinematics`, OmniRetarget reduced penetration duration from `0.05` to `0.00`, but terrain hand contact preservation remained `0.00` and maximum foot skating speed remained too high. This is not yet a successful reproduction of the terrain claim.
 
+Job `e0708e5b-dfc` fixed object penetration: object penetration duration dropped from `1.00` for keypoint IK to `0.00` for OmniRetarget, with contact preservation `1.00`. Foot skating still did not satisfy the claim because the optimizer used a stricter stance detector than the evaluator (`0.12 m/s` vs `0.35 m/s`). The next revision aligns these thresholds.
+
 ## Remaining
 
 - Run the packaged reproduction in the compute container.
-- Rerun after tightening object non-penetration and terrain hand-contact constraints.
+- Rerun after aligning stance-foot detection with the evaluator.
 - Reach `core_claim` on at least one interaction setting, then expand to the second setting.
 
 ## Issues

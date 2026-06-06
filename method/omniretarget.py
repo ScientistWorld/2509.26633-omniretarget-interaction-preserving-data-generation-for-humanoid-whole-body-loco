@@ -59,7 +59,7 @@ def stance_feet(src_prev: np.ndarray, src: np.ndarray, dt: float, task_name: str
     for name in FOOT_NAMES:
         idx = NAME_TO_IDX[name]
         horiz_v = abs(src[idx, 0] - src_prev[idx, 0]) / dt
-        if horiz_v < 0.12 and src[idx, 1] <= terrain_height(src[idx, 0], task_name) + 0.03:
+        if horiz_v < 0.35 and src[idx, 1] <= terrain_height(src[idx, 0], task_name) + 0.03:
             out.append(name)
     return out
 
