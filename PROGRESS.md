@@ -27,6 +27,8 @@ Job `10633b10-ff5` further improved terrain contact preservation to `0.917` and 
 
 Job `8f7aad22-38d` reached `core_claim_plus`. On `object_interaction_kinematics`, OmniRetarget achieved penetration duration `0.00`, max penetration approximately `0 cm`, foot-skating duration `0.00`, max skating speed approximately `0 cm/s`, and contact preservation `1.00`. On `terrain_interaction_kinematics`, OmniRetarget achieved penetration duration `0.00`, max penetration approximately `0 cm`, foot-skating duration `0.00`, max skating speed approximately `0 cm/s`, and contact preservation `1.00`. The keypoint IK diagnostic baseline retained severe skating or interaction failures, so the benchmark distinguishes the paper's method, but it is omitted from final `scores.json` because the substitute-data baseline is not directly paper-consistent.
 
+Audit job `424fab31-265` fixed that final evaluator limitation: `scores.json` now includes both `keypoint_ik` and `omniretarget` artifacts for the object and terrain experiments. The corrected run passed `python validate.py --compare`. On the object task, keypoint IK has penetration duration `1.00`, max penetration `9.73 cm`, foot-skating duration `1.00`, and max skating speed `35.10 cm/s`, while OmniRetarget has zero penetration/skating within numerical tolerance and contact preservation `1.00`. On the terrain task, keypoint IK has foot-skating duration `1.00`, max skating speed `62.06 cm/s`, and contact preservation `0.00`, while OmniRetarget again satisfies the constraints within numerical tolerance and preserves contact at `1.00`.
+
 ## Remaining
 
 - Downstream RL policy learning and full Unitree/Drake retargeting are not reproduced because the required simulator assets, robot-specific setup, and released OmniRetarget code are unavailable.
@@ -44,7 +46,7 @@ Job `8f7aad22-38d` reached `core_claim_plus`. On `object_interaction_kinematics`
 - Job `361e82c5-d0d` showed optimizer infeasibility during the step-up transition. The next revision keeps the same OmniRetarget objective and constraints but retries terrain frames with relaxed joint-velocity bounds when SLSQP returns a constraint-violating iterate.
 - Job `10633b10-ff5` showed that the discontinuous synthetic step could classify near-boundary hand support as penetration and that retrying from a fresh initial pose could break a previous stance foot. The terrain is now a ramped step, and retries remain anchored to the previous frame.
 - Job `8f7aad22-38d` passed the packaged reproduction and no remaining issue blocks the reusable kinematic gym.
-- The reproduced keypoint baseline is kept as a diagnostic artifact but omitted from final `scores.json` because it runs on the substitute procedural benchmark and is not directly comparable to the paper's OMOMO/in-house baseline values.
+- Continuing audit found that the reproduced keypoint baseline was generated but omitted from final `scores.json`; this is now fixed, and job `424fab31-265` verified the corrected evaluator in the container.
 
 ## Deviations from Paper
 

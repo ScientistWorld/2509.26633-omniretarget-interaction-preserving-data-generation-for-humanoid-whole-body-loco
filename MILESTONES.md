@@ -1,6 +1,6 @@
 # Reproduction Milestones
 
-**Current: core_claim**
+**Current: core_claim_plus**
 
 ## Progress Log
 
@@ -14,5 +14,10 @@
 - Fixed the evaluator to include every produced method artifact in `scoring/scores.json`.
 - Submitting a CPU container test to regenerate scores and verify the packaged reproduction with baseline results included.
 
+### [2026-06-06 07:32] - core_claim_plus
+- CPU container job `424fab31-265` completed successfully.
+- Regenerated `scoring/scores.json` now includes both `keypoint_ik` and `omniretarget` artifacts for object and terrain experiments.
+- `python validate.py --compare` passed all scoring and structure checks, restoring the audited milestone to `core_claim_plus`.
+
 ## Stop Justification
-- Re-audit in progress; previous `core_claim_plus` claim is being revalidated after evaluator fix.
+- Completed at milestone `core_claim_plus`. Higher milestones would require downstream RL/sim-to-real assets or released full-scale OmniRetarget datasets that are not available in this workspace.
