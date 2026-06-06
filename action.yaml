@@ -4,4 +4,4 @@ action: submit
 gpus: 0
 test: false
 milestone: core_claim_plus
-notes: "Run evaluate_train.sh and evaluate_test.sh against checkpoints/retargeting; populate train/test scores and diagnostics."
+notes: "Re-run train/test scoring after replacing binary contact hit-rate with continuous tolerance-normalized contact preservation."
