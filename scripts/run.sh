@@ -15,4 +15,5 @@ cd /home/user
 export PYTHONPATH=/home/user:${PYTHONPATH:-}
 
 python --version
-bash scripts/reproduce.sh
+bash scripts/evaluate_train.sh /home/user/checkpoints/retargeting
+bash scripts/evaluate_test.sh /home/user/checkpoints/retargeting

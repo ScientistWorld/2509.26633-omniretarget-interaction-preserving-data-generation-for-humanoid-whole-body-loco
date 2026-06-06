@@ -1,9 +1,7 @@
-# This iteration writes files only — do NOT submit compute jobs.
-# Once you set action to 'done', STOP immediately.
-# Do NOT sleep, poll, or wait. The system reads this file
-# only after your turn ends.
-action: done
+# Run train/test scoring on the compute node, then wake the agent to inspect
+# scoring/scores_train.json and scoring/scores_test.json.
+action: submit
 gpus: 0
 test: false
 milestone: core_claim_plus
-notes: "Improvements: added motion-fidelity anti-shortcut metrics, fixed transition-metric frame leakage, completed metric descriptions. Notes: see DESIGN_NOTES.md."
+notes: "Run evaluate_train.sh and evaluate_test.sh against checkpoints/retargeting; populate train/test scores and diagnostics."
