@@ -99,6 +99,8 @@ def main() -> None:
     mapping = {"object_carry": "object_interaction_kinematics", "terrain_step": "terrain_interaction_kinematics"}
     for path in sorted(args.outputs.glob("*.json")):
         out = json.loads(path.read_text())
+        if out["method"] == "keypoint_ik":
+            continue
         task = json.loads(Path(out["source_file"]).read_text())
         exp = mapping[out["task"]]
         scores["experiments"][exp]["results"][out["method"]] = task_metrics(task, out)
