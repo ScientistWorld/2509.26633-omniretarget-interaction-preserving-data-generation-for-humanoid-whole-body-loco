@@ -21,18 +21,18 @@
     "terrain_interaction_kinematics": {
       "results": {
         "keypoint_ik": {
-          "penetration_duration": 0.05,
-          "max_penetration_cm": 1.7937560549358855,
+          "penetration_duration": 0.0,
+          "max_penetration_cm": 0.0,
           "foot_skating_duration": 1.0,
-          "max_foot_skating_cm_s": 40.63461918397431,
+          "max_foot_skating_cm_s": 42.74605431987863,
           "contact_preservation": 0.0
         },
         "omniretarget": {
-          "penetration_duration": 0.25,
-          "max_penetration_cm": 25.26664767962138,
-          "foot_skating_duration": 0.0,
-          "max_foot_skating_cm_s": 9.574128515236845e-05,
-          "contact_preservation": 0.0
+          "penetration_duration": 0.3,
+          "max_penetration_cm": 24.368193982047543,
+          "foot_skating_duration": 0.047619047619047616,
+          "max_foot_skating_cm_s": 2.7043418059093316,
+          "contact_preservation": 0.08
         }
       }
     }
