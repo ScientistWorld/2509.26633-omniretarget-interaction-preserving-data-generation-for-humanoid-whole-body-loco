@@ -33,5 +33,10 @@
 - Diagnosed remaining terrain protocol issues: early hand-contact labels and stance intervals spanning a step-height discontinuity.
 - Patched the terrain generator, method stance detector, and method-independent evaluator before resubmission.
 
+### [2026-06-06 04:35] - core_claim
+- Job `361e82c5-d0d` improved terrain hand-contact preservation to `0.75`, but terrain penetration and foot skating still failed the hard-constraint side of the claim.
+- Diagnosed failed hard constraints in the step-up frames caused by overly tight sequential velocity bounds.
+- Added a constrained terrain retry path with relaxed bounds before resubmission.
+
 ## Stop Justification
 - Not stopped.

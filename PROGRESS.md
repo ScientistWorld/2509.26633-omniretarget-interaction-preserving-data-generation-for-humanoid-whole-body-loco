@@ -21,10 +21,12 @@ Job `e0708e5b-dfc` fixed object penetration: object penetration duration dropped
 
 Job `9563a6d6-a93` kept the object-interaction core claim intact and improved terrain foot skating: OmniRetarget reduced terrain foot-skating duration from `1.00` for keypoint IK to `0.048` and max skating speed from `42.75 cm/s` to `2.70 cm/s`. It did not reach `core_claim_plus` because terrain penetration remained high (`24.37 cm`) and terrain hand-contact preservation was only `0.08`.
 
+Job `361e82c5-d0d` improved terrain contact preservation to `0.75`, above the paper's reported `0.72`, but still did not reach `core_claim_plus`: terrain penetration duration was `0.125`, max penetration was `21.50 cm`, and foot-skating duration was `0.286`. Artifact inspection showed failed hard constraints during the step-up transition, caused by too-tight sequential velocity bounds for the scaled planar robot.
+
 ## Remaining
 
 - Run the packaged reproduction in the compute container.
-- Rerun after tightening the terrain protocol: hand-contact labels now start only after the source hands reach the support, and stance-foot skating ignores discontinuous step-surface transitions.
+- Rerun after adding a terrain-specific constrained retry with relaxed velocity bounds for frames whose hard constraints remain violated.
 - Expand from `core_claim` to `core_claim_plus` by making the terrain-step setting meaningful and successful.
 
 ## Issues
@@ -36,6 +38,7 @@ Job `9563a6d6-a93` kept the object-interaction core claim intact and improved te
 - Job `d59dfd81-fe3` reached `method_runs` but exposed two method issues: object collision constraints allowed a 1 cm overlap and terrain hand contacts were only represented in the mesh, not constrained.
 - Job `12774676-633` showed that the terrain task generator placed labeled hand contacts well above the terrain surface, making contact preservation impossible. The generator now places support hands on the elevated platform surface.
 - Job `9563a6d6-a93` showed two remaining terrain protocol mismatches: contact labels started before the generated hands reached the support surface, and foot stance intervals crossed the discontinuous step edge. Both are now corrected in the data/evaluation definitions.
+- Job `361e82c5-d0d` showed optimizer infeasibility during the step-up transition. The next revision keeps the same OmniRetarget objective and constraints but retries terrain frames with relaxed joint-velocity bounds when SLSQP returns a constraint-violating iterate.
 
 ## Deviations from Paper
 

@@ -81,7 +81,10 @@ def solve_frame(task: dict, t: int, q_prev: np.ndarray, prev_fk: np.ndarray | No
     q_min = np.array([-2.0, 0.45, -0.7, -1.4, -0.2, -1.4, -1.9, -2.4, 0.1, -0.2, -2.4])
     q_max = np.array([2.0, 1.45, 0.7, 1.4, 1.9, 1.4, 0.2, 0.2, 2.4, 2.4, -0.1])
     vel = np.array([0.09, 0.08, 0.18, 0.24, 0.30, 0.24, 0.30, 0.30, 0.36, 0.30, 0.36])
-    bounds = list(zip(np.maximum(q_min, q0 - vel), np.minimum(q_max, q0 + vel))) if q_prev is not None else list(zip(q_min, q_max))
+    if task["task"] == "terrain_step":
+        vel = np.array([0.16, 0.18, 0.24, 0.42, 0.55, 0.42, 0.55, 0.50, 0.60, 0.50, 0.60])
+    limited_bounds = list(zip(np.maximum(q_min, q0 - vel), np.minimum(q_max, q0 + vel))) if q_prev is not None else list(zip(q_min, q_max))
+    full_bounds = list(zip(q_min, q_max))
 
     def target_mesh(q: np.ndarray) -> np.ndarray:
         pts = np.vstack([robot.fk(q), obj_pts, terr])
@@ -119,8 +122,26 @@ def solve_frame(task: dict, t: int, q_prev: np.ndarray, prev_fk: np.ndarray | No
             idx = NAME_TO_IDX[name]
             constraints.append({"type": "eq", "fun": lambda q, idx=idx: robot.fk(q)[idx, 1] - terrain_height(robot.fk(q)[idx, 0], task["task"])})
 
-    res = minimize(objective, q0, method="SLSQP", bounds=bounds, constraints=constraints,
-                   options={"maxiter": 90, "ftol": 1e-7, "disp": False})
+    def constraint_violation(q: np.ndarray) -> float:
+        violation = 0.0
+        for con in constraints:
+            val = np.asarray(con["fun"](q), dtype=float)
+            if con["type"] == "ineq":
+                violation = max(violation, float(np.max(np.maximum(0.0, -val))))
+            else:
+                violation = max(violation, float(np.max(np.abs(val))))
+        return violation
+
+    res = minimize(objective, q0, method="SLSQP", bounds=limited_bounds, constraints=constraints,
+                   options={"maxiter": 140, "ftol": 1e-8, "disp": False})
+    if (not res.success or constraint_violation(np.asarray(res.x, dtype=float)) > 1e-4) and task["task"] == "terrain_step":
+        seed = initial_guess(source)
+        seed[0] = q0[0]
+        seed[1] = max(q0[1], terrain_height(q0[0], task["task"]) + 0.85)
+        res_retry = minimize(objective, seed, method="SLSQP", bounds=full_bounds, constraints=constraints,
+                             options={"maxiter": 220, "ftol": 1e-8, "disp": False})
+        if constraint_violation(np.asarray(res_retry.x, dtype=float)) < constraint_violation(np.asarray(res.x, dtype=float)):
+            res = res_retry
     return np.asarray(res.x if res.success else res.x, dtype=float)
 
 

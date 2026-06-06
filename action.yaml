@@ -31,4 +31,4 @@ action: submit
 gpus: 0
 test: true
 milestone: core_claim
-notes: "Rerun after correcting terrain contact timing, step-edge stance evaluation, and terrain nonpenetration/contact consistency; target is core_claim_plus on terrain."
+notes: "Rerun after adding terrain constrained retries with relaxed bounds for failed hard-constraint frames; target is core_claim_plus on terrain."
