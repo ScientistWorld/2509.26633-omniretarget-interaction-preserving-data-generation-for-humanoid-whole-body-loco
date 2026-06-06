@@ -30,5 +30,5 @@
 action: submit
 gpus: 0
 test: true
-milestone: none
-notes: "Retry CPU smoke test after fixing local package imports; runs 40-frame synthetic object and terrain retargeting, evaluates artifacts, and validates scores."
+milestone: method_runs
+notes: "Retry after tightening object non-penetration, stance detection, and terrain hand-contact constraints; evaluate whether the scaled benchmark now supports the core claim."
