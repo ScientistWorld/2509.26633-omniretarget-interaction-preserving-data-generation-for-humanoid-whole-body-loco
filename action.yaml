@@ -27,8 +27,8 @@
 #   milestone: core_claim
 #   notes: "Reproduced the core claim. Environment packaged."
 
-action: pending
-gpus: 1
-test: false
+action: submit
+gpus: 0
+test: true
 milestone: none
-notes: ""
+notes: "CPU smoke test: install NumPy/SciPy in the container overlay, run baseline and OmniRetarget on the scaled synthetic benchmark, evaluate, and validate scores."
