@@ -30,5 +30,5 @@
 action: submit
 gpus: 0
 test: true
-milestone: method_runs
-notes: "Retry after aligning stance-foot constraints with evaluator threshold; target is object-interaction core claim with zero penetration, reduced skating, and preserved contact."
+milestone: core_claim
+notes: "Rerun the packaged reproduction after fixing terrain hand-contact generation; object-interaction core claim is reached, next target is terrain coverage for core_claim_plus."

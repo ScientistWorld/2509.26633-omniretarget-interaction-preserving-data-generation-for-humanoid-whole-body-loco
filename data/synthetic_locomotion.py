@@ -95,8 +95,8 @@ def generate_task(task: str, frames: int = 80, seed: int = 7) -> dict:
             objects.append({"center": obj_center.tolist(), "size": obj_size.tolist(), "theta": 0.0})
             contacts.append({"object": ["left_hand", "right_hand"], "terrain": ["left_foot", "right_foot"]})
         else:
-            # Hands brace on the upper platform while stepping up.
-            rail = np.array([0.63, terrain_height(0.63, task) + 0.53])
+            # Hands brace on the upper platform surface while stepping up.
+            rail = np.array([0.63, terrain_height(0.63, task) + 0.02])
             reach = np.clip((t - 0.28) / 0.30, 0.0, 1.0)
             body["left_hand"] = (1 - reach) * (body["left_shoulder"] + np.array([-0.10, -0.38])) + reach * (rail + np.array([-0.10, 0.0]))
             body["right_hand"] = (1 - reach) * (body["right_shoulder"] + np.array([0.10, -0.38])) + reach * (rail + np.array([0.10, 0.0]))

@@ -11,17 +11,19 @@
 
 ## Results
 
+Job `12774676-633` reached `core_claim` on `object_interaction_kinematics`. Keypoint IK had penetration duration `1.00`, max penetration `9.73 cm`, foot skating duration `1.00`, and max skating speed `35.10 cm/s`. OmniRetarget achieved penetration duration `0.00`, max penetration approximately `0 cm`, foot skating duration `0.00`, max skating speed approximately `0 cm/s`, and contact preservation `1.00`.
+
 Job `d59dfd81-fe3` produced the first reproduced scores. On `object_interaction_kinematics`, OmniRetarget reduced maximum penetration from `9.73 cm` to `1.00 cm`, reduced foot skating duration from `1.00` to `0.00`, reduced maximum foot skating speed from `35.10 cm/s` to approximately `0`, and preserved contact at `1.00`. However, penetration duration still reported `1.00`, so the object setting does not yet satisfy the core claim.
 
 On `terrain_interaction_kinematics`, OmniRetarget reduced penetration duration from `0.05` to `0.00`, but terrain hand contact preservation remained `0.00` and maximum foot skating speed remained too high. This is not yet a successful reproduction of the terrain claim.
 
-Job `e0708e5b-dfc` fixed object penetration: object penetration duration dropped from `1.00` for keypoint IK to `0.00` for OmniRetarget, with contact preservation `1.00`. Foot skating still did not satisfy the claim because the optimizer used a stricter stance detector than the evaluator (`0.12 m/s` vs `0.35 m/s`). The next revision aligns these thresholds.
+Job `e0708e5b-dfc` fixed object penetration: object penetration duration dropped from `1.00` for keypoint IK to `0.00` for OmniRetarget, with contact preservation `1.00`. Foot skating still did not satisfy the claim because the optimizer used a stricter stance detector than the evaluator (`0.12 m/s` vs `0.35 m/s`). The next revision aligned these thresholds.
 
 ## Remaining
 
 - Run the packaged reproduction in the compute container.
-- Rerun after aligning stance-foot detection with the evaluator.
-- Reach `core_claim` on at least one interaction setting, then expand to the second setting.
+- Rerun after fixing inconsistent terrain hand-contact generation.
+- Expand from `core_claim` to `core_claim_plus` by making the terrain-step setting meaningful and successful.
 
 ## Issues
 
@@ -30,6 +32,7 @@ Job `e0708e5b-dfc` fixed object penetration: object penetration duration dropped
 - A local smoke test could not run before container setup because `numpy` is not installed in the login Python.
 - Job `bd8cb121-d23` failed due to missing local package initialization, fixed in the next revision.
 - Job `d59dfd81-fe3` reached `method_runs` but exposed two method issues: object collision constraints allowed a 1 cm overlap and terrain hand contacts were only represented in the mesh, not constrained.
+- Job `12774676-633` showed that the terrain task generator placed labeled hand contacts well above the terrain surface, making contact preservation impossible. The generator now places support hands on the elevated platform surface.
 
 ## Deviations from Paper
 

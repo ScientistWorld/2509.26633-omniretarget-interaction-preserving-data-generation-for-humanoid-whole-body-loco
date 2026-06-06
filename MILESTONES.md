@@ -1,6 +1,6 @@
 # Reproduction Milestones
 
-**Current: method_runs**
+**Current: core_claim**
 
 ## Progress Log
 
@@ -22,6 +22,11 @@
 ### [2026-06-06 03:50] - method_runs
 - Job `e0708e5b-dfc` fixed object penetration and preserved object contact, but foot-skating metrics still failed due to a stance-threshold mismatch between method and evaluator.
 - Aligned the optimizer's stance detector with the evaluation threshold before resubmission.
+
+### [2026-06-06 04:05] - core_claim
+- Job `12774676-633` reproduced the core kinematic claim on object interaction.
+- Compared with keypoint IK, OmniRetarget eliminated penetration and foot skating while preserving hand-object contact.
+- Terrain setting remains below claim because the synthetic generator labeled hand contacts above the actual terrain surface; fixed generator and resubmitted to target `core_claim_plus`.
 
 ## Stop Justification
 - Not stopped.
