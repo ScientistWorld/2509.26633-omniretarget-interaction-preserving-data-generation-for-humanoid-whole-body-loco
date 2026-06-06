@@ -38,5 +38,10 @@
 - Diagnosed failed hard constraints in the step-up frames caused by overly tight sequential velocity bounds.
 - Added a constrained terrain retry path with relaxed bounds before resubmission.
 
+### [2026-06-06 04:50] - core_claim
+- Job `10633b10-ff5` improved terrain hand-contact preservation to `0.917`, but penetration duration and a one-frame foot-skating spike still blocked `core_claim_plus`.
+- Diagnosed the remaining issue as a discontinuous synthetic terrain edge plus retry seeding that could abandon an established stance foot.
+- Changed the procedural terrain to a continuous ramped step and anchored retry seeds to the previous frame.
+
 ## Stop Justification
 - Not stopped.

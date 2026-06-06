@@ -36,7 +36,8 @@ KEYPOINTS = [
 def terrain_height(x: np.ndarray | float, task: str) -> np.ndarray | float:
     x_arr = np.asarray(x)
     if task == "terrain_step":
-        out = np.where(x_arr > 0.45, 0.32, 0.0)
+        ramp = np.clip((x_arr - 0.40) / 0.15, 0.0, 1.0)
+        out = 0.32 * ramp
     else:
         out = np.zeros_like(x_arr, dtype=float)
     if np.isscalar(x):

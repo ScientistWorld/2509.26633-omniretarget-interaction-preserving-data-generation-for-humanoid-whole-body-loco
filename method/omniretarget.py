@@ -26,7 +26,11 @@ COLLISION_SKIP = set(HAND_NAMES)
 
 def terrain_height(x: np.ndarray | float, task: str) -> np.ndarray | float:
     x_arr = np.asarray(x)
-    out = np.where(x_arr > 0.45, 0.32, 0.0) if task == "terrain_step" else np.zeros_like(x_arr, dtype=float)
+    if task == "terrain_step":
+        ramp = np.clip((x_arr - 0.40) / 0.15, 0.0, 1.0)
+        out = 0.32 * ramp
+    else:
+        out = np.zeros_like(x_arr, dtype=float)
     return float(out) if np.isscalar(x) else out
 
 
@@ -135,9 +139,8 @@ def solve_frame(task: dict, t: int, q_prev: np.ndarray, prev_fk: np.ndarray | No
     res = minimize(objective, q0, method="SLSQP", bounds=limited_bounds, constraints=constraints,
                    options={"maxiter": 140, "ftol": 1e-8, "disp": False})
     if (not res.success or constraint_violation(np.asarray(res.x, dtype=float)) > 1e-4) and task["task"] == "terrain_step":
-        seed = initial_guess(source)
-        seed[0] = q0[0]
-        seed[1] = max(q0[1], terrain_height(q0[0], task["task"]) + 0.85)
+        seed = q0.copy()
+        seed[1] = max(seed[1], terrain_height(seed[0], task["task"]) + 0.85)
         res_retry = minimize(objective, seed, method="SLSQP", bounds=full_bounds, constraints=constraints,
                              options={"maxiter": 220, "ftol": 1e-8, "disp": False})
         if constraint_violation(np.asarray(res_retry.x, dtype=float)) < constraint_violation(np.asarray(res.x, dtype=float)):

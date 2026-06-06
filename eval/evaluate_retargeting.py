@@ -17,7 +17,11 @@ BODY_FOR_OBJECT_COLLISION = [n for n in NAMES if n not in ("left_hand", "right_h
 
 def terrain_height(x: np.ndarray | float, task: str) -> np.ndarray | float:
     x_arr = np.asarray(x)
-    out = np.where(x_arr > 0.45, 0.32, 0.0) if task == "terrain_step" else np.zeros_like(x_arr, dtype=float)
+    if task == "terrain_step":
+        ramp = np.clip((x_arr - 0.40) / 0.15, 0.0, 1.0)
+        out = 0.32 * ramp
+    else:
+        out = np.zeros_like(x_arr, dtype=float)
     return float(out) if np.isscalar(x) else out
 
 
