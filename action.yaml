@@ -31,4 +31,4 @@ action: submit
 gpus: 0
 test: true
 milestone: method_runs
-notes: "Retry after tightening object non-penetration, stance detection, and terrain hand-contact constraints; evaluate whether the scaled benchmark now supports the core claim."
+notes: "Retry after aligning stance-foot constraints with evaluator threshold; target is object-interaction core claim with zero penetration, reduced skating, and preserved contact."

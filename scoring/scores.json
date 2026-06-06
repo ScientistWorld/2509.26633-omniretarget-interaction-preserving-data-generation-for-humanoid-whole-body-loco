@@ -11,9 +11,9 @@
         },
         "omniretarget": {
           "penetration_duration": 0.0,
-          "max_penetration_cm": 8.326672684688674e-15,
-          "foot_skating_duration": 0.7142857142857143,
-          "max_foot_skating_cm_s": 53.7170424807837,
+          "max_penetration_cm": 1.3877787807814457e-14,
+          "foot_skating_duration": 0.0,
+          "max_foot_skating_cm_s": 7.704293545909004e-05,
           "contact_preservation": 1.0
         }
       }
@@ -28,11 +28,11 @@
           "contact_preservation": 0.0
         },
         "omniretarget": {
-          "penetration_duration": 0.175,
-          "max_penetration_cm": 28.02527100561773,
-          "foot_skating_duration": 0.5714285714285714,
-          "max_foot_skating_cm_s": 277.9824300086207,
-          "contact_preservation": 0.1
+          "penetration_duration": 0.25,
+          "max_penetration_cm": 25.26664767962138,
+          "foot_skating_duration": 0.0,
+          "max_foot_skating_cm_s": 9.574128515236845e-05,
+          "contact_preservation": 0.0
         }
       }
     }
