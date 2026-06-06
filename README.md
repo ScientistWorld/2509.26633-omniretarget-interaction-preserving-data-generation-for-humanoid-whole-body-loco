@@ -38,9 +38,9 @@ The paper uses a custom sequential SOCP solver with Drake automatic differentiat
 
 # Evaluation
 
-Evaluation reads method artifacts from `checkpoints/retargeting/*.json` and writes `scoring/scores.json`. It does not import from `method/`. The evaluator also writes `scoring/diagnostics.json` with every artifact it scored; `scores.json` is restricted to methods listed in `scoring/reference.json` so validation remains comparable to the paper.
+Evaluation reads candidate artifacts from `checkpoints/retargeting/*.json` and writes `scoring/scores.json`. It does not import from any solution implementation. The evaluator also writes `scoring/diagnostics.json` with every artifact it scored.
 
-Metrics mirror the paper's kinematic quality metrics:
+Metrics measure kinematic interaction quality:
 
 - `penetration_duration`: fraction of frames with robot-object or robot-terrain penetration.
 - `max_penetration_cm`: maximum penetration depth in centimeters.
@@ -48,7 +48,7 @@ Metrics mirror the paper's kinematic quality metrics:
 - `max_foot_skating_cm_s`: maximum stance-foot speed in centimeters per second.
 - `contact_preservation`: fraction of desired hand-object or hand-terrain contacts that remain close enough to contact.
 
-The core claim is supported when the proposed method reduces penetration and foot skating while preserving task contacts compared with a keypoint-matching IK baseline on at least one interaction setting. Higher milestones require the same effect across additional interaction settings.
+A successful candidate should reduce physical artifacts while preserving task contacts. Higher-quality results improve the same metrics across both interaction settings.
 
 ---
 
@@ -233,9 +233,38 @@ The core claim is supported when the proposed method reduces penetration and foo
 
 </details>
 
+### Iteration 8: gpt-5.5 (verifier)
+- **Milestone**: `core_claim` | **Status**: done
+- **Working time**: 9m | **GPU**: 0.0h
+- **Jobs**: 13 total (11 completed, 2 failed)
+
+<details>
+<summary>Progress Log</summary>
+
+### [2026-06-06 07:39] - core_claim_plus
+- Implemented a scaled OmniRetarget interaction-mesh constrained optimizer and keypoint IK diagnostic baseline.
+- Reproduced the kinematic core claim on both object and terrain interaction tasks in compute jobs.
+- Tightened the reusable evaluator to load trusted benchmark task files by task ID rather than trusting artifact-provided paths.
+
+### [2026-06-06 07:47] - core_claim_plus
+- Compute job `f03c43a4-801` passed `scripts/reproduce.sh` and `python validate.py --compare` in the container.
+- Final scoring keeps paper-reference `omniretarget` results in `scoring/scores.json` and local substitute-task diagnostics in `scoring/diagnostics.json`.
+- No packaging issue remains for the reusable kinematic reproduction gym.
+
+### [2026-06-06 08:18] - core_claim
+- Independent audit confirmed that the implementation captures the OmniRetarget interaction-mesh constrained retargeting core, but the SciPy SLSQP solver and planar synthetic benchmark are significant scale deviations from the paper's Drake sequential SOCP and Unitree datasets.
+- Final milestone is conservatively set to `core_claim`: the terrain interaction benchmark preserves contact while enforcing no penetration and no skating; object interaction preserves hard constraints but has lower normalized contact score under the stricter metric.
+
+### [2026-06-06 08:25] - core_claim
+- Final verification cleaned method-agnostic documentation and restored the local keypoint IK baseline to official scores as a substitute comparator.
+- `python validate.py --compare` passes after the verification fixes.
+- Workspace is ready as a partial gym for the scaled kinematic retargeting problem; higher milestones require original-scale assets, solver fidelity, augmentation, or downstream RL.
+
+</details>
+
 
 ---
 
 # Reproduction Milestones
 
-**Current: core_claim_plus**
+**Current: core_claim**
