@@ -18,8 +18,7 @@ set -e
 cd /home/user
 export PYTHONPATH=/home/user:${PYTHONPATH:-}
 
-mkdir -p data/synthetic_tasks checkpoints/retargeting
-python data/synthetic_locomotion.py --out data/synthetic_tasks --frames "${FRAMES:-80}"
+mkdir -p checkpoints/retargeting
 
 python baseline/keypoint_ik.py --task data/synthetic_tasks/object_carry.json --out checkpoints/retargeting/keypoint_ik_object_carry.json
 python baseline/keypoint_ik.py --task data/synthetic_tasks/terrain_step.json --out checkpoints/retargeting/keypoint_ik_terrain_step.json

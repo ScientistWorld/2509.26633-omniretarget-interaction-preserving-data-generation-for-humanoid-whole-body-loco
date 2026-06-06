@@ -12,7 +12,9 @@
         "contact_preservation": {"higher_is_better": true, "coefficient": 0.8}
       },
       "results": {
-        "keypoint_ik": {"type": "baseline", "penetration_duration": 0.68, "max_penetration_cm": 5.11, "foot_skating_duration": 0.05, "max_foot_skating_cm_s": 1.40, "contact_preservation": 0.96},
+        "PHC": {"type": "baseline", "penetration_duration": 0.68, "max_penetration_cm": 5.11, "foot_skating_duration": 0.05, "max_foot_skating_cm_s": 1.40, "contact_preservation": 0.96},
+        "GMR": {"type": "baseline", "penetration_duration": 0.83, "max_penetration_cm": 8.50, "foot_skating_duration": 0.02, "max_foot_skating_cm_s": 1.46, "contact_preservation": 0.99},
+        "VideoMimic": {"type": "baseline", "penetration_duration": 0.60, "max_penetration_cm": 7.48, "foot_skating_duration": 0.12, "max_foot_skating_cm_s": 1.50, "contact_preservation": 0.77},
         "omniretarget": {"type": "proposed", "penetration_duration": 0.00, "max_penetration_cm": 1.34, "foot_skating_duration": 0.0, "max_foot_skating_cm_s": 0.0, "contact_preservation": 0.96}
       }
     },
@@ -28,7 +30,9 @@
         "contact_preservation": {"higher_is_better": true, "coefficient": 0.8}
       },
       "results": {
-        "keypoint_ik": {"type": "baseline", "penetration_duration": 0.66, "max_penetration_cm": 7.74, "foot_skating_duration": 0.15, "max_foot_skating_cm_s": 2.03, "contact_preservation": 0.45},
+        "PHC": {"type": "baseline", "penetration_duration": 0.66, "max_penetration_cm": 7.74, "foot_skating_duration": 0.15, "max_foot_skating_cm_s": 2.03, "contact_preservation": 0.45},
+        "GMR": {"type": "baseline", "penetration_duration": 0.91, "max_penetration_cm": 5.72, "foot_skating_duration": 0.04, "max_foot_skating_cm_s": 1.75, "contact_preservation": 0.67},
+        "VideoMimic": {"type": "baseline", "penetration_duration": 0.83, "max_penetration_cm": 5.97, "foot_skating_duration": 0.14, "max_foot_skating_cm_s": 1.85, "contact_preservation": 0.47},
         "omniretarget": {"type": "proposed", "penetration_duration": 0.01, "max_penetration_cm": 1.37, "foot_skating_duration": 0.0, "max_foot_skating_cm_s": 0.0, "contact_preservation": 0.72}
       }
     }

@@ -13,7 +13,6 @@ set -e
 
 cd /home/user
 export PYTHONPATH=/home/user:${PYTHONPATH:-}
-export FRAMES="${FRAMES:-40}"
 
 python --version
 bash scripts/reproduce.sh

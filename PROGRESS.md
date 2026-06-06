@@ -6,7 +6,7 @@
 - Implemented a scaled planar humanoid benchmark with object-carry and terrain-step interaction tasks.
 - Implemented the paper's core retargeting computation: interaction-mesh Laplacian objective, Delaunay neighbors, object/terrain mesh samples, warm-started per-frame constrained optimization, joint/velocity limits, non-penetration constraints, and stance-foot sticking constraints.
 - Implemented a keypoint-position IK baseline from the paper's baseline family.
-- Implemented method-independent evaluation that reads artifacts and writes `scoring/scores.json`.
+- Implemented method-independent evaluation that reads artifacts, loads trusted benchmark tasks by task ID, and writes `scoring/scores.json`.
 - Job `d59dfd81-fe3` ran the full pipeline successfully in the compute container.
 
 ## Results
@@ -27,7 +27,9 @@ Job `10633b10-ff5` further improved terrain contact preservation to `0.917` and 
 
 Job `8f7aad22-38d` reached `core_claim_plus`. On `object_interaction_kinematics`, OmniRetarget achieved penetration duration `0.00`, max penetration approximately `0 cm`, foot-skating duration `0.00`, max skating speed approximately `0 cm/s`, and contact preservation `1.00`. On `terrain_interaction_kinematics`, OmniRetarget achieved penetration duration `0.00`, max penetration approximately `0 cm`, foot-skating duration `0.00`, max skating speed approximately `0 cm/s`, and contact preservation `1.00`. The keypoint IK diagnostic baseline retained severe skating or interaction failures, so the benchmark distinguishes the paper's method, but it is omitted from final `scores.json` because the substitute-data baseline is not directly paper-consistent.
 
-Audit job `424fab31-265` confirmed the packaged run after evaluator cleanup. The generated keypoint IK artifacts remain useful diagnostics on the synthetic benchmark: on the object task, keypoint IK has penetration duration `1.00`, max penetration `9.73 cm`, foot-skating duration `1.00`, and max skating speed `35.10 cm/s`; on the terrain task, keypoint IK has foot-skating duration `1.00`, max skating speed `62.06 cm/s`, and contact preservation `0.00`. Because those diagnostic numbers come from substitute procedural tasks rather than the paper's OMOMO/in-house baseline protocol, final `scoring/scores.json` omits them and reports only paper-comparable `omniretarget` results. `python validate.py` now passes.
+Audit job `424fab31-265` confirmed the packaged run. The generated keypoint IK artifacts remain useful diagnostics on the synthetic benchmark: on the object task, keypoint IK has penetration duration `1.00`, max penetration `9.73 cm`, foot-skating duration `1.00`, and max skating speed `35.10 cm/s`; on the terrain task, keypoint IK has foot-skating duration `1.00`, max skating speed `62.06 cm/s`, and contact preservation `0.00`. OmniRetarget retained near-zero penetration and skating with `1.00` contact preservation on both tasks. `python validate.py` passes.
+
+Current revision tightens scoring integrity before the next audit job: `eval/` now ignores artifact-supplied `source_file` paths and loads tracked task files from `data/synthetic_tasks/`; normal method and baseline scripts no longer regenerate those tracked benchmark files; and `reference.json` names the paper Table II baselines as `PHC`, `GMR`, and `VideoMimic` rather than conflating them with the local keypoint IK diagnostic baseline.
 
 ## Remaining
 
@@ -46,7 +48,7 @@ Audit job `424fab31-265` confirmed the packaged run after evaluator cleanup. The
 - Job `361e82c5-d0d` showed optimizer infeasibility during the step-up transition. The next revision keeps the same OmniRetarget objective and constraints but retries terrain frames with relaxed joint-velocity bounds when SLSQP returns a constraint-violating iterate.
 - Job `10633b10-ff5` showed that the discontinuous synthetic step could classify near-boundary hand support as penetration and that retrying from a fresh initial pose could break a previous stance foot. The terrain is now a ramped step, and retries remain anchored to the previous frame.
 - Job `8f7aad22-38d` passed the packaged reproduction and no remaining issue blocks the reusable kinematic gym.
-- Continuing audit verified that the reproduced keypoint baseline should remain a diagnostic artifact rather than a paper-comparable `scores.json` entry; otherwise validation compares synthetic baseline values against Table II. The evaluator now omits `keypoint_ik` from final scoring while retaining its generated artifacts.
+- The local keypoint IK baseline is a diagnostic baseline for the synthetic substitute tasks, not a reproduced PHC/GMR/VideoMimic paper baseline. It can appear in reproduced scores as an extra method, while `reference.json` keeps the paper-reported baseline method names and values.
 
 ## Deviations from Paper
 

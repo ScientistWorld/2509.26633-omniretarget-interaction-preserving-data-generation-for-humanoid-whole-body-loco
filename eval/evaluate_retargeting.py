@@ -13,6 +13,14 @@ NAMES = ["pelvis", "neck", "left_knee", "left_foot", "right_knee", "right_foot",
          "left_shoulder", "left_elbow", "left_hand", "right_shoulder", "right_elbow", "right_hand"]
 NAME_TO_IDX = {n: i for i, n in enumerate(NAMES)}
 BODY_FOR_OBJECT_COLLISION = [n for n in NAMES if n not in ("left_hand", "right_hand")]
+TRUSTED_TASKS = {
+    "object_carry": Path("data/synthetic_tasks/object_carry.json"),
+    "terrain_step": Path("data/synthetic_tasks/terrain_step.json"),
+}
+EXPERIMENTS = {
+    "object_carry": "object_interaction_kinematics",
+    "terrain_step": "terrain_interaction_kinematics",
+}
 
 
 def terrain_height(x: np.ndarray | float, task: str) -> np.ndarray | float:
@@ -34,6 +42,11 @@ def rect_signed_distance(p: np.ndarray, center: np.ndarray, size: np.ndarray) ->
 
 def task_metrics(task: dict, output: dict) -> dict[str, float]:
     pts = np.array(output["retargeted_keypoints"], dtype=float)
+    if len(pts) != len(task["source_keypoints"]):
+        raise ValueError(
+            f"Artifact for {output.get('task')} has {len(pts)} frames; "
+            f"trusted task has {len(task['source_keypoints'])} frames"
+        )
     dt = float(task["dt"])
     pen_depths = []
     pen_frames = 0
@@ -96,18 +109,13 @@ def main() -> None:
     parser.add_argument("--score-out", type=Path, default=Path("scoring/scores.json"))
     args = parser.parse_args()
     scores = {"experiments": {"object_interaction_kinematics": {"results": {}}, "terrain_interaction_kinematics": {"results": {}}}}
-    mapping = {"object_carry": "object_interaction_kinematics", "terrain_step": "terrain_interaction_kinematics"}
     for path in sorted(args.outputs.glob("*.json")):
         out = json.loads(path.read_text())
-        if out["method"] == "keypoint_ik":
-            # The baseline artifact is useful for local diagnostics on the
-            # synthetic substitute benchmark, but it is not directly comparable
-            # to the paper's OMOMO/in-house baseline values. Do not place it in
-            # scores.json under the paper method key, because validate.py checks
-            # matching keys against paper-reported numbers.
-            continue
-        task = json.loads(Path(out["source_file"]).read_text())
-        exp = mapping[out["task"]]
+        task_name = out["task"]
+        if task_name not in TRUSTED_TASKS:
+            raise ValueError(f"Unknown task id in artifact {path}: {task_name}")
+        task = json.loads(TRUSTED_TASKS[task_name].read_text())
+        exp = EXPERIMENTS[task_name]
         scores["experiments"][exp]["results"][out["method"]] = task_metrics(task, out)
     args.score_out.parent.mkdir(parents=True, exist_ok=True)
     args.score_out.write_text(json.dumps(scores, indent=2))
