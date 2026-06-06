@@ -31,4 +31,4 @@ action: submit
 gpus: 0
 test: true
 milestone: none
-notes: "CPU smoke test: install NumPy/SciPy in the container overlay, run baseline and OmniRetarget on the scaled synthetic benchmark, evaluate, and validate scores."
+notes: "Retry CPU smoke test after fixing local package imports; runs 40-frame synthetic object and terrain retargeting, evaluates artifacts, and validates scores."
