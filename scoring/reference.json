@@ -3,7 +3,7 @@
     "object_interaction_kinematics": {
       "description": "Robot-object retargeting kinematic quality on OMOMO from Table II. Penetration and foot skating are constraints; contact preservation is the interaction benefit.",
       "weight": 0.5,
-      "primary_metric": "penetration_duration",
+      "primary_metric": "contact_preservation",
       "metrics": {
         "penetration_duration": {"higher_is_better": false, "coefficient": -1.0, "description": "Fraction of scored frames with robot body penetration into terrain or carried object."},
         "max_penetration_cm": {"higher_is_better": false, "coefficient": -0.5, "description": "Worst penetration depth in centimeters across scored frames."},
@@ -17,13 +17,14 @@
         "PHC": {"type": "baseline", "penetration_duration": 0.68, "max_penetration_cm": 5.11, "foot_skating_duration": 0.05, "max_foot_skating_cm_s": 1.40, "contact_preservation": 0.96},
         "GMR": {"type": "baseline", "penetration_duration": 0.83, "max_penetration_cm": 8.50, "foot_skating_duration": 0.02, "max_foot_skating_cm_s": 1.46, "contact_preservation": 0.99},
         "VideoMimic": {"type": "baseline", "penetration_duration": 0.60, "max_penetration_cm": 7.48, "foot_skating_duration": 0.12, "max_foot_skating_cm_s": 1.50, "contact_preservation": 0.77},
+        "keypoint_ik": {"type": "baseline"},
         "omniretarget": {"type": "proposed", "penetration_duration": 0.00, "max_penetration_cm": 1.34, "foot_skating_duration": 0.0, "max_foot_skating_cm_s": 0.0, "contact_preservation": 0.96}
       }
     },
     "terrain_interaction_kinematics": {
       "description": "Robot-terrain retargeting kinematic quality on in-house MoCap from Table II. Contact preservation must improve while maintaining hard constraints.",
       "weight": 0.5,
-      "primary_metric": "penetration_duration",
+      "primary_metric": "contact_preservation",
       "metrics": {
         "penetration_duration": {"higher_is_better": false, "coefficient": -1.0, "description": "Fraction of scored frames with robot body penetration into terrain."},
         "max_penetration_cm": {"higher_is_better": false, "coefficient": -0.5, "description": "Worst terrain penetration depth in centimeters across scored frames."},
@@ -37,6 +38,7 @@
         "PHC": {"type": "baseline", "penetration_duration": 0.66, "max_penetration_cm": 7.74, "foot_skating_duration": 0.15, "max_foot_skating_cm_s": 2.03, "contact_preservation": 0.45},
         "GMR": {"type": "baseline", "penetration_duration": 0.91, "max_penetration_cm": 5.72, "foot_skating_duration": 0.04, "max_foot_skating_cm_s": 1.75, "contact_preservation": 0.67},
         "VideoMimic": {"type": "baseline", "penetration_duration": 0.83, "max_penetration_cm": 5.97, "foot_skating_duration": 0.14, "max_foot_skating_cm_s": 1.85, "contact_preservation": 0.47},
+        "keypoint_ik": {"type": "baseline"},
         "omniretarget": {"type": "proposed", "penetration_duration": 0.01, "max_penetration_cm": 1.37, "foot_skating_duration": 0.0, "max_foot_skating_cm_s": 0.0, "contact_preservation": 0.72}
       }
     }
