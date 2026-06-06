@@ -10,7 +10,7 @@
 
 ## Results
 
-No reproduced scores have been produced yet because the login-node Python environment lacks NumPy/SciPy. Dependencies are declared in `environment/setup.sh`; the submitted job will install them in the container overlay and run `scripts/reproduce.sh`.
+No reproduced scores have been produced yet. Job `bd8cb121-d23` reached the compute container and confirmed Python 3.11, but failed before running the optimizer because `baseline/keypoint_ik.py` could not import the local `data` package. The fix adds package initializers and exports `PYTHONPATH=/home/user` in runnable scripts.
 
 ## Remaining
 
@@ -23,6 +23,7 @@ No reproduced scores have been produced yet because the login-node Python enviro
 - The paper states that OmniRetarget code, retargeted datasets, and trained policies will be released, but the markdown provides no repository URL for the proposed method.
 - Full Unitree/Drake/RL reproduction is outside the current workspace assets; this first job targets the core kinematic retargeting claim.
 - A local smoke test could not run before container setup because `numpy` is not installed in the login Python.
+- Job `bd8cb121-d23` failed due to missing local package initialization, fixed in the next revision.
 
 ## Deviations from Paper
 

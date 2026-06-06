@@ -17,6 +17,7 @@
 set -e
 
 cd /home/user
+export PYTHONPATH=/home/user:${PYTHONPATH:-}
 
 rm -rf checkpoints/retargeting scoring/scores.json
 mkdir -p checkpoints/retargeting

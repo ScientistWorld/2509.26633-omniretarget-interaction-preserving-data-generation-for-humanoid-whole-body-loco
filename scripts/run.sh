@@ -12,6 +12,7 @@
 set -e
 
 cd /home/user
+export PYTHONPATH=/home/user:${PYTHONPATH:-}
 
 python --version
 bash scripts/reproduce.sh

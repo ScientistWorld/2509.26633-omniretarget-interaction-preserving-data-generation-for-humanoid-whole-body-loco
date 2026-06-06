@@ -9,6 +9,7 @@
 set -e
 
 cd /home/user
+export PYTHONPATH=/home/user:${PYTHONPATH:-}
 
 mkdir -p data/synthetic_tasks checkpoints/retargeting
 python data/synthetic_locomotion.py --out data/synthetic_tasks --frames "${FRAMES:-80}"
