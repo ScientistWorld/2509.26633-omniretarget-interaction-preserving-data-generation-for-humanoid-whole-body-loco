@@ -59,7 +59,10 @@ def stance_feet(src_prev: np.ndarray, src: np.ndarray, dt: float, task_name: str
     for name in FOOT_NAMES:
         idx = NAME_TO_IDX[name]
         horiz_v = abs(src[idx, 0] - src_prev[idx, 0]) / dt
-        if horiz_v < 0.35 and src[idx, 1] <= terrain_height(src[idx, 0], task_name) + 0.03:
+        prev_h = terrain_height(src_prev[idx, 0], task_name)
+        cur_h = terrain_height(src[idx, 0], task_name)
+        same_surface = abs(cur_h - prev_h) < 0.05
+        if horiz_v < 0.35 and same_surface and src[idx, 1] <= cur_h + 0.03:
             out.append(name)
     return out
 
@@ -97,7 +100,7 @@ def solve_frame(task: dict, t: int, q_prev: np.ndarray, prev_fk: np.ndarray | No
         fk = robot.fk(q)
         vals = []
         for i, p in enumerate(fk):
-            vals.append(p[1] - terrain_height(p[0], task["task"]) - 0.015)
+            vals.append(p[1] - terrain_height(p[0], task["task"]))
             if obj and NAMES[i] not in COLLISION_SKIP:
                 c = np.array(obj["center"])
                 sx, sz = np.array(obj["size"])

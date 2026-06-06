@@ -28,5 +28,10 @@
 - Compared with keypoint IK, OmniRetarget eliminated penetration and foot skating while preserving hand-object contact.
 - Terrain setting remains below claim because the synthetic generator labeled hand contacts above the actual terrain surface; fixed generator and resubmitted to target `core_claim_plus`.
 
+### [2026-06-06 04:20] - core_claim
+- Job `9563a6d6-a93` preserved the object-interaction core claim and improved terrain skating, but terrain penetration and hand-contact preservation were still insufficient for `core_claim_plus`.
+- Diagnosed remaining terrain protocol issues: early hand-contact labels and stance intervals spanning a step-height discontinuity.
+- Patched the terrain generator, method stance detector, and method-independent evaluator before resubmission.
+
 ## Stop Justification
 - Not stopped.

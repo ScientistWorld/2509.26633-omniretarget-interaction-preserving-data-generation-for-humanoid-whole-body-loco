@@ -19,10 +19,12 @@ On `terrain_interaction_kinematics`, OmniRetarget reduced penetration duration f
 
 Job `e0708e5b-dfc` fixed object penetration: object penetration duration dropped from `1.00` for keypoint IK to `0.00` for OmniRetarget, with contact preservation `1.00`. Foot skating still did not satisfy the claim because the optimizer used a stricter stance detector than the evaluator (`0.12 m/s` vs `0.35 m/s`). The next revision aligned these thresholds.
 
+Job `9563a6d6-a93` kept the object-interaction core claim intact and improved terrain foot skating: OmniRetarget reduced terrain foot-skating duration from `1.00` for keypoint IK to `0.048` and max skating speed from `42.75 cm/s` to `2.70 cm/s`. It did not reach `core_claim_plus` because terrain penetration remained high (`24.37 cm`) and terrain hand-contact preservation was only `0.08`.
+
 ## Remaining
 
 - Run the packaged reproduction in the compute container.
-- Rerun after fixing inconsistent terrain hand-contact generation.
+- Rerun after tightening the terrain protocol: hand-contact labels now start only after the source hands reach the support, and stance-foot skating ignores discontinuous step-surface transitions.
 - Expand from `core_claim` to `core_claim_plus` by making the terrain-step setting meaningful and successful.
 
 ## Issues
@@ -33,6 +35,7 @@ Job `e0708e5b-dfc` fixed object penetration: object penetration duration dropped
 - Job `bd8cb121-d23` failed due to missing local package initialization, fixed in the next revision.
 - Job `d59dfd81-fe3` reached `method_runs` but exposed two method issues: object collision constraints allowed a 1 cm overlap and terrain hand contacts were only represented in the mesh, not constrained.
 - Job `12774676-633` showed that the terrain task generator placed labeled hand contacts well above the terrain surface, making contact preservation impossible. The generator now places support hands on the elevated platform surface.
+- Job `9563a6d6-a93` showed two remaining terrain protocol mismatches: contact labels started before the generated hands reached the support surface, and foot stance intervals crossed the discontinuous step edge. Both are now corrected in the data/evaluation definitions.
 
 ## Deviations from Paper
 

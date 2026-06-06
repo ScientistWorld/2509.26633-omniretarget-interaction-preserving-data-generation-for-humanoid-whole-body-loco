@@ -31,4 +31,4 @@ action: submit
 gpus: 0
 test: true
 milestone: core_claim
-notes: "Rerun the packaged reproduction after fixing terrain hand-contact generation; object-interaction core claim is reached, next target is terrain coverage for core_claim_plus."
+notes: "Rerun after correcting terrain contact timing, step-edge stance evaluation, and terrain nonpenetration/contact consistency; target is core_claim_plus on terrain."

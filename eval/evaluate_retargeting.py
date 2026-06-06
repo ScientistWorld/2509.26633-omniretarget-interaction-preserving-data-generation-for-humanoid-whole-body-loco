@@ -53,7 +53,10 @@ def task_metrics(task: dict, output: dict) -> dict[str, float]:
         for foot in ("left_foot", "right_foot"):
             idx = NAME_TO_IDX[foot]
             src_v = abs(src[t, idx, 0] - src[t - 1, idx, 0]) / dt
-            if src_v < 0.35 and src[t, idx, 1] <= terrain_height(src[t, idx, 0], task["task"]) + 0.03:
+            prev_h = terrain_height(src[t - 1, idx, 0], task["task"])
+            cur_h = terrain_height(src[t, idx, 0], task["task"])
+            same_surface = abs(cur_h - prev_h) < 0.05
+            if src_v < 0.35 and same_surface and src[t, idx, 1] <= cur_h + 0.03:
                 stance_count += 1
                 v = np.linalg.norm(pts[t, idx] - pts[t - 1, idx]) / dt
                 skate_speeds.append(v)

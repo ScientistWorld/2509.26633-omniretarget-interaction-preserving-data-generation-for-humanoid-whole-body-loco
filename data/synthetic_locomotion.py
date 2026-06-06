@@ -103,7 +103,7 @@ def generate_task(task: str, frames: int = 80, seed: int = 7) -> dict:
             body["left_elbow"] = 0.5 * (body["left_shoulder"] + body["left_hand"]) + np.array([-0.03, 0.06])
             body["right_elbow"] = 0.5 * (body["right_shoulder"] + body["right_hand"]) + np.array([0.03, 0.06])
             objects.append(None)
-            hand_contacts = ["left_hand", "right_hand"] if t > 0.38 else []
+            hand_contacts = ["left_hand", "right_hand"] if reach > 0.9 else []
             contacts.append({"object": [], "terrain": ["left_foot", "right_foot"] + hand_contacts})
 
         for ki, name in enumerate(KEYPOINTS):
