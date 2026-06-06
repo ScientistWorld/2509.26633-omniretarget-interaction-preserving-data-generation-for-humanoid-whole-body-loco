@@ -38,7 +38,7 @@ The paper uses a custom sequential SOCP solver with Drake automatic differentiat
 
 # Evaluation
 
-Evaluation reads method artifacts from `checkpoints/retargeting/*.json` and writes `scoring/scores.json`. It does not import from `method/`.
+Evaluation reads method artifacts from `checkpoints/retargeting/*.json` and writes `scoring/scores.json`. It does not import from `method/`. The evaluator also writes `scoring/diagnostics.json` with every artifact it scored; `scores.json` is restricted to methods listed in `scoring/reference.json` so validation remains comparable to the paper.
 
 Metrics mirror the paper's kinematic quality metrics:
 
@@ -133,12 +133,29 @@ The core claim is supported when the proposed method reduces penetration and foo
 
 </details>
 
+### Iteration 3: gpt-5.5
+- **Milestone**: `core_claim_plus` | **Status**: done
+- **Working time**: 10m | **GPU**: 0.0h
+- **Jobs**: 11 total (9 completed, 2 failed)
+
+<details>
+<summary>Progress Log</summary>
+
+### [2026-06-06 07:39] - core_claim_plus
+- Implemented a scaled OmniRetarget interaction-mesh constrained optimizer and keypoint IK diagnostic baseline.
+- Reproduced the kinematic core claim on both object and terrain interaction tasks in compute jobs.
+- Tightened the reusable evaluator to load trusted benchmark task files by task ID rather than trusting artifact-provided paths.
+
+### [2026-06-06 07:47] - core_claim_plus
+- Compute job `f03c43a4-801` passed `scripts/reproduce.sh` and `python validate.py --compare` in the container.
+- Final scoring keeps paper-reference `omniretarget` results in `scoring/scores.json` and local substitute-task diagnostics in `scoring/diagnostics.json`.
+- No packaging issue remains for the reusable kinematic reproduction gym.
+
+</details>
+
 
 ---
 
 # Reproduction Milestones
 
-**Current: core_claim**
-
-## Stop Justification
-- Completed at milestone `core_claim`.
+**Current: core_claim_plus**
