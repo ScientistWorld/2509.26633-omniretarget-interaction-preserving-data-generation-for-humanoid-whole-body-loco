@@ -17,4 +17,10 @@ set -e
 
 cd /home/user
 
-# TODO: run baseline
+mkdir -p data/synthetic_tasks checkpoints/retargeting
+python data/synthetic_locomotion.py --out data/synthetic_tasks --frames "${FRAMES:-80}"
+
+python baseline/keypoint_ik.py --task data/synthetic_tasks/object_carry.json --out checkpoints/retargeting/keypoint_ik_object_carry.json
+python baseline/keypoint_ik.py --task data/synthetic_tasks/terrain_step.json --out checkpoints/retargeting/keypoint_ik_terrain_step.json
+
+bash scripts/evaluate.sh checkpoints/retargeting

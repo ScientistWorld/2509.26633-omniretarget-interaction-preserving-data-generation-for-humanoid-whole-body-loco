@@ -2,20 +2,12 @@
 
 **Current: none**
 
-<!-- Milestone levels (update "Current" above as you progress):
-  none             — just started, no meaningful progress yet
-  method_runs      — the paper's method executes end-to-end without errors
-  core_claim       — minimum experiment supports the paper's central claim
-  core_claim_plus  — core claim reproduced on additional settings
-  secondary_claims — secondary results or contributions reproduced
-  majority         — more than half of reported results reproduced
-  near_complete    — most results reproduced, only minor gaps remain
-  full             — all reported results reproduced
--->
-
 ## Progress Log
 
-<!-- Write your progress here -->
+### [2026-06-06 00:00] - none
+- Read the paper and identified OmniRetarget's core as interaction-mesh Laplacian retargeting with hard kinematic constraints.
+- Implemented the initial scaled benchmark, proposed method, baseline, evaluator, scripts, and scoring reference.
+- Prepared a compute-container job to run the method end-to-end; no milestone above `none` is claimed until the job finishes successfully.
 
 ## Stop Justification
-- Completed at milestone `none`.
+- Not stopped.

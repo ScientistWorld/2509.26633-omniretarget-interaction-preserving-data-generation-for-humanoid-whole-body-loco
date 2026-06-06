@@ -1,15 +1,13 @@
 # Evaluation
 
-How success is measured. Describe only the metrics, targets, and evaluation procedure — do NOT describe the paper's method or how they achieved these results. Think of this as a general evaluation protocal for other scientists trying to solve the same problem, where they should not see this paper's solution.
+Evaluation reads method artifacts from `checkpoints/retargeting/*.json` and writes `scoring/scores.json`. It does not import from `method/`.
 
-## Metrics
+Metrics mirror the paper's kinematic quality metrics:
 
-<!-- What metrics are used? How are they computed? What does higher/lower mean? -->
+- `penetration_duration`: fraction of frames with robot-object or robot-terrain penetration.
+- `max_penetration_cm`: maximum penetration depth in centimeters.
+- `foot_skating_duration`: fraction of desired stance-foot contacts where the robot foot moves above the tolerance.
+- `max_foot_skating_cm_s`: maximum stance-foot speed in centimeters per second.
+- `contact_preservation`: fraction of desired hand-object or hand-terrain contacts that remain close enough to contact.
 
-## Baselines and Targets
-
-<!-- What performance levels exist as reference points? Include the paper's reported numbers as targets, and any standard baselines. A scientist agent should know what "good" looks like. -->
-
-## Evaluation Protocol
-
-<!-- How should evaluation be run? What data split, what conditions? Any important details about how to compare fairly (e.g., fixed seeds, specific test sets, averaging over runs). -->
+The core claim is supported when the proposed method reduces penetration and foot skating while preserving task contacts compared with a keypoint-matching IK baseline on at least one interaction setting. Higher milestones require the same effect across additional interaction settings.

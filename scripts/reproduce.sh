@@ -18,7 +18,10 @@ set -e
 
 cd /home/user
 
-# TODO: implement full reproduction pipeline
-# e.g.:
-#   bash scripts/baseline.sh
-#   bash scripts/method.sh
+rm -rf checkpoints/retargeting scoring/scores.json
+mkdir -p checkpoints/retargeting
+
+bash scripts/baseline.sh
+bash scripts/method.sh
+bash scripts/evaluate.sh checkpoints/retargeting
+python validate.py --compare

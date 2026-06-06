@@ -10,5 +10,10 @@ set -e
 
 cd /home/user
 
-# TODO: run the paper's method
-# TODO: call scripts/evaluate.sh to score
+mkdir -p data/synthetic_tasks checkpoints/retargeting
+python data/synthetic_locomotion.py --out data/synthetic_tasks --frames "${FRAMES:-80}"
+
+python method/omniretarget.py --task data/synthetic_tasks/object_carry.json --out checkpoints/retargeting/omniretarget_object_carry.json
+python method/omniretarget.py --task data/synthetic_tasks/terrain_step.json --out checkpoints/retargeting/omniretarget_terrain_step.json
+
+bash scripts/evaluate.sh checkpoints/retargeting

@@ -2,36 +2,30 @@
 
 ## What Works
 
-<!-- What has been successfully reproduced so far. -->
+- Read the OmniRetarget paper and extracted the core algorithm, baselines, metrics, and Table II reported numbers.
+- Implemented a scaled planar humanoid benchmark with object-carry and terrain-step interaction tasks.
+- Implemented the paper's core retargeting computation: interaction-mesh Laplacian objective, Delaunay neighbors, object/terrain mesh samples, warm-started per-frame constrained optimization, joint/velocity limits, non-penetration constraints, and stance-foot sticking constraints.
+- Implemented a keypoint-position IK baseline from the paper's baseline family.
+- Implemented method-independent evaluation that reads artifacts and writes `scoring/scores.json`.
 
 ## Results
 
-<!-- Reproduced numbers compared to the paper's reported numbers. -->
+No reproduced scores have been produced yet because the login-node Python environment lacks NumPy/SciPy. Dependencies are declared in `environment/setup.sh`; the submitted job will install them in the container overlay and run `scripts/reproduce.sh`.
 
 ## Remaining
 
-<!-- What still needs to be done to reach higher milestones. -->
+- Run the packaged reproduction in the compute container.
+- Inspect `scoring/scores.json` and compare against the expected qualitative pattern.
+- If the method does not beat the baseline on the constraint metrics, tune the synthetic task or optimizer without changing the paper's algorithm.
 
 ## Issues
 
-<!-- Blockers, bugs, or difficulties encountered. -->
+- The paper states that OmniRetarget code, retargeted datasets, and trained policies will be released, but the markdown provides no repository URL for the proposed method.
+- Full Unitree/Drake/RL reproduction is outside the current workspace assets; this first job targets the core kinematic retargeting claim.
+- A local smoke test could not run before container setup because `numpy` is not installed in the login Python.
 
 ## Deviations from Paper
 
-<!-- Do not edit this section unless you deviated from the paper's original setup.
-     For each deviation, document: what the paper used, what you substituted, and why.
-
-     ACCEPTABLE deviations (data/resource/scale substitutions — milestones still valid):
-       - Replaced a proprietary dataset with a public one
-       - Used a smaller model of the same architecture
-       - Scaled down training (fewer epochs, smaller batch)
-       - Used a different library for the same algorithm
-
-     UNACCEPTABLE deviations (algorithm substitutions — milestones above 'none' are void):
-       - Replaced the paper's algorithm with a fundamentally different one
-       - Wrote a generic model trained to approximate the method's outputs
-         instead of implementing the method's computational steps
-
-     The test: could someone reading your code identify which algorithm from
-     the paper you implemented? If not, you replaced the method. -->
-
+- Paper data: OMOMO, LAFAN1, and in-house MoCap. Substitute: deterministic synthetic object and terrain interaction tasks in `data/`. Reason: the OmniRetarget release and in-house MoCap are not available from the paper markdown, and a small benchmark is needed for a reusable gym.
+- Paper robot/solver: Unitree humanoids, Drake autodiff, custom sequential SOCP. Substitute: planar humanoid model and SciPy SLSQP constrained optimization. Reason: preserve the same objective and hard-constraint formulation at a scale that can run in this environment.
+- Paper downstream RL: BeyondMimic-style policy training. Substitute: kinematic metrics only for the first milestone. Reason: the paper's central retargeting claim is directly measured by Table II kinematic metrics, while full RL requires unavailable simulator assets and policies.

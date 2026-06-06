@@ -26,5 +26,5 @@ cd /home/user
 
 mkdir -p scoring
 
-# TODO: implement evaluation using code in eval/
-# Must write scoring/scores.json at the end
+OUTPUT_DIR="${1:-checkpoints/retargeting}"
+python eval/evaluate_retargeting.py --outputs "$OUTPUT_DIR" --score-out scoring/scores.json
