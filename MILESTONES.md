@@ -17,3 +17,8 @@
 ### [2026-06-06 08:18] - core_claim
 - Independent audit confirmed that the implementation captures the OmniRetarget interaction-mesh constrained retargeting core, but the SciPy SLSQP solver and planar synthetic benchmark are significant scale deviations from the paper's Drake sequential SOCP and Unitree datasets.
 - Final milestone is conservatively set to `core_claim`: the terrain interaction benchmark preserves contact while enforcing no penetration and no skating; object interaction preserves hard constraints but has lower normalized contact score under the stricter metric.
+
+### [2026-06-06 08:25] - core_claim
+- Final verification cleaned method-agnostic documentation and restored the local keypoint IK baseline to official scores as a substitute comparator.
+- `python validate.py --compare` passes after the verification fixes.
+- Workspace is ready as a partial gym for the scaled kinematic retargeting problem; higher milestones require original-scale assets, solver fidelity, augmentation, or downstream RL.

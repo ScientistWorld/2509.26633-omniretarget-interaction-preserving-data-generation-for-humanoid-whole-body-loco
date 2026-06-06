@@ -1,5 +1,5 @@
 # Direction
 
-Work within interaction-aware humanoid retargeting. Valid improvements include better constrained optimization, better interaction mesh construction, better contact handling, and better morphology adaptation.
+Work within humanoid retargeting for object and terrain interaction. Valid improvements include better feasibility handling, better contact preservation, better morphology adaptation, and stronger trajectory consistency.
 
-Out of scope: replacing retargeting with a learned black-box mapper trained to the benchmark outputs, changing the task data to make contacts easier, or optimizing only keypoint tracking while ignoring object and terrain constraints.
+Out of scope: training a black-box mapper directly on benchmark outputs, changing the task data to make contacts easier, or optimizing only unconstrained keypoint matching while ignoring object and terrain feasibility.

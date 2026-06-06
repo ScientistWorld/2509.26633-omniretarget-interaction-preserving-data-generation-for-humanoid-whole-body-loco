@@ -1,8 +1,8 @@
 # Evaluation
 
-Evaluation reads method artifacts from `checkpoints/retargeting/*.json` and writes `scoring/scores.json`. It does not import from `method/`. The evaluator also writes `scoring/diagnostics.json` with every artifact it scored; `scores.json` is restricted to methods listed in `scoring/reference.json` so validation remains comparable to the paper.
+Evaluation reads candidate artifacts from `checkpoints/retargeting/*.json` and writes `scoring/scores.json`. It does not import from any solution implementation. The evaluator also writes `scoring/diagnostics.json` with every artifact it scored.
 
-Metrics mirror the paper's kinematic quality metrics:
+Metrics measure kinematic interaction quality:
 
 - `penetration_duration`: fraction of frames with robot-object or robot-terrain penetration.
 - `max_penetration_cm`: maximum penetration depth in centimeters.
@@ -10,4 +10,4 @@ Metrics mirror the paper's kinematic quality metrics:
 - `max_foot_skating_cm_s`: maximum stance-foot speed in centimeters per second.
 - `contact_preservation`: fraction of desired hand-object or hand-terrain contacts that remain close enough to contact.
 
-The core claim is supported when the proposed method reduces penetration and foot skating while preserving task contacts compared with a keypoint-matching IK baseline on at least one interaction setting. Higher milestones require the same effect across additional interaction settings.
+A successful candidate should reduce physical artifacts while preserving task contacts. Higher-quality results improve the same metrics across both interaction settings.

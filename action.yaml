@@ -3,4 +3,4 @@ action: done
 gpus: 0
 test: false
 milestone: core_claim
-notes: "Core OmniRetarget interaction-mesh constrained retargeting is implemented and validated on the terrain substitute task. Validation passes; higher milestones need faithful SOCP/URDF, augmentation, or RL."
+notes: "Final verification passed for a partial scaled kinematic gym. Milestone is core_claim; higher milestones need original-scale solver/assets, augmentation, or RL."

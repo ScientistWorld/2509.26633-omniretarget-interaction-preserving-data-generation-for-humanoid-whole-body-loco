@@ -2,6 +2,15 @@
   "experiments": {
     "object_interaction_kinematics": {
       "results": {
+        "keypoint_ik": {
+          "penetration_duration": 1.0,
+          "max_penetration_cm": 9.720570823921056,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 26.961176648682876,
+          "contact_preservation": 0.900896072859163,
+          "pelvis_path_error_cm": 1.4358344160432908,
+          "motion_velocity_error_cm_s": 5.762039009197075
+        },
         "omniretarget": {
           "penetration_duration": 0.0,
           "max_penetration_cm": 1.3877787807814457e-14,
@@ -15,6 +24,15 @@
     },
     "terrain_interaction_kinematics": {
       "results": {
+        "keypoint_ik": {
+          "penetration_duration": 0.0,
+          "max_penetration_cm": 0.0,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 60.21107796023244,
+          "contact_preservation": 0.0,
+          "pelvis_path_error_cm": 8.6397619675407,
+          "motion_velocity_error_cm_s": 24.97010322101986
+        },
         "omniretarget": {
           "penetration_duration": 0.0,
           "max_penetration_cm": 2.2890793704988255e-07,
