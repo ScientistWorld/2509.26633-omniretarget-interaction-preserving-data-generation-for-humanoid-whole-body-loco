@@ -138,7 +138,7 @@ The core claim is supported when the proposed method reduces penetration and foo
 
 # Reproduction Milestones
 
-**Current: core_claim_plus**
+**Current: core_claim**
 
 ## Stop Justification
-- Completed at milestone `core_claim_plus`.
+- Completed at milestone `core_claim`.
