@@ -28,4 +28,8 @@ export PYTHONPATH=/home/user:${PYTHONPATH:-}
 mkdir -p scoring
 
 OUTPUT_DIR="${1:-checkpoints/retargeting}"
-python eval/evaluate_retargeting.py --outputs "$OUTPUT_DIR" --score-out scoring/scores.json
+python eval/evaluate_retargeting.py \
+  --outputs "$OUTPUT_DIR" \
+  --score-out scoring/scores.json \
+  --diagnostics-out scoring/diagnostics.json \
+  --reference scoring/reference.json

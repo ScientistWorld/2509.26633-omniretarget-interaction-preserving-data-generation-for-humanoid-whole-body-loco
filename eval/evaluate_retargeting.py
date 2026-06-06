@@ -107,8 +107,16 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--outputs", type=Path, default=Path("checkpoints/retargeting"))
     parser.add_argument("--score-out", type=Path, default=Path("scoring/scores.json"))
+    parser.add_argument("--diagnostics-out", type=Path, default=Path("scoring/diagnostics.json"))
+    parser.add_argument("--reference", type=Path, default=Path("scoring/reference.json"))
     args = parser.parse_args()
     scores = {"experiments": {"object_interaction_kinematics": {"results": {}}, "terrain_interaction_kinematics": {"results": {}}}}
+    diagnostics = {"experiments": {"object_interaction_kinematics": {"results": {}}, "terrain_interaction_kinematics": {"results": {}}}}
+    reference = json.loads(args.reference.read_text())
+    reference_methods = {
+        exp: set(spec["results"].keys())
+        for exp, spec in reference["experiments"].items()
+    }
     for path in sorted(args.outputs.glob("*.json")):
         out = json.loads(path.read_text())
         task_name = out["task"]
@@ -116,9 +124,14 @@ def main() -> None:
             raise ValueError(f"Unknown task id in artifact {path}: {task_name}")
         task = json.loads(TRUSTED_TASKS[task_name].read_text())
         exp = EXPERIMENTS[task_name]
-        scores["experiments"][exp]["results"][out["method"]] = task_metrics(task, out)
+        metrics = task_metrics(task, out)
+        diagnostics["experiments"][exp]["results"][out["method"]] = metrics
+        if out["method"] in reference_methods[exp]:
+            scores["experiments"][exp]["results"][out["method"]] = metrics
     args.score_out.parent.mkdir(parents=True, exist_ok=True)
+    args.diagnostics_out.parent.mkdir(parents=True, exist_ok=True)
     args.score_out.write_text(json.dumps(scores, indent=2))
+    args.diagnostics_out.write_text(json.dumps(diagnostics, indent=2))
     print(json.dumps(scores, indent=2))
 
 

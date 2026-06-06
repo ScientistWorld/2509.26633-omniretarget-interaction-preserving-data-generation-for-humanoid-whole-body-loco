@@ -1,6 +1,6 @@
 # Evaluation
 
-Evaluation reads method artifacts from `checkpoints/retargeting/*.json` and writes `scoring/scores.json`. It does not import from `method/`.
+Evaluation reads method artifacts from `checkpoints/retargeting/*.json` and writes `scoring/scores.json`. It does not import from `method/`. The evaluator also writes `scoring/diagnostics.json` with every artifact it scored; `scores.json` is restricted to methods listed in `scoring/reference.json` so validation remains comparable to the paper.
 
 Metrics mirror the paper's kinematic quality metrics:
 
