@@ -1,0 +1,30 @@
+{
+  "experiments": {
+    "object_interaction_kinematics": {
+      "results": {
+        "omniretarget": {
+          "penetration_duration": 0.0,
+          "max_penetration_cm": 2.7755575615628914e-15,
+          "foot_skating_duration": 0.1,
+          "max_foot_skating_cm_s": 9.455891622787853,
+          "contact_preservation": 0.8278202662511447,
+          "pelvis_path_error_cm": 3.4726236688689918,
+          "motion_velocity_error_cm_s": 11.40630141038451
+        }
+      }
+    },
+    "terrain_interaction_kinematics": {
+      "results": {
+        "omniretarget": {
+          "penetration_duration": 0.0,
+          "max_penetration_cm": 2.6623148130511254e-10,
+          "foot_skating_duration": 0.0,
+          "max_foot_skating_cm_s": 2.3572887641876157e-05,
+          "contact_preservation": 0.9999999942013353,
+          "pelvis_path_error_cm": 20.722627837701616,
+          "motion_velocity_error_cm_s": 77.9015864228921
+        }
+      }
+    }
+  }
+}

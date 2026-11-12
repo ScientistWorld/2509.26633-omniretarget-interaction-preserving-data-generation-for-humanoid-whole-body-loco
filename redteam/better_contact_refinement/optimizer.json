@@ -1,0 +1,242 @@
+[
+  {
+    "task": "object_carry",
+    "frame": 0,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 1,
+    "success": true,
+    "violation": 2.7755575615628914e-17
+  },
+  {
+    "task": "object_carry",
+    "frame": 2,
+    "success": true,
+    "violation": 2.7755575615628914e-17
+  },
+  {
+    "task": "object_carry",
+    "frame": 3,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 4,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 5,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 6,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 7,
+    "success": true,
+    "violation": 2.7755575615628914e-17
+  },
+  {
+    "task": "object_carry",
+    "frame": 8,
+    "success": true,
+    "violation": 2.7755575615628914e-17
+  },
+  {
+    "task": "object_carry",
+    "frame": 9,
+    "success": true,
+    "violation": 2.7755575615628914e-17
+  },
+  {
+    "task": "object_carry",
+    "frame": 10,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 11,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 12,
+    "success": true,
+    "violation": 2.7755575615628914e-17
+  },
+  {
+    "task": "object_carry",
+    "frame": 13,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 14,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 15,
+    "success": true,
+    "violation": 2.7755575615628914e-17
+  },
+  {
+    "task": "object_carry",
+    "frame": 16,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 17,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 18,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 19,
+    "success": true,
+    "violation": 2.7755575615628914e-17
+  },
+  {
+    "task": "object_carry",
+    "frame": 20,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 21,
+    "success": true,
+    "violation": 2.7755575615628914e-17
+  },
+  {
+    "task": "object_carry",
+    "frame": 22,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 23,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 24,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 25,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 26,
+    "success": true,
+    "violation": 2.7755575615628914e-17
+  },
+  {
+    "task": "object_carry",
+    "frame": 27,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 28,
+    "success": true,
+    "violation": 5.551115123125783e-17
+  },
+  {
+    "task": "object_carry",
+    "frame": 29,
+    "success": true,
+    "violation": 8.326672684688674e-17
+  },
+  {
+    "task": "object_carry",
+    "frame": 30,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 31,
+    "success": true,
+    "violation": 1.3877787807814457e-16
+  },
+  {
+    "task": "object_carry",
+    "frame": 32,
+    "success": true,
+    "violation": 2.7755575615628914e-17
+  },
+  {
+    "task": "object_carry",
+    "frame": 33,
+    "success": true,
+    "violation": 8.326672684688674e-17
+  },
+  {
+    "task": "object_carry",
+    "frame": 34,
+    "success": true,
+    "violation": 2.7755575615628914e-17
+  },
+  {
+    "task": "object_carry",
+    "frame": 35,
+    "success": true,
+    "violation": 2.7755575615628914e-17
+  },
+  {
+    "task": "object_carry",
+    "frame": 36,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 37,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 38,
+    "success": true,
+    "violation": 0.0
+  },
+  {
+    "task": "object_carry",
+    "frame": 39,
+    "success": true,
+    "violation": 0.0
+  }
+]

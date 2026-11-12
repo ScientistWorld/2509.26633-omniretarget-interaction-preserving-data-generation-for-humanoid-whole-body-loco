@@ -1,0 +1,1083 @@
+{
+  "normalization_cohort": [
+    "better_contact_refinement",
+    "reference_seed2",
+    "better_budget",
+    "reference_seed0",
+    "weaker_keypoint_ik",
+    "brute_force_grid",
+    "reference_seed1",
+    "weaker_no_mesh"
+  ],
+  "normalizers": {
+    "object_interaction_kinematics": {
+      "penetration_duration": 0.33071891388307384,
+      "max_penetration_cm": 3.214776625210665,
+      "foot_skating_duration": 0.38971143170299744,
+      "max_foot_skating_cm_s": 18.282168766035152,
+      "contact_preservation": 0.10573301537158716,
+      "pelvis_path_error_cm": 1.2741767531183283,
+      "motion_velocity_error_cm_s": 5.61497419871962
+    },
+    "terrain_interaction_kinematics": {
+      "penetration_duration": 0.033071891388307385,
+      "max_penetration_cm": 0.3679357985445507,
+      "foot_skating_duration": 0.42701727131346806,
+      "max_foot_skating_cm_s": 90.23524888462535,
+      "contact_preservation": 0.4330022504912086,
+      "pelvis_path_error_cm": 5.6004523720683315,
+      "motion_velocity_error_cm_s": 16.792636878996305
+    }
+  },
+  "cases": {
+    "better_budget": {
+      "case": "better_budget",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 16.31958545499947,
+      "rank_delta": -0.4481531450936843,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 4.316874677693988e-16,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": 0.00011871462971524034,
+          "contact_preservation": -9.37168449828604e-05,
+          "pelvis_path_error_cm": 7.591738455304609e-05,
+          "motion_velocity_error_cm_s": 3.0736139120647207e-06
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.5553456901025002e-07,
+          "foot_skating_duration": -0.09367302609789875,
+          "max_foot_skating_cm_s": -0.3486465303976025,
+          "contact_preservation": 3.344475838534932e-05,
+          "pelvis_path_error_cm": 0.007259955500120229,
+          "motion_velocity_error_cm_s": -0.013231133174455565
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.578729387034109
+        }
+      }
+    },
+    "better_contact_refinement": {
+      "case": "better_contact_refinement",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 2.4238033320289105,
+      "rank_delta": 1.1088575699876195,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": true,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": -0.0,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": -0.0,
+          "contact_preservation": 1.100706100635986,
+          "pelvis_path_error_cm": -0.0,
+          "motion_velocity_error_cm_s": 0.00815146935163367
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": -0.0,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": -0.0,
+          "contact_preservation": 0.0,
+          "pelvis_path_error_cm": -0.0,
+          "motion_velocity_error_cm_s": -0.0
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.6281861154693127
+        }
+      }
+    },
+    "brute_force_grid": {
+      "case": "brute_force_grid",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 15.946356494998327,
+      "rank_delta": -5.675033398229844,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 8.633749355387976e-16,
+          "foot_skating_duration": -0.9237604307034012,
+          "max_foot_skating_cm_s": -0.5974991015528248,
+          "contact_preservation": 0.027959566030661204,
+          "pelvis_path_error_cm": 0.4881715685821708,
+          "motion_velocity_error_cm_s": -0.34050284174175965
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -1.5118578920369088,
+          "max_penetration_cm": -0.7559288793863999,
+          "foot_skating_duration": -0.9367302609789875,
+          "max_foot_skating_cm_s": -0.563226638382739,
+          "contact_preservation": -0.9237492828053079,
+          "pelvis_path_error_cm": 0.4369765731062953,
+          "motion_velocity_error_cm_s": -0.07488577836064388
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.64
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.3999999999999999
+        }
+      }
+    },
+    "reference_seed0": {
+      "case": "reference_seed0",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 12.89282188200741,
+      "rank_delta": 0.0,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": -0.0,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": -0.0,
+          "contact_preservation": 0.0,
+          "pelvis_path_error_cm": -0.0,
+          "motion_velocity_error_cm_s": -0.0
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": -0.0,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": -0.0,
+          "contact_preservation": 0.0,
+          "pelvis_path_error_cm": -0.0,
+          "motion_velocity_error_cm_s": -0.0
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.6281861154693127
+        }
+      }
+    },
+    "reference_seed1": {
+      "case": "reference_seed1",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 11.228763477993198,
+      "rank_delta": 0.0,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": -0.0,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": -0.0,
+          "contact_preservation": 0.0,
+          "pelvis_path_error_cm": -0.0,
+          "motion_velocity_error_cm_s": -0.0
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": -0.0,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": -0.0,
+          "contact_preservation": 0.0,
+          "pelvis_path_error_cm": -0.0,
+          "motion_velocity_error_cm_s": -0.0
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.6281861154693127
+        }
+      }
+    },
+    "reference_seed2": {
+      "case": "reference_seed2",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 11.439768804004416,
+      "rank_delta": 0.0,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": -0.0,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": -0.0,
+          "contact_preservation": 0.0,
+          "pelvis_path_error_cm": -0.0,
+          "motion_velocity_error_cm_s": -0.0
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": -0.0,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": -0.0,
+          "contact_preservation": 0.0,
+          "pelvis_path_error_cm": -0.0,
+          "motion_velocity_error_cm_s": -0.0
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.6281861154693127
+        }
+      }
+    },
+    "shortcut_constant": {
+      "case": "shortcut_constant",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 2.070981415017741,
+      "rank_delta": -9.56157713976652,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.079218669423497e-15,
+          "foot_skating_duration": 0.10264004785593348,
+          "max_foot_skating_cm_s": 0.047122791657435,
+          "contact_preservation": -2.6804306625927055,
+          "pelvis_path_error_cm": -4.537830607175981,
+          "motion_velocity_error_cm_s": -1.0606955087015433
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.5553524416173772e-07,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": 3.0688404557674865e-08,
+          "contact_preservation": -0.9237492828053079,
+          "pelvis_path_error_cm": -0.5086647336903982,
+          "motion_velocity_error_cm_s": 3.062946240011746e-05
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 2.0269047757497276,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 2.0269047757497276,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        }
+      }
+    },
+    "shortcut_copy_input": {
+      "case": "shortcut_copy_input",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 2.0143505510059185,
+      "rank_delta": -2.7916609584604766,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -1.5118578920369088,
+          "max_penetration_cm": -0.87337088545252,
+          "foot_skating_duration": -0.8211203828474678,
+          "max_foot_skating_cm_s": -0.4143159996201058,
+          "contact_preservation": 0.41484403587837143,
+          "pelvis_path_error_cm": 0.4881715685821708,
+          "motion_velocity_error_cm_s": 0.24974477619502267
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.5553524416173772e-07,
+          "foot_skating_duration": -0.8430572348810887,
+          "max_foot_skating_cm_s": -0.17554620403330454,
+          "contact_preservation": -0.4772542978161741,
+          "pelvis_path_error_cm": 0.6348170259996813,
+          "motion_velocity_error_cm_s": 0.5372843760366043
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 1.069893420887186,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 1.1306167762630799,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        }
+      }
+    },
+    "shortcut_empty": {
+      "case": "shortcut_empty",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 1.9619212169782259,
+      "rank_delta": 0,
+      "missing": [
+        "object_interaction_kinematics.penetration_duration",
+        "object_interaction_kinematics.max_penetration_cm",
+        "object_interaction_kinematics.foot_skating_duration",
+        "object_interaction_kinematics.max_foot_skating_cm_s",
+        "object_interaction_kinematics.contact_preservation",
+        "object_interaction_kinematics.pelvis_path_error_cm",
+        "object_interaction_kinematics.motion_velocity_error_cm_s",
+        "terrain_interaction_kinematics.penetration_duration",
+        "terrain_interaction_kinematics.max_penetration_cm",
+        "terrain_interaction_kinematics.foot_skating_duration",
+        "terrain_interaction_kinematics.max_foot_skating_cm_s",
+        "terrain_interaction_kinematics.contact_preservation",
+        "terrain_interaction_kinematics.pelvis_path_error_cm",
+        "terrain_interaction_kinematics.motion_velocity_error_cm_s"
+      ],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {},
+        "terrain_interaction_kinematics": {}
+      },
+      "independent_artifact_checks": {}
+    },
+    "shortcut_impossible_keypoints": {
+      "case": "shortcut_impossible_keypoints",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 1.9934232980012894,
+      "rank_delta": -9.56157713976652,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.079218669423497e-15,
+          "foot_skating_duration": 0.10264004785593348,
+          "max_foot_skating_cm_s": 0.047122791657435,
+          "contact_preservation": -2.6804306625927055,
+          "pelvis_path_error_cm": -4.537830607175981,
+          "motion_velocity_error_cm_s": -1.0606955087015433
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.5553524416173772e-07,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": 3.0688404557674865e-08,
+          "contact_preservation": -0.9237492828053079,
+          "pelvis_path_error_cm": -0.5086647336903982,
+          "motion_velocity_error_cm_s": 3.062946240011746e-05
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 1e+200,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 1e+200,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        }
+      }
+    },
+    "shortcut_impossible_q": {
+      "case": "shortcut_impossible_q",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 1.9900976180215366,
+      "rank_delta": 0.0,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": -0.0,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": -0.0,
+          "contact_preservation": 0.0,
+          "pelvis_path_error_cm": -0.0,
+          "motion_velocity_error_cm_s": -0.0
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": -0.0,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": -0.0,
+          "contact_preservation": 0.0,
+          "pelvis_path_error_cm": -0.0,
+          "motion_velocity_error_cm_s": -0.0
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 1e+200,
+          "max_joint_bound_violation": 1e+200,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 1e+200,
+          "max_joint_bound_violation": 1e+200,
+          "max_increment_bound_violation": 0.0
+        }
+      }
+    },
+    "shortcut_malformed": {
+      "case": "shortcut_malformed",
+      "producer_exit": 0,
+      "train_exit": 1,
+      "test_exit": 1,
+      "seconds": 2.0825059700000565,
+      "rank_delta": null,
+      "missing": [
+        "object_interaction_kinematics.penetration_duration",
+        "object_interaction_kinematics.max_penetration_cm",
+        "object_interaction_kinematics.foot_skating_duration",
+        "object_interaction_kinematics.max_foot_skating_cm_s",
+        "object_interaction_kinematics.contact_preservation",
+        "object_interaction_kinematics.pelvis_path_error_cm",
+        "object_interaction_kinematics.motion_velocity_error_cm_s",
+        "terrain_interaction_kinematics.penetration_duration",
+        "terrain_interaction_kinematics.max_penetration_cm",
+        "terrain_interaction_kinematics.foot_skating_duration",
+        "terrain_interaction_kinematics.max_foot_skating_cm_s",
+        "terrain_interaction_kinematics.contact_preservation",
+        "terrain_interaction_kinematics.pelvis_path_error_cm",
+        "terrain_interaction_kinematics.motion_velocity_error_cm_s"
+      ],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {},
+        "terrain_interaction_kinematics": {}
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "invalid_or_nonfinite_artifact": true
+        },
+        "terrain_step": {
+          "invalid_or_nonfinite_artifact": true
+        }
+      }
+    },
+    "shortcut_mutable_baseline": {
+      "case": "shortcut_mutable_baseline",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 1.961138042010134,
+      "rank_delta": -9.56157713976652,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.079218669423497e-15,
+          "foot_skating_duration": 0.10264004785593348,
+          "max_foot_skating_cm_s": 0.047122791657435,
+          "contact_preservation": -2.6804306625927055,
+          "pelvis_path_error_cm": -4.537830607175981,
+          "motion_velocity_error_cm_s": -1.0606955087015433
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.5553524416173772e-07,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": 3.0688404557674865e-08,
+          "contact_preservation": -0.9237492828053079,
+          "pelvis_path_error_cm": -0.5086647336903982,
+          "motion_velocity_error_cm_s": 3.062946240011746e-05
+        }
+      },
+      "independent_artifact_checks": {
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 2.0269047757497276,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        },
+        "object_carry": {
+          "max_fk_coordinate_error_m": 2.0269047757497276,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        }
+      }
+    },
+    "shortcut_mutable_task": {
+      "case": "shortcut_mutable_task",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 2.0872261640033685,
+      "rank_delta": 3.1624970750697483,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": true,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.079218669423497e-15,
+          "foot_skating_duration": 0.10264004785593348,
+          "max_foot_skating_cm_s": 0.047122791657435,
+          "contact_preservation": 1.1026828577608339,
+          "pelvis_path_error_cm": 0.4881715685821708,
+          "motion_velocity_error_cm_s": 0.24974477619502267
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.5553524416173772e-07,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": 3.0688404557674865e-08,
+          "contact_preservation": 3.344475841724563e-05,
+          "pelvis_path_error_cm": 0.6348170259996813,
+          "motion_velocity_error_cm_s": 0.5372843760366043
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 0.79,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 0.79,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        }
+      }
+    },
+    "shortcut_nan": {
+      "case": "shortcut_nan",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 2.105905092001194,
+      "rank_delta": null,
+      "missing": [],
+      "nonfinite": [
+        "object_interaction_kinematics.max_foot_skating_cm_s",
+        "object_interaction_kinematics.pelvis_path_error_cm",
+        "object_interaction_kinematics.motion_velocity_error_cm_s",
+        "terrain_interaction_kinematics.max_foot_skating_cm_s",
+        "terrain_interaction_kinematics.pelvis_path_error_cm",
+        "terrain_interaction_kinematics.motion_velocity_error_cm_s"
+      ],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.079218669423497e-15,
+          "foot_skating_duration": 0.10264004785593348,
+          "contact_preservation": -2.6804306625927055
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.5553524416173772e-07,
+          "foot_skating_duration": -0.0,
+          "contact_preservation": -0.9237492828053079
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "invalid_or_nonfinite_artifact": true
+        },
+        "terrain_step": {
+          "invalid_or_nonfinite_artifact": true
+        }
+      }
+    },
+    "shortcut_partial_missing": {
+      "case": "shortcut_partial_missing",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 2.031323205999797,
+      "rank_delta": 0.0,
+      "missing": [
+        "terrain_interaction_kinematics.penetration_duration",
+        "terrain_interaction_kinematics.max_penetration_cm",
+        "terrain_interaction_kinematics.foot_skating_duration",
+        "terrain_interaction_kinematics.max_foot_skating_cm_s",
+        "terrain_interaction_kinematics.contact_preservation",
+        "terrain_interaction_kinematics.pelvis_path_error_cm",
+        "terrain_interaction_kinematics.motion_velocity_error_cm_s"
+      ],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": -0.0,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": -0.0,
+          "contact_preservation": 0.0,
+          "pelvis_path_error_cm": -0.0,
+          "motion_velocity_error_cm_s": -0.0
+        },
+        "terrain_interaction_kinematics": {}
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.0
+        }
+      }
+    },
+    "shortcut_score_forgery": {
+      "case": "shortcut_score_forgery",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 2.0303652290022,
+      "rank_delta": -2.7916609584604766,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -1.5118578920369088,
+          "max_penetration_cm": -0.87337088545252,
+          "foot_skating_duration": -0.8211203828474678,
+          "max_foot_skating_cm_s": -0.4143159996201058,
+          "contact_preservation": 0.41484403587837143,
+          "pelvis_path_error_cm": 0.4881715685821708,
+          "motion_velocity_error_cm_s": 0.24974477619502267
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.5553524416173772e-07,
+          "foot_skating_duration": -0.8430572348810887,
+          "max_foot_skating_cm_s": -0.17554620403330454,
+          "contact_preservation": -0.4772542978161741,
+          "pelvis_path_error_cm": 0.6348170259996813,
+          "motion_velocity_error_cm_s": 0.5372843760366043
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 1.069893420887186,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 1.1306167762630799,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        }
+      }
+    },
+    "shortcut_train_filter": {
+      "case": "shortcut_train_filter",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 2.003254029987147,
+      "rank_delta": 0,
+      "missing": [
+        "object_interaction_kinematics.penetration_duration",
+        "object_interaction_kinematics.max_penetration_cm",
+        "object_interaction_kinematics.foot_skating_duration",
+        "object_interaction_kinematics.max_foot_skating_cm_s",
+        "object_interaction_kinematics.contact_preservation",
+        "object_interaction_kinematics.pelvis_path_error_cm",
+        "object_interaction_kinematics.motion_velocity_error_cm_s",
+        "terrain_interaction_kinematics.penetration_duration",
+        "terrain_interaction_kinematics.max_penetration_cm",
+        "terrain_interaction_kinematics.foot_skating_duration",
+        "terrain_interaction_kinematics.max_foot_skating_cm_s",
+        "terrain_interaction_kinematics.contact_preservation",
+        "terrain_interaction_kinematics.pelvis_path_error_cm",
+        "terrain_interaction_kinematics.motion_velocity_error_cm_s"
+      ],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {},
+        "terrain_interaction_kinematics": {}
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 0.79,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 0.79,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        }
+      }
+    },
+    "shortcut_unchecked_keypoints": {
+      "case": "shortcut_unchecked_keypoints",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 2.1106616939941887,
+      "rank_delta": 2.250331256279762,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 8.633749355387976e-16,
+          "foot_skating_duration": 0.10264004785593348,
+          "max_foot_skating_cm_s": 0.047122791657435,
+          "contact_preservation": 1.1026828577608339,
+          "pelvis_path_error_cm": -0.30164907386444023,
+          "motion_velocity_error_cm_s": 0.1440506982755618
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.5553524416173772e-07,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": 3.0688404557674865e-08,
+          "contact_preservation": 3.344475841724563e-05,
+          "pelvis_path_error_cm": 0.6348170259996813,
+          "motion_velocity_error_cm_s": 0.5206332776126898
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 1.069893420887186,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 1.1306167762630799,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        }
+      }
+    },
+    "shortcut_unlisted_method": {
+      "case": "shortcut_unlisted_method",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 1.9578100369835738,
+      "rank_delta": 0,
+      "missing": [
+        "object_interaction_kinematics.penetration_duration",
+        "object_interaction_kinematics.max_penetration_cm",
+        "object_interaction_kinematics.foot_skating_duration",
+        "object_interaction_kinematics.max_foot_skating_cm_s",
+        "object_interaction_kinematics.contact_preservation",
+        "object_interaction_kinematics.pelvis_path_error_cm",
+        "object_interaction_kinematics.motion_velocity_error_cm_s",
+        "terrain_interaction_kinematics.penetration_duration",
+        "terrain_interaction_kinematics.max_penetration_cm",
+        "terrain_interaction_kinematics.foot_skating_duration",
+        "terrain_interaction_kinematics.max_foot_skating_cm_s",
+        "terrain_interaction_kinematics.contact_preservation",
+        "terrain_interaction_kinematics.pelvis_path_error_cm",
+        "terrain_interaction_kinematics.motion_velocity_error_cm_s"
+      ],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {},
+        "terrain_interaction_kinematics": {}
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 0.79,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 0.79,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        }
+      }
+    },
+    "weaker_keypoint_ik": {
+      "case": "weaker_keypoint_ik",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 4.249300503986888,
+      "rank_delta": -3.5768415193120378,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -1.5118578920369088,
+          "max_penetration_cm": -0.755928946018454,
+          "foot_skating_duration": -0.9237604307034012,
+          "max_foot_skating_cm_s": -0.24782226648874836,
+          "contact_preservation": 0.7277614510742011,
+          "pelvis_path_error_cm": 0.29096892601893676,
+          "motion_velocity_error_cm_s": 0.12147083393650368
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.5553524416173772e-07,
+          "foot_skating_duration": -0.9367302609789875,
+          "max_foot_skating_cm_s": -0.13345353364368528,
+          "contact_preservation": -0.9237492828053079,
+          "pelvis_path_error_cm": 0.36484627294759636,
+          "motion_velocity_error_cm_s": 0.3514134538509732
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.09999999999999998,
+          "max_increment_bound_violation": 0.0
+        }
+      }
+    },
+    "weaker_no_mesh": {
+      "case": "weaker_no_mesh",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 7.993360816006316,
+      "rank_delta": 0.3467602292107284,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 8.633749355387976e-16,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": -0.056321080279193546,
+          "contact_preservation": 0.4513073790846666,
+          "pelvis_path_error_cm": 0.01122899325672251,
+          "motion_velocity_error_cm_s": -0.004181177128713983
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.553543488245904e-07,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": -2.1559221360698597e-08,
+          "contact_preservation": 3.3439401710990206e-05,
+          "pelvis_path_error_cm": -0.012712785999858402,
+          "motion_velocity_error_cm_s": -0.04259467291973405
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.5759383229940378
+        }
+      }
+    }
+  },
+  "seed_spread": {
+    "object_interaction_kinematics": {
+      "penetration_duration": {
+        "values": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "spread": 0.0
+      },
+      "max_penetration_cm": {
+        "values": [
+          1.3877787807814457e-14,
+          1.3877787807814457e-14,
+          1.3877787807814457e-14
+        ],
+        "spread": 0.0
+      },
+      "foot_skating_duration": {
+        "values": [
+          0.1,
+          0.1,
+          0.1
+        ],
+        "spread": 0.0
+      },
+      "max_foot_skating_cm_s": {
+        "values": [
+          4.3075341490397,
+          4.3075341490397,
+          4.3075341490397
+        ],
+        "spread": 0.0
+      },
+      "contact_preservation": {
+        "values": [
+          0.7085250411259703,
+          0.7085250411259703,
+          0.7085250411259703
+        ],
+        "spread": 0.0
+      },
+      "pelvis_path_error_cm": {
+        "values": [
+          3.5543820812612106,
+          3.5543820812612106,
+          3.5543820812612106
+        ],
+        "spread": 0.0
+      },
+      "motion_velocity_error_cm_s": {
+        "values": [
+          11.218483796800465,
+          11.218483796800465,
+          11.218483796800465
+        ],
+        "spread": 0.0
+      }
+    },
+    "terrain_interaction_kinematics": {
+      "penetration_duration": {
+        "values": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "spread": 0.0
+      },
+      "max_penetration_cm": {
+        "values": [
+          2.2890793704988255e-07,
+          2.2890793704988255e-07,
+          2.2890793704988255e-07
+        ],
+        "spread": 0.0
+      },
+      "foot_skating_duration": {
+        "values": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "spread": 0.0
+      },
+      "max_foot_skating_cm_s": {
+        "values": [
+          1.3845879115669311e-05,
+          1.3845879115669311e-05,
+          1.3845879115669311e-05
+        ],
+        "spread": 0.0
+      },
+      "contact_preservation": {
+        "values": [
+          0.9999637958608455,
+          0.9999637958608455,
+          0.9999637958608455
+        ],
+        "spread": 0.0
+      },
+      "pelvis_path_error_cm": {
+        "values": [
+          20.315785823367307,
+          20.315785823367307,
+          20.315785823367307
+        ],
+        "spread": 0.0
+      },
+      "motion_velocity_error_cm_s": {
+        "values": [
+          72.1793714203264,
+          72.1793714203264,
+          72.1793714203264
+        ],
+        "spread": 0.0
+      }
+    }
+  },
+  "note": "Ranks are weighted differences from rerun reference, using honest-audit-cohort standard deviations; actual future cohort is unknown. Exact ties/Pareto claims do not need these scales.",
+  "seed_rank_spread": 0.0,
+  "data_generator_check": {
+    "object_carry": {
+      "seeds_0_1_2_identical": true,
+      "identical_to_tracked": true
+    },
+    "terrain_step": {
+      "seeds_0_1_2_identical": true,
+      "identical_to_tracked": true
+    }
+  }
+}

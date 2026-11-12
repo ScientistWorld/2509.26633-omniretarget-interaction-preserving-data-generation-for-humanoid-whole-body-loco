@@ -1,0 +1,43 @@
+{
+  "slice": "test",
+  "frame_policy": "odd_frame_indices",
+  "train_scores": "scoring/scores_train.json",
+  "experiments": {
+    "object_interaction_kinematics": {
+      "results": {
+        "omniretarget": {
+          "slice": "test",
+          "task": "object_carry",
+          "num_scored_frames": 20,
+          "metrics": {
+            "penetration_duration": 0.0,
+            "max_penetration_cm": 2.7755575615628914e-15,
+            "foot_skating_duration": 1.0,
+            "max_foot_skating_cm_s": 58.925431209755295,
+            "contact_preservation": 0.7159156641882273,
+            "pelvis_path_error_cm": 4.163336342344337e-16,
+            "motion_velocity_error_cm_s": 26.513801164565987
+          }
+        }
+      }
+    },
+    "terrain_interaction_kinematics": {
+      "results": {
+        "omniretarget": {
+          "slice": "test",
+          "task": "terrain_step",
+          "num_scored_frames": 20,
+          "metrics": {
+            "penetration_duration": 0.1,
+            "max_penetration_cm": 1.1125334124276267,
+            "foot_skating_duration": 1.0,
+            "max_foot_skating_cm_s": 254.1144933104658,
+            "contact_preservation": 0.0,
+            "pelvis_path_error_cm": 6.331405906844781,
+            "motion_velocity_error_cm_s": 82.23960888761674
+          }
+        }
+      }
+    }
+  }
+}

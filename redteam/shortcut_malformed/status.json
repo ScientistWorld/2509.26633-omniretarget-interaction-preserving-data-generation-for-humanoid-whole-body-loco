@@ -1,0 +1,7 @@
+{
+  "case": "shortcut_malformed",
+  "producer_exit": 0,
+  "train_exit": 1,
+  "test_exit": 1,
+  "seconds": 2.0825059700000565
+}

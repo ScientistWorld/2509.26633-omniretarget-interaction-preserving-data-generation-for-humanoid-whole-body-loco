@@ -1,0 +1,13 @@
+{
+  "slice": "test",
+  "frame_policy": "odd_frame_indices",
+  "train_scores": "scoring/scores_train.json",
+  "experiments": {
+    "object_interaction_kinematics": {
+      "results": {}
+    },
+    "terrain_interaction_kinematics": {
+      "results": {}
+    }
+  }
+}

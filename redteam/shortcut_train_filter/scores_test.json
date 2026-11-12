@@ -1,0 +1,10 @@
+{
+  "experiments": {
+    "object_interaction_kinematics": {
+      "results": {}
+    },
+    "terrain_interaction_kinematics": {
+      "results": {}
+    }
+  }
+}
