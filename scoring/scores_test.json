@@ -3,44 +3,66 @@
     "object_interaction_kinematics": {
       "results": {
         "keypoint_ik": {
-          "penetration_duration": 1.0,
-          "max_penetration_cm": 9.720570823921056,
-          "foot_skating_duration": 1.0,
-          "max_foot_skating_cm_s": 26.961176648682876,
-          "contact_preservation": 0.900896072859163,
-          "pelvis_path_error_cm": 1.4358344160432908,
-          "motion_velocity_error_cm_s": 5.762039009197075
+          "penetration_duration": 0.3760943139385311,
+          "max_penetration_cm": 1.6260328185037494,
+          "foot_skating_duration": 0.43894791400981986,
+          "max_foot_skating_cm_s": 5.211988979008209,
+          "contact_preservation": 0.6981214229754501,
+          "pelvis_path_error_cm": 0.13519351058210732,
+          "motion_velocity_error_cm_s": 0.8955692529309497
         },
         "omniretarget": {
           "penetration_duration": 0.0,
-          "max_penetration_cm": 1.3877787807814457e-14,
-          "foot_skating_duration": 0.1,
-          "max_foot_skating_cm_s": 4.3075341490397,
-          "contact_preservation": 0.7085250411259703,
-          "pelvis_path_error_cm": 3.5543820812612106,
-          "motion_velocity_error_cm_s": 11.218483796800465
+          "max_penetration_cm": 0.07119196828117522,
+          "foot_skating_duration": 0.0,
+          "max_foot_skating_cm_s": 0.32643764597810376,
+          "contact_preservation": 0.8150860112439418,
+          "pelvis_path_error_cm": 1.1658077772986801,
+          "motion_velocity_error_cm_s": 4.861505217181137
         }
       }
     },
     "terrain_interaction_kinematics": {
       "results": {
         "keypoint_ik": {
-          "penetration_duration": 0.0,
-          "max_penetration_cm": 0.0,
-          "foot_skating_duration": 1.0,
-          "max_foot_skating_cm_s": 60.21107796023244,
-          "contact_preservation": 0.0,
-          "pelvis_path_error_cm": 8.6397619675407,
-          "motion_velocity_error_cm_s": 24.97010322101986
+          "penetration_duration": 0.33911408121252284,
+          "max_penetration_cm": 2.3840621462994016,
+          "foot_skating_duration": 0.5052587701102457,
+          "max_foot_skating_cm_s": 8.401323047522283,
+          "contact_preservation": 0.8644627407359492,
+          "pelvis_path_error_cm": 0.39563812761082645,
+          "motion_velocity_error_cm_s": 2.3708834843533544
         },
         "omniretarget": {
           "penetration_duration": 0.0,
-          "max_penetration_cm": 2.2890793704988255e-07,
-          "foot_skating_duration": 0.0,
-          "max_foot_skating_cm_s": 1.3845879115669311e-05,
-          "contact_preservation": 0.9999637958608455,
-          "pelvis_path_error_cm": 20.315785823367307,
-          "motion_velocity_error_cm_s": 72.1793714203264
+          "max_penetration_cm": 0.016309692732665162,
+          "foot_skating_duration": 0.0021011396011396013,
+          "max_foot_skating_cm_s": 0.9281646405612425,
+          "contact_preservation": 0.9839681466456315,
+          "pelvis_path_error_cm": 0.9319477674393748,
+          "motion_velocity_error_cm_s": 8.338832130399242
+        }
+      }
+    },
+    "augmented_interaction_kinematics": {
+      "results": {
+        "keypoint_ik": {
+          "penetration_duration": 0.6912565457693072,
+          "max_penetration_cm": 5.009487555156101,
+          "foot_skating_duration": 0.5207414679863973,
+          "max_foot_skating_cm_s": 16.64891444738484,
+          "contact_preservation": 0.6344892973205156,
+          "pelvis_path_error_cm": 0.29509899562895453,
+          "motion_velocity_error_cm_s": 2.541287656969189
+        },
+        "omniretarget": {
+          "penetration_duration": 0.10846445221445221,
+          "max_penetration_cm": 1.0866053726757017,
+          "foot_skating_duration": 0.001388888888888889,
+          "max_foot_skating_cm_s": 0.6850627040398161,
+          "contact_preservation": 0.7144774732036981,
+          "pelvis_path_error_cm": 1.6090750409757393,
+          "motion_velocity_error_cm_s": 7.26549961701721
         }
       }
     }
