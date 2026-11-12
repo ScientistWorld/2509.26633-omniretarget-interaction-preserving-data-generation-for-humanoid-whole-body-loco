@@ -1,6 +1,4 @@
 # Once you set action to 'submit' or 'done', STOP immediately.
-action: submit
-gpus: 0
-test: false
+action: done
 milestone: core_claim
-notes: "Hardening check (rerun after fixes): official train/test scoring of omniretarget + keypoint_ik; combined hidden-test run with variants and shortcut submissions; summarize rank deltas."
+notes: "Hardened gym: hidden 120-instance generated test, q-only scoring with validity gate and worst-value failures, every registered method scored, paper-faithful SQP OmniRetarget with direct scaling, new augmentation experiment; better variant +1.47 (CI [+1.07,+1.90]), baseline -7.39, all red-team shortcuts closed. See HARDENING.md."
