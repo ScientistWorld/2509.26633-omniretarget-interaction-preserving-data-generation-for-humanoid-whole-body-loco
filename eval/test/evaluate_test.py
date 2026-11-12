@@ -23,7 +23,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--score-out", type=Path, default=ROOT / "scoring/scores_test.json")
     parser.add_argument("--diagnostics-out", type=Path, default=ROOT / "scoring/diagnostics_test.json")
-    parser.add_argument("--timeout", type=float, default=5400.0, help="seconds allowed per method")
+    parser.add_argument("--timeout", type=float, default=2400.0, help="seconds allowed per method")
     args = parser.parse_args()
     inputs, anns = {}, {}
     for inp, ann in test_split():

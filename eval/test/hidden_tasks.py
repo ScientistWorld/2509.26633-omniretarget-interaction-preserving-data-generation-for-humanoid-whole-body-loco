@@ -436,7 +436,7 @@ def make_split(master_seed: int, per_experiment: int, prefix: str) -> list[tuple
 
 
 _TEST_MASTER_SEED = 0x5EC12E7_0B5C
-TEST_PER_EXPERIMENT = 12
+TEST_PER_EXPERIMENT = 40
 
 
 def test_split() -> list[tuple[dict, dict]]:

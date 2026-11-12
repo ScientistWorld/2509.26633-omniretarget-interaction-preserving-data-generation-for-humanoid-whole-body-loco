@@ -37,6 +37,8 @@ Q_MAX = np.array([3.0, 1.60, 0.80, 1.50, 2.40, 1.50, 0.30, 0.60, 2.60, 3.20, 2.6
 V_MAX = np.array([1.5, 1.5, 4.0, 8.0, 10.0, 8.0, 10.0, 8.0, 10.0, 8.0, 10.0])
 LINKS = [(0, 1), (1, 6), (1, 9), (0, 2), (2, 3), (0, 4), (4, 5), (6, 7), (7, 8), (9, 10), (10, 11)]
 PELVIS, LEFT_FOOT, RIGHT_FOOT, LEFT_HAND, RIGHT_HAND = 0, 3, 5, 8, 11
+KEYPOINT_NAMES = ["pelvis", "neck", "left_knee", "left_foot", "right_knee", "right_foot",
+                  "left_shoulder", "left_elbow", "left_hand", "right_shoulder", "right_elbow", "right_hand"]
 LIMIT_TOL = 1e-6
 
 EXPERIMENTS = [
@@ -159,9 +161,19 @@ def instance_metrics(inp: dict, ann: dict, q: np.ndarray, extras: dict | None = 
     size = np.asarray(obj["size"], dtype=float) if obj else None
 
     S = link_samples(P)
-    depth = np.max(np.maximum(0.0, -terrain_sdf(S, terrain)), axis=1)
+    d_terr = np.maximum(0.0, -terrain_sdf(S, terrain))
+    d_all = d_terr
     if obj:
-        depth = np.maximum(depth, np.max(np.maximum(0.0, -box_sdf(S, centers[:, None, :], size)), axis=1))
+        d_obj = np.maximum(0.0, -box_sdf(S, centers[:, None, :], size))
+        d_all = np.maximum(d_terr, d_obj)
+    depth = np.max(d_all, axis=1)
+    if extras is not None and float(np.max(depth)) > 0.0:  # diagnostics only (not scored)
+        t_star = int(np.argmax(depth))
+        k_star = int(np.argmax(d_all[t_star]))
+        i, j = LINKS[k_star // LINK_SAMPLES]
+        extras["max_penetration_frame"] = t_star
+        extras["max_penetration_link"] = f"{KEYPOINT_NAMES[i]}-{KEYPOINT_NAMES[j]}"
+        extras["max_penetration_obstacle"] = "object" if obj and d_obj[t_star, k_star] >= d_terr[t_star, k_star] else "terrain"
 
     speeds, contacts = [], []
     for name, idx in (("left_foot", LEFT_FOOT), ("right_foot", RIGHT_FOOT)):

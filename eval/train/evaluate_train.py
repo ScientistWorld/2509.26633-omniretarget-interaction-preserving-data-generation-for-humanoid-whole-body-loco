@@ -34,7 +34,7 @@ def main() -> None:
     parser.add_argument("--tasks", type=Path, default=ROOT / "data/tasks/train")
     parser.add_argument("--score-out", type=Path, default=ROOT / "scoring/scores_train.json")
     parser.add_argument("--diagnostics-out", type=Path, default=ROOT / "scoring/diagnostics_train.json")
-    parser.add_argument("--timeout", type=float, default=5400.0, help="seconds allowed per method")
+    parser.add_argument("--timeout", type=float, default=2400.0, help="seconds allowed per method")
     args = parser.parse_args()
     inputs, anns = load_split(args.tasks)
     evaluate_all(ROOT, inputs, anns, "train", args.score_out, args.diagnostics_out,

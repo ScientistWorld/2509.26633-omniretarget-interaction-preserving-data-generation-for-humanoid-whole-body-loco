@@ -430,7 +430,7 @@ def make_split(master_seed: int, per_experiment: int, prefix: str) -> list[tuple
 
 
 TRAIN_MASTER_SEED = 20250930
-TRAIN_PER_EXPERIMENT = 6
+TRAIN_PER_EXPERIMENT = 20
 
 
 def main() -> None:

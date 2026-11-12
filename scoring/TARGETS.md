@@ -1,10 +1,16 @@
 # Targets
 
-Optimize the retargeted trajectory quality on:
+Every experiment below is scored in `scoring/scores_train.json` (public train)
+and `scoring/scores_test.json` (hidden test), with the same seven metrics:
 
-- `object_interaction_kinematics`
-- `terrain_interaction_kinematics`
+| experiment | benefit metric | constraint metrics | fidelity metrics |
+|---|---|---|---|
+| `object_interaction_kinematics` | `contact_preservation` (primary) | `penetration_duration`, `max_penetration_cm`, `foot_skating_duration`, `max_foot_skating_cm_s` | `pelvis_path_error_cm`, `motion_velocity_error_cm_s` |
+| `terrain_interaction_kinematics` | `contact_preservation` (primary) | same | same |
+| `augmented_interaction_kinematics` | `contact_preservation` (primary) | same | same |
 
-Primary constraints are low `penetration_duration`, low `max_penetration_cm`, low `foot_skating_duration`, and low `max_foot_skating_cm_s`.
+Hard requirements (validity gate, not traded off): joint limits, per-frame
+velocity limits, a well-formed finite trajectory for every instance.
 
-The benefit metric is `contact_preservation`: methods should preserve intended object or terrain contacts while satisfying the constraints.
+Goal: preserve more demonstrated contacts without more penetration or foot
+skating and without drifting away from the demonstrated motion.
