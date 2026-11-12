@@ -1,0 +1,5 @@
+{
+  "test_exit": 1,
+  "scores_test_written": false,
+  "exception": "ValueError: Artifact for object_carry has 0 frames; trusted task has 40 frames"
+}

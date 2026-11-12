@@ -1,0 +1,65 @@
+{
+  "start_commit": "da53eb23707773cbc2ffa2b443ca471a6f14aea9",
+  "case_count": 24,
+  "shortcut_count": 16,
+  "test_success_count": 23,
+  "expected_test_failure": "shortcut_malformed",
+  "test_command": [
+    "bash",
+    "scripts/evaluate_test.sh"
+  ],
+  "reference_matches_original_scores": true,
+  "all_scientific_metrics_seed_spread": 0,
+  "restored_snapshot_files": {
+    "data": {
+      "snapshot_files_compared": 7,
+      "mismatches": []
+    },
+    "method": {
+      "snapshot_files_compared": 3,
+      "mismatches": []
+    },
+    "baseline": {
+      "snapshot_files_compared": 3,
+      "mismatches": []
+    },
+    "scoring": {
+      "snapshot_files_compared": 14,
+      "mismatches": []
+    },
+    "checkpoints/retargeting": {
+      "snapshot_files_compared": 4,
+      "mismatches": []
+    }
+  },
+  "benchmark_tracked_paths_equal_start": [
+    "data",
+    "method",
+    "baseline",
+    "eval",
+    "scoring",
+    "environment",
+    "briefing",
+    "scripts",
+    ".gitignore",
+    "action.yaml",
+    "MILESTONES.md",
+    "PROGRESS.md"
+  ],
+  "final_control_file_exception": "action.yaml will be set to done",
+  "preexisting_and_system_managed_paths_preserved": [
+    "README.md",
+    "manifest.json",
+    "trajectory/"
+  ],
+  "jobs": [
+    {
+      "id": "32475454-e3b",
+      "reported_exit_code": 0
+    },
+    {
+      "id": "5b618d40-e2d",
+      "reported_exit_code": 0
+    }
+  ]
+}
