@@ -1,2 +1,8 @@
-action: done
-notes: "Completed 24-case scoring audit; genuine refinement improves scores, but disconnected body points and omitted experiments also win. Report and evidence committed; benchmark restored."
+# Once you set action to 'submit' or 'done', STOP immediately.
+# Do NOT sleep, poll, or wait for jobs. The system reads this file
+# only after your turn ends.
+action: pending
+gpus: 0
+test: false
+milestone: core_claim
+notes: ""
