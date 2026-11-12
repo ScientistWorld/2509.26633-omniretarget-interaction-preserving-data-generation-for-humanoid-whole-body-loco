@@ -19,6 +19,14 @@ uniform Laplacian weights; meshes are expressed in the object frame when an
 object is present.  A foot is in stance when its source horizontal speed is
 below 1 cm/s.
 
+Source preprocessing follows the paper's direct scaling (App. A, Eq. 7/8):
+the demonstration is scaled by alpha = h_robot / h_human (heights from the
+demonstrator's bone lengths).  The whole demonstration -- human keypoints and
+the source-scene samples they interact with -- is scaled about the ground
+point below the pelvis in every frame, so the scaled demonstration stays
+self-consistent while the walking path is kept; the target mesh uses the
+robot and the actual target scene.
+
 The convex sub-problem is solved exactly with SciPy's SLSQP (it is a small
 QP with one quadratic trust-region constraint); an L-infinity elastic slack
 on the linearised collision rows keeps it feasible.
@@ -97,10 +105,26 @@ def neighbour_laplacian(points: np.ndarray) -> np.ndarray:
 # Per-frame problem data
 # ---------------------------------------------------------------------------
 
+def human_height(src0: np.ndarray) -> float:
+    P = lambda n: src0[NAME_TO_IDX[n]]  # noqa: E731
+    torso = np.linalg.norm(P("neck") - P("pelvis"))
+    thigh = 0.5 * (np.linalg.norm(P("left_knee") - P("pelvis")) + np.linalg.norm(P("right_knee") - P("pelvis")))
+    shin = 0.5 * (np.linalg.norm(P("left_foot") - P("left_knee")) + np.linalg.norm(P("right_foot") - P("right_knee")))
+    return float(torso + thigh + shin)
+
+
 class FrameProblem:
-    def __init__(self, task: dict, t: int, terr_s: np.ndarray, terr_t: np.ndarray, objective: str):
+    def __init__(self, task: dict, t: int, terr_s: np.ndarray, terr_t: np.ndarray, objective: str,
+                 alpha: float = 1.0, anchor: np.ndarray | None = None):
         self.t = t
-        src = np.asarray(task["source_keypoints"][t], dtype=float)
+        raw = np.asarray(task["source_keypoints"][t], dtype=float)
+        anchor = np.zeros(2) if anchor is None else anchor
+
+        def scale(p):  # direct scaling of the demonstration (Eq. 7/8)
+            return anchor + alpha * (np.asarray(p, dtype=float) - anchor)
+
+        src = scale(raw)
+        terr_s = scale(terr_s)
         self.src = src
         self.objective = objective
         tgt_scene = task["target_scene"]
@@ -117,9 +141,9 @@ class FrameProblem:
             ct = np.asarray(tgt_scene["object"]["center"][t], dtype=float)
             st = np.asarray(tgt_scene["object"]["size"], dtype=float)
             self.box_tgt = (ct, st)
-            scene_s.insert(0, cs + BOX_UV * ss)
+            scene_s.insert(0, scale(cs + BOX_UV * ss))
             scene_t.insert(0, ct + BOX_UV * st)
-            origin_s, origin_t = cs, ct  # object-frame interaction mesh (App. C-2)
+            origin_s, origin_t = scale(cs), ct  # object-frame interaction mesh (App. C-2)
         self.scene_t = np.concatenate(scene_t) - origin_t
         self.origin_t = origin_t
         mesh_s = np.concatenate([src] + scene_s) - origin_s
@@ -251,13 +275,16 @@ def retarget(task: dict, objective: str = "mesh", extra_residual=None,
     px = src_all[:, 0, 0]
     terr_s, terr_t = terrain_samples(task["source_scene"]["terrain"], task["target_scene"]["terrain"],
                                      float(px.min()) - 0.9, float(px.max()) + 0.9)
+    alpha = ROBOT.height / human_height(src_all[0])
+    src_terrain = np.asarray(task["source_scene"]["terrain"], dtype=float)
+    anchors = np.stack([px, np.interp(px, src_terrain[:, 0], src_terrain[:, 1])], axis=1)
     q_out = np.zeros((N, len(Q_MIN)))
     q_prev = None
     feet_prev = None
     for t in range(N):
-        prob = FrameProblem(task, t, terr_s, terr_t, objective)
+        prob = FrameProblem(task, t, terr_s, terr_t, objective, alpha, anchors[t])
         if q_prev is None:
-            qbar = initial_configuration(src_all[0], task["target_scene"]["terrain"])
+            qbar = initial_configuration(prob.src, task["target_scene"]["terrain"])
             qref, qw, iters = qbar.copy(), 0.1 * Q_WEIGHTS, FIRST_FRAME_ITERS
             box_lo, box_hi = Q_MIN.copy(), Q_MAX.copy()
             stance = []

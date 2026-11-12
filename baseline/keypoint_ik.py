@@ -60,9 +60,13 @@ def retarget(task: dict) -> np.ndarray:
         q0 = np.clip(q0, lo, hi)
 
         def objective(q, q0=q0, target=target):
-            return float(np.sum((ROBOT.fk(q) - target) ** 2) + 1e-3 * np.sum((q - q0) ** 2))
+            fk, J = ROBOT.fk_jacobian(q)
+            e = fk - target
+            val = float(np.sum(e ** 2) + 1e-3 * np.sum((q - q0) ** 2))
+            grad = 2.0 * np.einsum("kd,kdj->j", e, J) + 2e-3 * (q - q0)
+            return val, grad
 
-        res = minimize(objective, q0, method="L-BFGS-B", bounds=list(zip(lo, hi)),
+        res = minimize(objective, q0, jac=True, method="L-BFGS-B", bounds=list(zip(lo, hi)),
                        options={"maxiter": 300 if q_prev is None else 80})
         q_prev = np.clip(np.asarray(res.x, dtype=float), lo, hi)
         out[t] = q_prev

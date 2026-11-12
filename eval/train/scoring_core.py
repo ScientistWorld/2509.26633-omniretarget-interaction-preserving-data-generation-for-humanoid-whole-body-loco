@@ -148,7 +148,7 @@ def validate_output(path: Path, inp: dict) -> tuple[np.ndarray | None, str]:
     return q, ""
 
 
-def instance_metrics(inp: dict, ann: dict, q: np.ndarray) -> dict[str, float]:
+def instance_metrics(inp: dict, ann: dict, q: np.ndarray, extras: dict | None = None) -> dict[str, float]:
     dt = float(inp["dt"])
     P = fk_batch(q)
     src = np.asarray(inp["source_keypoints"], dtype=float)
@@ -170,6 +170,7 @@ def instance_metrics(inp: dict, ann: dict, q: np.ndarray) -> dict[str, float]:
         v = np.linalg.norm(P[1:, idx] - P[:-1, idx], axis=1) / dt
         speeds.append(v[ev])
         contacts.append(np.abs(terrain_sdf(P[st, idx], terrain)) <= CONTACT_TOLERANCE)
+    n_foot_events = int(sum(len(c) for c in contacts))
     for name, idx in (("left_hand", LEFT_HAND), ("right_hand", RIGHT_HAND)):
         for t, label in enumerate(ann["hand_contact"][name]):
             if label == "object" and obj:
@@ -181,6 +182,9 @@ def instance_metrics(inp: dict, ann: dict, q: np.ndarray) -> dict[str, float]:
             contacts.append(np.array([abs(d) <= CONTACT_TOLERANCE]))
     speeds = np.concatenate(speeds)
     contacts = np.concatenate(contacts)
+    if extras is not None:  # diagnostics only (not scored)
+        extras["foot_contact_rate"] = float(np.mean(contacts[:n_foot_events])) if n_foot_events else None
+        extras["hand_contact_rate"] = float(np.mean(contacts[n_foot_events:])) if len(contacts) > n_foot_events else None
 
     pel_err = np.linalg.norm((P[:, PELVIS] - P[0, PELVIS]) - (src[:, PELVIS] - src[0, PELVIS]), axis=1)
     vel_err = np.linalg.norm(np.diff(P, axis=0) - np.diff(src, axis=0), axis=2) / dt
@@ -251,7 +255,9 @@ def run_and_score(root: Path, name: str, script: Path, inputs: dict[str, dict], 
             if q is None:
                 diag["status"], diag["reason"] = "failed", f"{iid}: {why}"
                 break
-            per_instance[iid] = instance_metrics(inp, anns[iid], q)
+            extras = {}
+            per_instance[iid] = instance_metrics(inp, anns[iid], q, extras)
+            diag.setdefault("per_instance_extras", {})[iid] = extras
     shutil.rmtree(work, ignore_errors=True)
 
     if diag["status"] != "ok":
