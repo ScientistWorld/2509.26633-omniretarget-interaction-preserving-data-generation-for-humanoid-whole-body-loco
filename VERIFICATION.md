@@ -1,3 +1,5 @@
+> **Superseded:** this report describes the pre-hardening gym (iterations 1-9). The benchmark, evaluator and reference implementation were rebuilt in iteration 11; see `HARDENING.md` for the current state.
+
 # Verification Report
 
 ## Initial Assessment

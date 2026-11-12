@@ -66,3 +66,7 @@ Final verification rejected an attempted object-contact equality constraint: CPU
 - Paper data: OMOMO, LAFAN1, and in-house MoCap. Substitute: deterministic synthetic object and terrain interaction tasks in `data/`. Reason: the OmniRetarget release and in-house MoCap are not available from the paper markdown, and a small benchmark is needed for a reusable gym.
 - Paper robot/solver: Unitree humanoids, Drake autodiff, custom sequential SOCP. Substitute: planar humanoid model and SciPy SLSQP constrained optimization. Reason: preserve the same objective and hard-constraint formulation at a scale that can run in this environment.
 - Paper downstream RL: BeyondMimic-style policy training. Substitute: kinematic metrics only for the first milestone. Reason: the paper's central retargeting claim is directly measured by Table II kinematic metrics, while full RL requires unavailable simulator assets and policies.
+
+### [2026-11-12 04:40] - core_claim (iteration 11, hardener)
+- Jobs: `47e6081b-653` (cancelled: baseline used numeric gradients; reference floated without the paper's direct scaling), `ca61137d-357` (36-instance test; fixes validated), `9f74fa16-ef7` (final: 60 train / 120 test instances, official scores + combined variants/shortcuts run; optional combined-train pass cancelled after a node slowdown).
+- Final official scores: `scoring/scores_train.json`, `scoring/scores_test.json`; audit results in `redteam/hardening/results/`; report in `HARDENING.md`.

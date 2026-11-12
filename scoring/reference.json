@@ -201,14 +201,20 @@
           "description": "Mean keypoint velocity mismatch between the robot and the demonstration (cm/s, capped at 300)."
         }
       },
-      "_paper_note": "The paper reports no kinematic metrics for augmented motions (only downstream RL success, 79.1% augmented vs 82.2% nominal; baselines are not run because they do not support augmentation). The omniretarget value below is this gym's measured reference, recorded for orientation.",
+      "_paper_note": "The paper reports no kinematic metrics for augmented motions (only downstream RL success, 79.1% on the augmented dataset vs 82.2% on nominal motions; baselines are not run because they do not support augmentation). The omniretarget row below is this gym's measured hidden-test value of the reference implementation (120-instance test, 40 in this experiment), recorded for orientation; it is not a paper number.",
       "results": {
         "keypoint_ik": {
           "type": "baseline"
         },
         "omniretarget": {
           "type": "proposed",
-          "contact_preservation": 0.0
+          "penetration_duration": 0.0049,
+          "max_penetration_cm": 0.1614,
+          "foot_skating_duration": 0.0013,
+          "max_foot_skating_cm_s": 0.6737,
+          "contact_preservation": 0.7136,
+          "pelvis_path_error_cm": 1.4487,
+          "motion_velocity_error_cm_s": 7.2009
         }
       }
     }

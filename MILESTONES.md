@@ -31,3 +31,8 @@
 - Final verification rejected the object-contact constraint attempt because audit jobs showed no object benefit and worse foot-skating metrics.
 - Removed the attempted constraint and kept the validated scaled interaction-mesh constrained optimizer.
 - Milestone remains `core_claim`.
+
+### [2026-11-12 04:40] - core_claim
+- Hardening (iteration 11): rebuilt the benchmark around a hidden, generated 120-instance test, a q-only evaluator with a validity gate (worst values on failure) and an every-registered-method interface; restored the paper's per-frame sequential convex solver (trust region 0.2, <=10 iterations), 1 cm/s stance detection and direct scaling; added the scene-augmentation experiment (Sec. III-B).
+- Hidden test: OmniRetarget has ~0 penetration and skating vs 0.36-0.43 / 0.41-0.56 for keypoint IK, and higher contact in all three experiments (0.83/0.86/0.71 vs 0.71/0.86/0.54); rank delta of the baseline -7.4. A contact-aware variant beats the reference by +1.47 (paired 95% CI [+1.07, +1.90]); all red-team shortcuts now fail or score as their real trajectory. Details in HARDENING.md.
+- Milestone kept at `core_claim`: scaled planar substitute, no downstream RL; the mesh-vs-constrained-keypoint ablation is a tie.

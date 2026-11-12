@@ -13,7 +13,8 @@ import json
 import sys
 from pathlib import Path
 
-import numpy as np
+import random
+import statistics
 
 ROOT = Path("/home/user")
 REF = "omniretarget"
@@ -44,10 +45,10 @@ def main() -> None:
     scores, diag = load(run_dir)
     methods = sorted(diag)
     honest = [m for m in HONEST if m in diag and diag[m]["status"] == "ok"]
-    sds = {exp: {m: float(np.std([scores[exp]["results"][h][m] for h in honest]))
+    sds = {exp: {m: float(statistics.pstdev([scores[exp]["results"][h][m] for h in honest]))
                  for m in spec["metrics"]} for exp, spec in reference["experiments"].items()}
     vals = {name: {exp: scores[exp]["results"][name] for exp in reference["experiments"]} for name in methods}
-    rng = np.random.default_rng(0)
+    rng = random.Random(0)
     per_ref = diag[REF]["per_instance"]
     ids_by_exp = {exp: sorted(i for i, v in per_ref.items() if v["experiment"] == exp) for exp in reference["experiments"]}
     out = {"normalizers": sds, "honest_methods": honest, "methods": {}}
@@ -61,13 +62,13 @@ def main() -> None:
             for _ in range(2000):
                 vc, vr = {}, {}
                 for exp, ids in ids_by_exp.items():
-                    pick = rng.choice(ids, size=len(ids), replace=True)
-                    vc[exp] = {m: float(np.mean([per_c[i][m] for i in pick])) for m in reference["experiments"][exp]["metrics"]}
-                    vr[exp] = {m: float(np.mean([per_ref[i][m] for i in pick])) for m in reference["experiments"][exp]["metrics"]}
+                    pick = [rng.choice(ids) for _ in ids]
+                    vc[exp] = {m: statistics.fmean([per_c[i][m] for i in pick]) for m in reference["experiments"][exp]["metrics"]}
+                    vr[exp] = {m: statistics.fmean([per_ref[i][m] for i in pick]) for m in reference["experiments"][exp]["metrics"]}
                 boots.append(rank_delta(vc, vr, sds, reference))
-            entry["rank_delta_ci95"] = [float(np.percentile(boots, 2.5)), float(np.percentile(boots, 97.5))]
-            entry["rank_delta_boot_sd"] = float(np.std(boots))
-            # Per-instance paired win rate on the scalar rank (each instance alone).
+            boots.sort()
+            entry["rank_delta_ci95"] = [boots[int(0.025 * len(boots))], boots[int(0.975 * len(boots)) - 1]]
+            entry["rank_delta_boot_sd"] = statistics.pstdev(boots)
         out["methods"][name] = entry
     (run_dir / "summary.json").write_text(json.dumps(out, indent=2))
     lines = ["| method | status | rank delta vs reference | paired 95% CI |", "|---|---|---:|---|"]
