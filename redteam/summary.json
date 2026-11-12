@@ -1,18 +1,18 @@
 {
   "normalization_cohort": [
-    "better_contact_refinement",
-    "reference_seed2",
     "better_budget",
-    "reference_seed0",
-    "weaker_keypoint_ik",
+    "better_contact_refinement",
     "brute_force_grid",
+    "reference_seed0",
     "reference_seed1",
+    "reference_seed2",
+    "weaker_keypoint_ik",
     "weaker_no_mesh"
   ],
   "normalizers": {
     "object_interaction_kinematics": {
       "penetration_duration": 0.33071891388307384,
-      "max_penetration_cm": 3.214776625210665,
+      "max_penetration_cm": 3.2147766252106647,
       "foot_skating_duration": 0.38971143170299744,
       "max_foot_skating_cm_s": 18.282168766035152,
       "contact_preservation": 0.10573301537158716,
@@ -21,7 +21,7 @@
     },
     "terrain_interaction_kinematics": {
       "penetration_duration": 0.033071891388307385,
-      "max_penetration_cm": 0.3679357985445507,
+      "max_penetration_cm": 0.36793579854455066,
       "foot_skating_duration": 0.42701727131346806,
       "max_foot_skating_cm_s": 90.23524888462535,
       "contact_preservation": 0.4330022504912086,
@@ -43,7 +43,7 @@
       "components": {
         "object_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 4.316874677693988e-16,
+          "max_penetration_cm": 4.316874677693989e-16,
           "foot_skating_duration": -0.0,
           "max_foot_skating_cm_s": 0.00011871462971524034,
           "contact_preservation": -9.37168449828604e-05,
@@ -52,7 +52,7 @@
         },
         "terrain_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 1.5553456901025002e-07,
+          "max_penetration_cm": 1.5553456901025005e-07,
           "foot_skating_duration": -0.09367302609789875,
           "max_foot_skating_cm_s": -0.3486465303976025,
           "contact_preservation": 3.344475838534932e-05,
@@ -129,7 +129,7 @@
       "components": {
         "object_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 8.633749355387976e-16,
+          "max_penetration_cm": 8.633749355387978e-16,
           "foot_skating_duration": -0.9237604307034012,
           "max_foot_skating_cm_s": -0.5974991015528248,
           "contact_preservation": 0.027959566030661204,
@@ -138,7 +138,7 @@
         },
         "terrain_interaction_kinematics": {
           "penetration_duration": -1.5118578920369088,
-          "max_penetration_cm": -0.7559288793863999,
+          "max_penetration_cm": -0.7559288793864001,
           "foot_skating_duration": -0.9367302609789875,
           "max_foot_skating_cm_s": -0.563226638382739,
           "contact_preservation": -0.9237492828053079,
@@ -301,7 +301,7 @@
       "components": {
         "object_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 1.079218669423497e-15,
+          "max_penetration_cm": 1.0792186694234972e-15,
           "foot_skating_duration": 0.10264004785593348,
           "max_foot_skating_cm_s": 0.047122791657435,
           "contact_preservation": -2.6804306625927055,
@@ -310,7 +310,7 @@
         },
         "terrain_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 1.5553524416173772e-07,
+          "max_penetration_cm": 1.5553524416173775e-07,
           "foot_skating_duration": -0.0,
           "max_foot_skating_cm_s": 3.0688404557674865e-08,
           "contact_preservation": -0.9237492828053079,
@@ -344,7 +344,7 @@
       "components": {
         "object_interaction_kinematics": {
           "penetration_duration": -1.5118578920369088,
-          "max_penetration_cm": -0.87337088545252,
+          "max_penetration_cm": -0.8733708854525202,
           "foot_skating_duration": -0.8211203828474678,
           "max_foot_skating_cm_s": -0.4143159996201058,
           "contact_preservation": 0.41484403587837143,
@@ -353,7 +353,7 @@
         },
         "terrain_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 1.5553524416173772e-07,
+          "max_penetration_cm": 1.5553524416173775e-07,
           "foot_skating_duration": -0.8430572348810887,
           "max_foot_skating_cm_s": -0.17554620403330454,
           "contact_preservation": -0.4772542978161741,
@@ -369,6 +369,49 @@
         },
         "terrain_step": {
           "max_fk_coordinate_error_m": 1.1306167762630799,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        }
+      }
+    },
+    "shortcut_disconnected_body": {
+      "case": "shortcut_disconnected_body",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 3.0667927080066875,
+      "rank_delta": 3.1163986582470047,
+      "missing": [],
+      "nonfinite": [],
+      "pareto_dominates": true,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.0792186694234972e-15,
+          "foot_skating_duration": 0.10264004785593348,
+          "max_foot_skating_cm_s": 0.047122791657435,
+          "contact_preservation": 1.1026828577608339,
+          "pelvis_path_error_cm": 0.4881715685821686,
+          "motion_velocity_error_cm_s": 0.2202974577961974
+        },
+        "terrain_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": 1.5553524416173775e-07,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": 3.0688404557674865e-08,
+          "contact_preservation": 3.344475841724563e-05,
+          "pelvis_path_error_cm": 0.6348170259996807,
+          "motion_velocity_error_cm_s": 0.5206332776126887
+        }
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 3.069893420887186,
+          "max_joint_bound_violation": 0.45,
+          "max_increment_bound_violation": 0.0
+        },
+        "terrain_step": {
+          "max_fk_coordinate_error_m": 3.13061677626308,
           "max_joint_bound_violation": 0.45,
           "max_increment_bound_violation": 0.0
         }
@@ -418,7 +461,7 @@
       "components": {
         "object_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 1.079218669423497e-15,
+          "max_penetration_cm": 1.0792186694234972e-15,
           "foot_skating_duration": 0.10264004785593348,
           "max_foot_skating_cm_s": 0.047122791657435,
           "contact_preservation": -2.6804306625927055,
@@ -427,7 +470,7 @@
         },
         "terrain_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 1.5553524416173772e-07,
+          "max_penetration_cm": 1.5553524416173775e-07,
           "foot_skating_duration": -0.0,
           "max_foot_skating_cm_s": 3.0688404557674865e-08,
           "contact_preservation": -0.9237492828053079,
@@ -542,7 +585,7 @@
       "components": {
         "object_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 1.079218669423497e-15,
+          "max_penetration_cm": 1.0792186694234972e-15,
           "foot_skating_duration": 0.10264004785593348,
           "max_foot_skating_cm_s": 0.047122791657435,
           "contact_preservation": -2.6804306625927055,
@@ -551,7 +594,7 @@
         },
         "terrain_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 1.5553524416173772e-07,
+          "max_penetration_cm": 1.5553524416173775e-07,
           "foot_skating_duration": -0.0,
           "max_foot_skating_cm_s": 3.0688404557674865e-08,
           "contact_preservation": -0.9237492828053079,
@@ -585,7 +628,7 @@
       "components": {
         "object_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 1.079218669423497e-15,
+          "max_penetration_cm": 1.0792186694234972e-15,
           "foot_skating_duration": 0.10264004785593348,
           "max_foot_skating_cm_s": 0.047122791657435,
           "contact_preservation": 1.1026828577608339,
@@ -594,7 +637,7 @@
         },
         "terrain_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 1.5553524416173772e-07,
+          "max_penetration_cm": 1.5553524416173775e-07,
           "foot_skating_duration": -0.0,
           "max_foot_skating_cm_s": 3.0688404557674865e-08,
           "contact_preservation": 3.344475841724563e-05,
@@ -635,13 +678,13 @@
       "components": {
         "object_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 1.079218669423497e-15,
+          "max_penetration_cm": 1.0792186694234972e-15,
           "foot_skating_duration": 0.10264004785593348,
           "contact_preservation": -2.6804306625927055
         },
         "terrain_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 1.5553524416173772e-07,
+          "max_penetration_cm": 1.5553524416173775e-07,
           "foot_skating_duration": -0.0,
           "contact_preservation": -0.9237492828053079
         }
@@ -652,6 +695,44 @@
         },
         "terrain_step": {
           "invalid_or_nonfinite_artifact": true
+        }
+      }
+    },
+    "shortcut_omit_failed_experiment": {
+      "case": "shortcut_omit_failed_experiment",
+      "producer_exit": 0,
+      "train_exit": 0,
+      "test_exit": 0,
+      "seconds": 2.0120394499972463,
+      "rank_delta": 1.1088575699876195,
+      "missing": [
+        "terrain_interaction_kinematics.penetration_duration",
+        "terrain_interaction_kinematics.max_penetration_cm",
+        "terrain_interaction_kinematics.foot_skating_duration",
+        "terrain_interaction_kinematics.max_foot_skating_cm_s",
+        "terrain_interaction_kinematics.contact_preservation",
+        "terrain_interaction_kinematics.pelvis_path_error_cm",
+        "terrain_interaction_kinematics.motion_velocity_error_cm_s"
+      ],
+      "nonfinite": [],
+      "pareto_dominates": false,
+      "components": {
+        "object_interaction_kinematics": {
+          "penetration_duration": -0.0,
+          "max_penetration_cm": -0.0,
+          "foot_skating_duration": -0.0,
+          "max_foot_skating_cm_s": -0.0,
+          "contact_preservation": 1.100706100635986,
+          "pelvis_path_error_cm": -0.0,
+          "motion_velocity_error_cm_s": 0.00815146935163367
+        },
+        "terrain_interaction_kinematics": {}
+      },
+      "independent_artifact_checks": {
+        "object_carry": {
+          "max_fk_coordinate_error_m": 0.0,
+          "max_joint_bound_violation": 0.0,
+          "max_increment_bound_violation": 0.0
         }
       }
     },
@@ -706,7 +787,7 @@
       "components": {
         "object_interaction_kinematics": {
           "penetration_duration": -1.5118578920369088,
-          "max_penetration_cm": -0.87337088545252,
+          "max_penetration_cm": -0.8733708854525202,
           "foot_skating_duration": -0.8211203828474678,
           "max_foot_skating_cm_s": -0.4143159996201058,
           "contact_preservation": 0.41484403587837143,
@@ -715,7 +796,7 @@
         },
         "terrain_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 1.5553524416173772e-07,
+          "max_penetration_cm": 1.5553524416173775e-07,
           "foot_skating_duration": -0.8430572348810887,
           "max_foot_skating_cm_s": -0.17554620403330454,
           "contact_preservation": -0.4772542978161741,
@@ -791,7 +872,7 @@
       "components": {
         "object_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 8.633749355387976e-16,
+          "max_penetration_cm": 8.633749355387978e-16,
           "foot_skating_duration": 0.10264004785593348,
           "max_foot_skating_cm_s": 0.047122791657435,
           "contact_preservation": 1.1026828577608339,
@@ -800,7 +881,7 @@
         },
         "terrain_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 1.5553524416173772e-07,
+          "max_penetration_cm": 1.5553524416173775e-07,
           "foot_skating_duration": -0.0,
           "max_foot_skating_cm_s": 3.0688404557674865e-08,
           "contact_preservation": 3.344475841724563e-05,
@@ -876,7 +957,7 @@
       "components": {
         "object_interaction_kinematics": {
           "penetration_duration": -1.5118578920369088,
-          "max_penetration_cm": -0.755928946018454,
+          "max_penetration_cm": -0.7559289460184541,
           "foot_skating_duration": -0.9237604307034012,
           "max_foot_skating_cm_s": -0.24782226648874836,
           "contact_preservation": 0.7277614510742011,
@@ -885,7 +966,7 @@
         },
         "terrain_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 1.5553524416173772e-07,
+          "max_penetration_cm": 1.5553524416173775e-07,
           "foot_skating_duration": -0.9367302609789875,
           "max_foot_skating_cm_s": -0.13345353364368528,
           "contact_preservation": -0.9237492828053079,
@@ -919,7 +1000,7 @@
       "components": {
         "object_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 8.633749355387976e-16,
+          "max_penetration_cm": 8.633749355387978e-16,
           "foot_skating_duration": -0.0,
           "max_foot_skating_cm_s": -0.056321080279193546,
           "contact_preservation": 0.4513073790846666,
@@ -928,7 +1009,7 @@
         },
         "terrain_interaction_kinematics": {
           "penetration_duration": -0.0,
-          "max_penetration_cm": 1.553543488245904e-07,
+          "max_penetration_cm": 1.5535434882459043e-07,
           "foot_skating_duration": -0.0,
           "max_foot_skating_cm_s": -2.1559221360698597e-08,
           "contact_preservation": 3.3439401710990206e-05,

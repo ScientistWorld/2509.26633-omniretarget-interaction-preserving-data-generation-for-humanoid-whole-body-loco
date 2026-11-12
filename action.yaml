@@ -1,4 +1,4 @@
 action: submit
 gpus: 0
-test: false
-notes: "Audit 22 cases: reference seeds, stronger/weaker methods, grid enumeration, artifact/task/score/missing-result shortcuts; preserve per-case hidden-test scores under redteam."
+test: true
+notes: "Final audit checks: disconnected body points with unchanged tasks, and a genuinely improved object result with the entire terrain experiment omitted; regenerate audit summary."
