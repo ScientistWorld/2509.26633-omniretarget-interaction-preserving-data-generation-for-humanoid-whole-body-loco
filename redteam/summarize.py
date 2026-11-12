@@ -28,7 +28,7 @@ def scalar(exps,exp,metric):
     return exps.get(exp,{}).get('results',{}).get('omniretarget',{}).get(metric)
 
 
-cases=[p.parent.name for p in AUDIT.glob('*/status.json')]
+cases=sorted(p.parent.name for p in AUDIT.glob('*/status.json'))
 honest=[s for s in cases if not s.startswith('shortcut_')]
 scales={}
 for exp,espec in spec.items():

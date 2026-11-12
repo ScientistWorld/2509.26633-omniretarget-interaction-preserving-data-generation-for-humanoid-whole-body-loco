@@ -42,9 +42,12 @@ def main():
     folder = AUDIT / name
     folder.mkdir(exist_ok=True)
     ensure_state()
-    if name in {'better_contact_refinement', 'shortcut_impossible_q', 'shortcut_partial_missing'}:
+    if name in {'better_contact_refinement', 'shortcut_impossible_q', 'shortcut_partial_missing', 'shortcut_omit_failed_experiment'}:
         if not (AUDIT / 'reference_seed0/artifacts/omniretarget_object_carry.json').exists():
             subprocess.run([sys.executable, 'redteam/run_case.py', 'reference_seed0'], check=True)
+    if name == 'shortcut_omit_failed_experiment':
+        if not (AUDIT / 'better_contact_refinement/artifacts/omniretarget_object_carry.json').exists():
+            subprocess.run([sys.executable, 'redteam/run_case.py', 'better_contact_refinement'], check=True)
     restore()
     outputs = ROOT / 'checkpoints/retargeting'
     shutil.rmtree(outputs)

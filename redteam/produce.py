@@ -197,11 +197,18 @@ def brute_force_grid():
     (AUDIT/'brute_force_grid/enumeration.json').write_text(json.dumps(counts,indent=2))
 
 
-def shortcut_unchecked_keypoints():
+def shortcut_unchecked_keypoints(case='shortcut_unchecked_keypoints'):
     """Shortcut: independently place public source joints, bypass morphology."""
     for name in TASKS:
         task = load_task(name); src = np.array(task['source_keypoints']); pts=src.copy()
         n=len(src)
+        if case=='shortcut_disconnected_body':
+            # Shortcut: global offsets of individual joints are invisible to
+            # path/velocity metrics. Float the torso, shoulders, knees, and
+            # elbows safely above the scene, while hands and feet satisfy
+            # contact metrics independently. This is not any robot's FK.
+            for i in [0,1,2,4,6,7,9,10]:
+                pts[:,i,1]+=2.0
         # Connect stance edges for lags 1 and 2 on the complete public motion,
         # with the stance definition available in eval/train. No hidden index
         # or answer file is read.
@@ -286,6 +293,14 @@ def simple_output(case):
             ref=reference_artifact(name)
             save(task,np.array(ref['retargeted_keypoints']),np.array(ref['q']))
             continue
+        elif case=='shortcut_omit_failed_experiment':
+            if name=='terrain_step':
+                continue
+            # Shortcut: retain a legitimately improved result on one task,
+            # submit no result at all for the other required task.
+            out=json.loads((AUDIT/'better_contact_refinement/artifacts/omniretarget_object_carry.json').read_text())
+            save(task,np.array(out['retargeted_keypoints']),np.array(out['q']))
+            continue
         elif case=='shortcut_malformed':
             pts=np.zeros((0,12,2))
         else:
@@ -307,8 +322,8 @@ def main():
         weak_ik()
     elif case=='brute_force_grid':
         brute_force_grid()
-    elif case=='shortcut_unchecked_keypoints':
-        shortcut_unchecked_keypoints()
+    elif case in {'shortcut_unchecked_keypoints','shortcut_disconnected_body'}:
+        shortcut_unchecked_keypoints(case)
     elif case=='shortcut_empty':
         pass
     else:
