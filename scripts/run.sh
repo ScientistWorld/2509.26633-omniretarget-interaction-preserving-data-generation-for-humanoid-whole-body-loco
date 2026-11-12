@@ -1,20 +1,21 @@
 #!/bin/bash
-# Example job script submitted via the end-of-turn YAML block.
-#
-# This runs inside the compute container with:
-#   - Your workspace mounted at /home/user
-#   - GPU(s) available
-#   - No internet access
-#
-# Make sure all data, code, and dependencies are already in the
-# workspace or baked into the container before submitting.
-
-set -e
-
+# Hardening job: regenerate public train instances, score the shipped methods
+# on train and on the hidden test (official numbers), then rerun the hidden
+# test with honest variants and shortcut submissions registered alongside.
+set -x
 cd /home/user
 export PYTHONPATH=/home/user:${PYTHONPATH:-}
-
 python --version
-bash scripts/reproduce.sh
-bash scripts/evaluate_train.sh /home/user/checkpoints/retargeting
-bash scripts/evaluate_test.sh /home/user/checkpoints/retargeting
+python -c "import numpy, scipy; print('numpy', numpy.__version__, 'scipy', scipy.__version__)"
+
+python data/task_generator.py --out data/tasks/train || exit 1
+
+python redteam/hardening/harness.py official
+python redteam/hardening/summarize.py redteam/hardening/results/official || true
+cp scoring/scores_train.json scoring/scores.json
+cp scoring/diagnostics_train.json scoring/diagnostics.json
+
+python redteam/hardening/harness.py combined
+python redteam/hardening/summarize.py redteam/hardening/results/combined_test || true
+
+python validate.py || true

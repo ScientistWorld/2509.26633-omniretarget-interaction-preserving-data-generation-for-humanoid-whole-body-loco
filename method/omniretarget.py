@@ -1,177 +1,318 @@
-"""Scaled OmniRetarget implementation.
+"""OmniRetarget, scaled planar reproduction (paper Sec. III-A, Alg. 5, App. D).
 
-This implements the paper's computational core: frame-wise interaction
-mesh retargeting with Laplacian deformation energy, temporal smoothing,
-joint/velocity limits, non-penetration, and foot-sticking constraints.
-The solver uses SciPy SLSQP for the small benchmark instead of Drake's
-SOCP backend; the objective and hard constraints mirror Eq. (3)/(15).
+For every frame t (warm-started from q*_{t-1}) we solve
+
+    min_q  sum_i || L(p_i^source) - L(p_i^target(q)) ||^2 + || q - q_{t-1} ||_Q^2      (3a)
+    s.t.   phi_j(q) >= 0             (non-penetration of robot links, 3b)
+           q_min <= q <= q_max        (3c)
+           v_min dt <= q - q_{t-1} <= v_max dt   (3d)
+           p^F_t(q) = p^F_{t-1}       for source stance feet (3e)
+
+with a sequential convex method: each iteration linearises the Laplacian
+residuals (Gauss-Newton quadratic model), linearises the collision and
+stance constraints around the current iterate, keeps the joint/velocity
+bounds exact and adds the second-order-cone trust region ||dq||_2 <= 0.2
+(15a-15g).  At most 10 iterations per frame.  The interaction mesh is the
+Delaunay triangulation (2D analogue of the paper's tetrahedralisation) of
+the source keypoints plus dense samples of the object surface and terrain;
+uniform Laplacian weights; meshes are expressed in the object frame when an
+object is present.  A foot is in stance when its source horizontal speed is
+below 1 cm/s.
+
+The convex sub-problem is solved exactly with SciPy's SLSQP (it is a small
+QP with one quadratic trust-region constraint); an L-infinity elastic slack
+on the linearised collision rows keeps it feasible.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
 from scipy.optimize import minimize
 from scipy.spatial import Delaunay
 
-from data.planar_robot import KEYPOINTS as NAMES
-from data.planar_robot import NAME_TO_IDX, PlanarHumanoid, initial_guess
-FOOT_NAMES = ["left_foot", "right_foot"]
-HAND_NAMES = ["left_hand", "right_hand"]
-COLLISION_SKIP = set(HAND_NAMES)
+from data.planar_robot import (KEYPOINTS, NAME_TO_IDX, Q_MAX, Q_MIN, PlanarHumanoid,
+                               clip_to_limits, link_sample_weights, per_frame_velocity_bounds)
+from data.scene_geometry import box_perimeter_uv, box_sdf, terrain_sdf
+
+ROBOT = PlanarHumanoid()
+FEET = [NAME_TO_IDX["left_foot"], NAME_TO_IDX["right_foot"]]
+STANCE_SPEED = 0.01        # m/s (Sec. III-A)
+TRUST_RADIUS = 0.2         # epsilon in (15g)
+MAX_SQP_ITERS = 10         # App. D
+FIRST_FRAME_ITERS = 40     # frame 0 has no warm start from a previous solution
+Q_WEIGHTS = np.array([0.5, 0.5] + [0.05] * 9)
+ELASTIC_PENALTY = 1e3
+COLLISION_MARGIN = 0.25    # only linearise collision rows of nearby link samples
+N_LINK_SAMPLES = 5
+W_LINK = link_sample_weights(N_LINK_SAMPLES)
+TERRAIN_SPACING = 0.05
+BOX_UV = box_perimeter_uv(8)
 
 
-def terrain_height(x: np.ndarray | float, task: str) -> np.ndarray | float:
-    x_arr = np.asarray(x)
-    if task == "terrain_step":
-        ramp = np.clip((x_arr - 0.40) / 0.15, 0.0, 1.0)
-        out = 0.32 * ramp
-    else:
-        out = np.zeros_like(x_arr, dtype=float)
-    return float(out) if np.isscalar(x) else out
+# ---------------------------------------------------------------------------
+# Scene sampling with source/target correspondence
+# ---------------------------------------------------------------------------
+
+def terrain_samples(src_verts, tgt_verts, x_lo, x_hi):
+    """Corresponding samples along the source and target terrain polylines."""
+    S = np.asarray(src_verts, dtype=float)
+    T = np.asarray(tgt_verts, dtype=float)
+    ps, pt = [], []
+    for k in range(len(S) - 1):
+        a, b = S[k], S[k + 1]
+        c, d = T[k], T[k + 1]
+        n = max(1, int(np.ceil(np.linalg.norm(b - a) / TERRAIN_SPACING)))
+        u = np.arange(n) / n
+        seg_s = a + u[:, None] * (b - a)
+        seg_t = c + u[:, None] * (d - c)
+        keep = (seg_s[:, 0] >= x_lo) & (seg_s[:, 0] <= x_hi)
+        ps.append(seg_s[keep])
+        pt.append(seg_t[keep])
+    ps.append(S[-1:][(S[-1:, 0] >= x_lo) & (S[-1:, 0] <= x_hi)])
+    pt.append(T[-1:][(S[-1:, 0] >= x_lo) & (S[-1:, 0] <= x_hi)])
+    return np.concatenate(ps), np.concatenate(pt)
 
 
-def adjacency(points: np.ndarray) -> list[list[int]]:
-    if len(points) < 4:
-        return [[j for j in range(len(points)) if j != i] for i in range(len(points))]
+def neighbour_laplacian(points: np.ndarray) -> np.ndarray:
+    """Uniform-weight Laplacian operator L = I - W from a Delaunay mesh."""
+    n = len(points)
     tri = Delaunay(points, qhull_options="QJ")
-    neigh = [set() for _ in range(len(points))]
+    A = np.zeros((n, n))
     for simplex in tri.simplices:
         for i in simplex:
-            neigh[i].update(int(j) for j in simplex if j != i)
-    return [sorted(n) if n else [j for j in range(len(points)) if j != i] for i, n in enumerate(neigh)]
+            for j in simplex:
+                if i != j:
+                    A[i, j] = 1.0
+    deg = A.sum(axis=1, keepdims=True)
+    W = np.divide(A, deg, out=np.zeros_like(A), where=deg > 0)
+    return np.eye(n) - W
 
 
-def laplacian(points: np.ndarray, neigh: list[list[int]]) -> np.ndarray:
-    out = np.zeros_like(points)
-    for i, ns in enumerate(neigh):
-        out[i] = points[i] - points[ns].mean(axis=0)
-    return out
+# ---------------------------------------------------------------------------
+# Per-frame problem data
+# ---------------------------------------------------------------------------
+
+class FrameProblem:
+    def __init__(self, task: dict, t: int, terr_s: np.ndarray, terr_t: np.ndarray, objective: str):
+        self.t = t
+        src = np.asarray(task["source_keypoints"][t], dtype=float)
+        self.src = src
+        self.objective = objective
+        tgt_scene = task["target_scene"]
+        src_scene = task["source_scene"]
+        self.terrain_tgt = np.asarray(tgt_scene["terrain"], dtype=float)
+        self.box_tgt = None
+        scene_s = [terr_s]
+        scene_t = [terr_t]
+        origin_s = np.zeros(2)
+        origin_t = np.zeros(2)
+        if src_scene.get("object"):
+            cs = np.asarray(src_scene["object"]["center"][t], dtype=float)
+            ss = np.asarray(src_scene["object"]["size"], dtype=float)
+            ct = np.asarray(tgt_scene["object"]["center"][t], dtype=float)
+            st = np.asarray(tgt_scene["object"]["size"], dtype=float)
+            self.box_tgt = (ct, st)
+            scene_s.insert(0, cs + BOX_UV * ss)
+            scene_t.insert(0, ct + BOX_UV * st)
+            origin_s, origin_t = cs, ct  # object-frame interaction mesh (App. C-2)
+        self.scene_t = np.concatenate(scene_t) - origin_t
+        self.origin_t = origin_t
+        mesh_s = np.concatenate([src] + scene_s) - origin_s
+        if objective == "mesh":
+            self.L = neighbour_laplacian(mesh_s)
+            self.L_src = self.L @ mesh_s
+            self.L_body = self.L[:, :len(src)]
+            self.L_scene_term = self.L[:, len(src):] @ self.scene_t
+
+    def residual(self, fk: np.ndarray, Jfk: np.ndarray):
+        if self.objective == "mesh":
+            r = self.L_body @ (fk - self.origin_t) + self.L_scene_term - self.L_src
+            J = np.einsum("vk,kdj->vdj", self.L_body, Jfk)
+            return r.ravel(), J.reshape(-1, Jfk.shape[-1])
+        # Ablation: GMR-style keypoint position matching in place of the mesh.
+        r = fk - self.src
+        return r.ravel(), Jfk.reshape(-1, Jfk.shape[-1])
+
+    def collision_rows(self, fk: np.ndarray, Jfk: np.ndarray):
+        S = W_LINK @ fk
+        JS = np.einsum("sk,kdj->sdj", W_LINK, Jfk)
+        rows, vals = [], []
+        phi, grad = terrain_sdf(S, self.terrain_tgt, with_grad=True)
+        keep = phi < COLLISION_MARGIN
+        rows.append(np.einsum("sd,sdj->sj", grad[keep], JS[keep]))
+        vals.append(phi[keep])
+        if self.box_tgt is not None:
+            phi, grad = box_sdf(S, self.box_tgt[0], self.box_tgt[1], with_grad=True)
+            keep = phi < COLLISION_MARGIN
+            rows.append(np.einsum("sd,sdj->sj", grad[keep], JS[keep]))
+            vals.append(phi[keep])
+        return np.concatenate(rows), np.concatenate(vals)
 
 
-def object_frame(points: np.ndarray, obj: dict | None) -> np.ndarray:
-    if not obj:
-        return points
-    return points - np.array(obj["center"], dtype=float)
+def solve_subproblem(J, r, qbar, qref, qw, G, phi, Aeq, beq, lo, hi, trust):
+    n = len(qbar)
+    JtJ = J.T @ J
+    Jtr = J.T @ r
+
+    def f(z):
+        dq = z[:n]
+        e = qbar + dq - qref
+        return float(dq @ JtJ @ dq + 2.0 * Jtr @ dq + e @ (qw * e) + ELASTIC_PENALTY * z[n])
+
+    def g(z):
+        dq = z[:n]
+        e = qbar + dq - qref
+        out = np.empty(n + 1)
+        out[:n] = 2.0 * (JtJ @ dq) + 2.0 * Jtr + 2.0 * qw * e
+        out[n] = ELASTIC_PENALTY
+        return out
+
+    cons = [{"type": "ineq",
+             "fun": lambda z: np.array([trust * trust - z[:n] @ z[:n]]),
+             "jac": lambda z: np.concatenate([-2.0 * z[:n], [0.0]])[None, :]}]
+    if len(G):
+        Gz = np.hstack([G, np.ones((len(G), 1))])
+        cons.append({"type": "ineq", "fun": lambda z: Gz @ z + phi, "jac": lambda z: Gz})
+    if Aeq is not None and len(Aeq):
+        Az = np.hstack([Aeq, np.zeros((len(Aeq), 1))])
+        cons.append({"type": "eq", "fun": lambda z: Az @ z + beq, "jac": lambda z: Az})
+    s0 = float(max(0.0, -np.min(phi))) if len(phi) else 0.0
+    z0 = np.zeros(n + 1)
+    z0[n] = s0
+    bounds = [(float(a), float(b)) for a, b in zip(lo, hi)] + [(0.0, None)]
+    try:
+        res = minimize(f, z0, jac=g, method="SLSQP", bounds=bounds, constraints=cons,
+                       options={"maxiter": 200, "ftol": 1e-10})
+        z = np.asarray(res.x, dtype=float)
+        if not np.all(np.isfinite(z)):
+            return np.zeros(n)
+        return np.clip(z[:n], lo, hi)
+    except Exception:  # pragma: no cover - numerical safety net
+        return np.zeros(n)
 
 
-def stance_feet(src_prev: np.ndarray, src: np.ndarray, dt: float, task_name: str) -> list[str]:
-    out = []
-    for name in FOOT_NAMES:
-        idx = NAME_TO_IDX[name]
-        horiz_v = abs(src[idx, 0] - src_prev[idx, 0]) / dt
-        prev_h = terrain_height(src_prev[idx, 0], task_name)
-        cur_h = terrain_height(src[idx, 0], task_name)
-        same_surface = abs(cur_h - prev_h) < 0.05
-        if horiz_v < 0.35 and same_surface and src[idx, 1] <= cur_h + 0.03:
-            out.append(name)
-    return out
+# ---------------------------------------------------------------------------
+# Initial guess for frame 0 (copy source limb angles, then refine with IK)
+# ---------------------------------------------------------------------------
+
+def _angle(v):
+    return float(np.arctan2(v[0], -v[1]))
 
 
-def solve_frame(task: dict, t: int, q_prev: np.ndarray, prev_fk: np.ndarray | None, robot: PlanarHumanoid) -> np.ndarray:
-    source = np.array(task["source_keypoints"][t], dtype=float)
-    obj = task["objects"][t]
-    obj_pts = np.array(task["object_surface"][t], dtype=float).reshape(-1, 2)
-    terr = np.array(task["terrain_points"][t], dtype=float)
-    source_mesh = np.vstack([source, obj_pts, terr])
-    source_mesh = object_frame(source_mesh, obj) if obj else source_mesh
-    neigh = adjacency(source_mesh)
-    l_source = laplacian(source_mesh, neigh)
-    q0 = q_prev.copy() if q_prev is not None else initial_guess(source)
+def _wrap(a):
+    return float((a + np.pi) % (2 * np.pi) - np.pi)
+
+
+def initial_configuration(src: np.ndarray, terrain) -> np.ndarray:
+    P = {n: src[i] for i, n in enumerate(KEYPOINTS)}
+    lh = _angle(P["left_knee"] - P["pelvis"])
+    rh = _angle(P["right_knee"] - P["pelvis"])
+    ls = _angle(P["left_elbow"] - P["left_shoulder"])
+    rs = _angle(P["right_elbow"] - P["right_shoulder"])
+    torso_vec = P["neck"] - P["pelvis"]
+    q = np.array([
+        P["pelvis"][0], P["pelvis"][1], float(np.arctan2(torso_vec[0], torso_vec[1])),
+        lh, _wrap(_angle(P["left_foot"] - P["left_knee"]) - lh),
+        rh, _wrap(_angle(P["right_foot"] - P["right_knee"]) - rh),
+        ls, _wrap(_angle(P["left_hand"] - P["left_elbow"]) - ls),
+        rs, _wrap(_angle(P["right_hand"] - P["right_elbow"]) - rs),
+    ])
+    q = np.clip(q, Q_MIN, Q_MAX)
+    from scipy.optimize import minimize as _min
+
+    def obj(qq):
+        return float(np.sum((ROBOT.fk(qq) - src) ** 2))
+
+    res = _min(obj, q, method="L-BFGS-B", bounds=list(zip(Q_MIN, Q_MAX)), options={"maxiter": 200})
+    return np.clip(np.asarray(res.x, dtype=float), Q_MIN, Q_MAX)
+
+
+# ---------------------------------------------------------------------------
+# Trajectory retargeting
+# ---------------------------------------------------------------------------
+
+def retarget(task: dict, objective: str = "mesh", extra_residual=None,
+             max_iters: int = MAX_SQP_ITERS, trust: float = TRUST_RADIUS) -> np.ndarray:
+    """Retarget one task; returns q of shape (num_frames, 11).
+
+    ``extra_residual(t, fk, Jfk) -> (r, J) | None`` may append task-specific
+    least-squares costs to the objective (App. B-5: the core objective can be
+    augmented with task-specific terms).
+    """
+    src_all = np.asarray(task["source_keypoints"], dtype=float)
+    N = len(src_all)
     dt = float(task["dt"])
-    q_min = np.array([-2.0, 0.45, -0.7, -1.4, -0.2, -1.4, -1.9, -2.4, 0.1, -0.2, -2.4])
-    q_max = np.array([2.0, 1.45, 0.7, 1.4, 1.9, 1.4, 0.2, 0.2, 2.4, 2.4, -0.1])
-    vel = np.array([0.09, 0.08, 0.18, 0.24, 0.30, 0.24, 0.30, 0.30, 0.36, 0.30, 0.36])
-    if task["task"] == "terrain_step":
-        vel = np.array([0.16, 0.18, 0.24, 0.42, 0.55, 0.42, 0.55, 0.50, 0.60, 0.50, 0.60])
-    limited_bounds = list(zip(np.maximum(q_min, q0 - vel), np.minimum(q_max, q0 + vel))) if q_prev is not None else list(zip(q_min, q_max))
-    full_bounds = list(zip(q_min, q_max))
-
-    def target_mesh(q: np.ndarray) -> np.ndarray:
-        pts = np.vstack([robot.fk(q), obj_pts, terr])
-        return object_frame(pts, obj) if obj else pts
-
-    def objective(q: np.ndarray) -> float:
-        tgt = target_mesh(q)
-        e_lap = np.sum((laplacian(tgt, neigh) - l_source) ** 2)
-        e_key = 0.08 * np.sum((robot.fk(q) - source) ** 2)
-        e_smooth = 0.03 * np.sum((q - q0) ** 2)
-        return float(e_lap + e_key + e_smooth)
-
-    constraints = []
-
-    def nonpenetration(q: np.ndarray) -> np.ndarray:
-        fk = robot.fk(q)
-        vals = []
-        for i, p in enumerate(fk):
-            vals.append(p[1] - terrain_height(p[0], task["task"]))
-            if obj and NAMES[i] not in COLLISION_SKIP:
-                c = np.array(obj["center"])
-                sx, sz = np.array(obj["size"])
-                dx = abs(p[0] - c[0]) - sx / 2
-                dz = abs(p[1] - c[1]) - sz / 2
-                vals.append(max(dx, dz))
-        return np.array(vals)
-
-    constraints.append({"type": "ineq", "fun": nonpenetration})
-    if t > 0 and prev_fk is not None:
-        for foot in stance_feet(np.array(task["source_keypoints"][t - 1]), source, dt, task["task"]):
-            idx = NAME_TO_IDX[foot]
-            constraints.append({"type": "eq", "fun": lambda q, idx=idx: robot.fk(q)[idx] - prev_fk[idx]})
-    for name in task["contacts"][t].get("terrain", []):
-        if "hand" in name:
-            idx = NAME_TO_IDX[name]
-            constraints.append({"type": "eq", "fun": lambda q, idx=idx: robot.fk(q)[idx, 1] - terrain_height(robot.fk(q)[idx, 0], task["task"])})
-
-    def constraint_violation(q: np.ndarray) -> float:
-        violation = 0.0
-        for con in constraints:
-            val = np.asarray(con["fun"](q), dtype=float)
-            if con["type"] == "ineq":
-                violation = max(violation, float(np.max(np.maximum(0.0, -val))))
-            else:
-                violation = max(violation, float(np.max(np.abs(val))))
-        return violation
-
-    res = minimize(objective, q0, method="SLSQP", bounds=limited_bounds, constraints=constraints,
-                   options={"maxiter": 140, "ftol": 1e-8, "disp": False})
-    if (not res.success or constraint_violation(np.asarray(res.x, dtype=float)) > 1e-4) and task["task"] == "terrain_step":
-        seed = q0.copy()
-        seed[1] = max(seed[1], terrain_height(seed[0], task["task"]) + 0.85)
-        res_retry = minimize(objective, seed, method="SLSQP", bounds=full_bounds, constraints=constraints,
-                             options={"maxiter": 220, "ftol": 1e-8, "disp": False})
-        if constraint_violation(np.asarray(res_retry.x, dtype=float)) < constraint_violation(np.asarray(res.x, dtype=float)):
-            res = res_retry
-    return np.asarray(res.x if res.success else res.x, dtype=float)
-
-
-def run(task_path: Path, out_path: Path) -> None:
-    task = json.loads(task_path.read_text())
-    robot = PlanarHumanoid()
-    qs, fks = [], []
+    vstep = per_frame_velocity_bounds(dt)
+    px = src_all[:, 0, 0]
+    terr_s, terr_t = terrain_samples(task["source_scene"]["terrain"], task["target_scene"]["terrain"],
+                                     float(px.min()) - 0.9, float(px.max()) + 0.9)
+    q_out = np.zeros((N, len(Q_MIN)))
     q_prev = None
-    prev_fk = None
-    for t in range(len(task["source_keypoints"])):
-        q = solve_frame(task, t, q_prev, prev_fk, robot)
-        fk = robot.fk(q)
-        qs.append(q.tolist())
-        fks.append(fk.tolist())
-        q_prev, prev_fk = q, fk
-    payload = {"method": "omniretarget", "task": task["task"], "dt": task["dt"], "q": qs,
-               "keypoint_names": NAMES, "retargeted_keypoints": fks, "source_file": str(task_path)}
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(payload, indent=2))
+    feet_prev = None
+    for t in range(N):
+        prob = FrameProblem(task, t, terr_s, terr_t, objective)
+        if q_prev is None:
+            qbar = initial_configuration(src_all[0], task["target_scene"]["terrain"])
+            qref, qw, iters = qbar.copy(), 0.1 * Q_WEIGHTS, FIRST_FRAME_ITERS
+            box_lo, box_hi = Q_MIN.copy(), Q_MAX.copy()
+            stance = []
+        else:
+            qbar = q_prev.copy()
+            qref, qw, iters = q_prev, Q_WEIGHTS, max_iters
+            box_lo = np.maximum(Q_MIN, q_prev - vstep)
+            box_hi = np.minimum(Q_MAX, q_prev + vstep)
+            stance = [f for f in FEET if abs(src_all[t, f, 0] - src_all[t - 1, f, 0]) / dt < STANCE_SPEED]
+        for _ in range(iters):
+            fk, Jfk = ROBOT.fk_jacobian(qbar)
+            r, J = prob.residual(fk, Jfk)
+            if extra_residual is not None:
+                ex = extra_residual(t, fk, Jfk)
+                if ex is not None:
+                    r = np.concatenate([r, ex[0]])
+                    J = np.vstack([J, ex[1]])
+            G, phi = prob.collision_rows(fk, Jfk)
+            if stance:
+                Aeq = np.concatenate([Jfk[f] for f in stance])
+                beq = np.concatenate([fk[f] - feet_prev[f] for f in stance])
+            else:
+                Aeq, beq = None, None
+            dq = solve_subproblem(J, r, qbar, qref, qw, G, phi, Aeq, beq,
+                                  box_lo - qbar, box_hi - qbar, trust)
+            qbar = np.clip(qbar + dq, box_lo, box_hi)
+            if np.linalg.norm(dq) < 1e-6:
+                break
+        q_t = clip_to_limits(qbar, q_prev, dt)
+        q_out[t] = q_t
+        q_prev = q_t
+        feet_prev = ROBOT.fk(q_t)
+    return q_out
+
+
+def run_dir(inputs: Path, outputs: Path, method_name: str, **kwargs) -> None:
+    outputs.mkdir(parents=True, exist_ok=True)
+    for path in sorted(inputs.glob("*.json")):
+        task = json.loads(path.read_text())
+        q = retarget(task, **kwargs)
+        out = {"instance_id": task["instance_id"], "method": method_name, "q": np.round(q, 10).tolist()}
+        (outputs / f"{task['instance_id']}.json").write_text(json.dumps(out))
+        print(f"[{method_name}] {task['instance_id']} done", file=sys.stderr, flush=True)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--task", type=Path, required=True)
-    parser.add_argument("--out", type=Path, required=True)
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--inputs", type=Path, required=True, help="directory of task input JSON files")
+    parser.add_argument("--outputs", type=Path, required=True, help="directory for per-instance outputs")
+    parser.add_argument("--objective", choices=["mesh", "keypoint"], default="mesh",
+                        help="'keypoint' is the no-interaction-mesh ablation")
+    parser.add_argument("--name", default=None)
     args = parser.parse_args()
-    run(args.task, args.out)
+    name = args.name or ("omniretarget" if args.objective == "mesh" else "omniretarget_no_mesh")
+    run_dir(args.inputs, args.outputs, name, objective=args.objective)
 
 
 if __name__ == "__main__":

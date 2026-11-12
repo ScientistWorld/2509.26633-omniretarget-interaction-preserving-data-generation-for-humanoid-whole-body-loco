@@ -1,48 +1,86 @@
-"""Keypoint-position IK baseline, matching the PHC/GMR objective family."""
+"""Keypoint-matching IK baseline (GMR / PHC objective family, paper App. B).
+
+Per frame, minimise sum_i || f_i(q) - p_i^source ||^2 subject only to joint
+limits (and the robot's velocity limits, as box bounds), warm-started from
+the previous frame.  Following the paper's "direct scaling" preprocessing
+(App. A, Eq. 7/8), human keypoints are scaled by the robot-to-human height
+ratio about the point on the ground below the pelvis.  The baseline does not
+look at objects or terrain.
+"""
 
 from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
 from scipy.optimize import minimize
 
-from data.planar_robot import KEYPOINTS as NAMES
-from data.planar_robot import PlanarHumanoid, initial_guess
+from data.planar_robot import NAME_TO_IDX, Q_MAX, Q_MIN, PlanarHumanoid, per_frame_velocity_bounds
+from data.scene_geometry import terrain_height
+
+ROBOT = PlanarHumanoid()
 
 
-def run(task_path: Path, out_path: Path) -> None:
-    task = json.loads(task_path.read_text())
-    robot = PlanarHumanoid()
+def human_height(src0: np.ndarray) -> float:
+    P = lambda n: src0[NAME_TO_IDX[n]]  # noqa: E731
+    torso = np.linalg.norm(P("neck") - P("pelvis"))
+    thigh = 0.5 * (np.linalg.norm(P("left_knee") - P("pelvis")) + np.linalg.norm(P("right_knee") - P("pelvis")))
+    shin = 0.5 * (np.linalg.norm(P("left_foot") - P("left_knee")) + np.linalg.norm(P("right_foot") - P("right_knee")))
+    return float(torso + thigh + shin)
+
+
+def scaled_source(task: dict) -> np.ndarray:
+    src = np.asarray(task["source_keypoints"], dtype=float)
+    alpha = ROBOT.height / human_height(src[0])
+    pel = src[:, NAME_TO_IDX["pelvis"]]
+    ground = terrain_height(pel[:, 0], task["source_scene"]["terrain"])
+    anchor = np.stack([pel[:, 0], ground], axis=1)[:, None, :]
+    return anchor + alpha * (src - anchor)
+
+
+def retarget(task: dict) -> np.ndarray:
+    tgt = scaled_source(task)
+    N = len(tgt)
+    vstep = per_frame_velocity_bounds(float(task["dt"]))
     q_prev = None
-    qs, fks = [], []
-    q_min = np.array([-2.0, 0.45, -0.8, -1.6, -0.5, -1.6, -2.1, -2.8, -0.1, -0.1, -2.8])
-    q_max = np.array([2.0, 1.55, 0.8, 1.6, 2.1, 1.6, 0.5, 0.3, 2.8, 2.8, 0.3])
-    for source_list in task["source_keypoints"]:
-        source = np.array(source_list, dtype=float)
-        q0 = q_prev if q_prev is not None else initial_guess(source)
+    out = np.zeros((N, len(Q_MIN)))
+    for t in range(N):
+        target = tgt[t]
+        if q_prev is None:
+            pel = target[NAME_TO_IDX["pelvis"]]
+            q0 = np.array([pel[0], min(pel[1], 0.78), 0.0, -0.15, 0.3, 0.15, -0.3, -0.3, 0.3, 0.3, -0.3])
+            lo, hi = Q_MIN, Q_MAX
+        else:
+            q0 = q_prev
+            lo = np.maximum(Q_MIN, q_prev - vstep)
+            hi = np.minimum(Q_MAX, q_prev + vstep)
+        q0 = np.clip(q0, lo, hi)
 
-        def objective(q: np.ndarray) -> float:
-            return float(np.sum((robot.fk(q) - source) ** 2) + 0.01 * np.sum((q - q0) ** 2))
+        def objective(q, q0=q0, target=target):
+            return float(np.sum((ROBOT.fk(q) - target) ** 2) + 1e-3 * np.sum((q - q0) ** 2))
 
-        res = minimize(objective, q0, method="L-BFGS-B", bounds=list(zip(q_min, q_max)), options={"maxiter": 80})
-        q_prev = np.asarray(res.x, dtype=float)
-        qs.append(q_prev.tolist())
-        fks.append(robot.fk(q_prev).tolist())
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps({"method": "keypoint_ik", "task": task["task"], "dt": task["dt"],
-                                    "q": qs, "keypoint_names": NAMES,
-                                    "retargeted_keypoints": fks, "source_file": str(task_path)}, indent=2))
+        res = minimize(objective, q0, method="L-BFGS-B", bounds=list(zip(lo, hi)),
+                       options={"maxiter": 300 if q_prev is None else 80})
+        q_prev = np.clip(np.asarray(res.x, dtype=float), lo, hi)
+        out[t] = q_prev
+    return out
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--task", type=Path, required=True)
-    parser.add_argument("--out", type=Path, required=True)
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--inputs", type=Path, required=True)
+    parser.add_argument("--outputs", type=Path, required=True)
     args = parser.parse_args()
-    run(args.task, args.out)
+    args.outputs.mkdir(parents=True, exist_ok=True)
+    for path in sorted(args.inputs.glob("*.json")):
+        task = json.loads(path.read_text())
+        q = retarget(task)
+        out = {"instance_id": task["instance_id"], "method": "keypoint_ik", "q": np.round(q, 10).tolist()}
+        (args.outputs / f"{task['instance_id']}.json").write_text(json.dumps(out))
+        print(f"[keypoint_ik] {task['instance_id']} done", file=sys.stderr, flush=True)
 
 
 if __name__ == "__main__":

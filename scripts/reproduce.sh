@@ -1,28 +1,15 @@
 #!/bin/bash
-# Reproduce the paper's results end-to-end.
-#
-# This script runs inside the compute container and should call
-# scripts/baseline.sh and scripts/method.sh to run baselines and
-# the paper's method, each of which calls scripts/evaluate.sh.
-#
-# Assumes:
-#   - Container is built (environment/container.sif)
-#   - Data and models are downloaded (via scripts/download.sh)
-#   - Working directory is /home/user
-#
-# This is the "gold standard" reproduction — 
-# You do not need to run this, but keep this in good shape
-# so other agents can easily run a full loop of reproduction and get the paper's numbers.
-
+# Reproduce the gym end to end: regenerate the public train instances, score
+# every registered method (OmniRetarget and the keypoint-IK baseline) on train
+# and, when the hidden evaluator is present, on the hidden test split.
 set -e
-
 cd /home/user
 export PYTHONPATH=/home/user:${PYTHONPATH:-}
-
-rm -rf checkpoints/retargeting scoring/scores.json scoring/diagnostics.json
-mkdir -p checkpoints/retargeting
-
-bash scripts/baseline.sh
-bash scripts/method.sh
-bash scripts/evaluate.sh checkpoints/retargeting
-python validate.py --compare
+python data/task_generator.py --out data/tasks/train
+bash scripts/evaluate_train.sh
+cp scoring/scores_train.json scoring/scores.json
+cp scoring/diagnostics_train.json scoring/diagnostics.json
+if [ -f eval/test/evaluate_test.py ]; then
+  bash scripts/evaluate_test.sh
+fi
+python validate.py
