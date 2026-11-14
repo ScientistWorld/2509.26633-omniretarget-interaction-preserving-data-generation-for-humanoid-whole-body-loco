@@ -236,3 +236,5 @@ core.[0-9]*
 # Hardening audit: raw per-instance method outputs kept for rescoring (large, reproducible)
 redteam/hardening/results/official/outputs/
 redteam/hardening/results/combined_outputs/
+redteam/hardening/results/.shipped_backup/
+redteam/hardening/results/.train_tampered

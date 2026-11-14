@@ -6,12 +6,13 @@
 #   3. hardening audit: honest variants and shortcut submissions through the
 #      unchanged hidden test (and train), CPU-budget / hang-guard checks;
 #   4. summaries and validation.
+# Every audit stage is resumable (done markers under redteam/hardening/results/),
+# because compute nodes may preempt and restart the job.
 set -e
 cd /home/user
 export PYTHONPATH=/home/user:${PYTHONPATH:-}
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1
 python --version
-# a preempted earlier attempt may have left audit registrations behind
 rm -f scripts/retargeters/var_*.sh scripts/retargeters/sc_*.sh
 rm -rf data/tasks/train
 python data/task_generator.py --out data/tasks/train > /dev/null
