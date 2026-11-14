@@ -51,28 +51,36 @@ provides signed distances to terrain polylines and boxes.
 
 Each instance is one demonstration (2.6–3.2 s at 30 Hz) of one of two task types:
 
-- `object_carry`: the human side-steps while holding a box overhead with both
-  hands on its sides; the box also moves up and down.
+- `object_carry`: the human side-steps up a ramp onto a platform while holding
+  a box overhead with both hands on its sides; the box also moves up and down.
 - `terrain_step`: the human side-steps up a ramp onto a platform and braces the
   right hand on top of a tall column standing on the platform.
 
 Demonstrators vary in overall size (roughly 0.9–1.15 times the robot) and in
-individual segment proportions. Every instance carries two scenes:
+individual segment proportions. Every instance carries three scenes:
 
-- `source_scene`: the scene the human interacted with,
-- `target_scene`: the scene in which the robot must act. In most instances it is
-  identical to the source scene; in *augmented* instances it is a modified copy
+- `source_scene`: the scene the human interacted with, at the human's scale;
+- `nominal_scene`: the same scene brought to the robot's scale by direct
+  scaling with `alpha = h_robot / h_human` (h = torso + thigh + shin at full
+  extension) about the ground point below the demonstrator's initial pelvis:
+  every terrain vertex and the box trajectory are scaled; the box keeps its true
+  size (the robot handles the same object), so the human's hand positions, once
+  scaled, do not land exactly on it;
+- `target_scene`: the scene in which the robot must act. In nominal instances it
+  equals `nominal_scene`; in *augmented* instances it is a modified copy of it
   (the box is resized and starts displaced, with the displacement decaying over
-  time, or the platform and column heights change). Scene correspondences are
-  explicit: terrain polylines have the same vertices in both scenes, and the box
-  keeps its identity (`center` per frame, `size`).
+  time, or the platform and the column on it are raised or lowered).
+
+Scene correspondences are explicit: terrain polylines have the same vertices in
+all three scenes, and the box keeps its identity (`center` per frame, `size`).
 
 Input file format (`data/tasks/train/inputs/<instance_id>.json`):
 
 ```
 instance_id, task_type, dt, num_frames, keypoint_names,
-source_keypoints  [num_frames][12][2]   (metres; x horizontal, z up)
+source_keypoints  [num_frames][12][2]   (metres; x horizontal, z up; human scale)
 source_scene      {"terrain": [[x, z], ...], "object": null | {"size": [w, h], "center": [num_frames][2]}}
+nominal_scene     same structure
 target_scene      same structure
 ```
 
@@ -104,10 +112,11 @@ OmniRetarget retargets a demonstration frame by frame by preserving an
 Alg. 5, App. D).
 
 - **Preprocessing (App. A, Eq. 7/8):** the demonstration is scaled by
-  `alpha = h_robot / h_human` (heights from the demonstrator's bone lengths). The
-  human keypoints and the source-scene samples are scaled together about the
-  ground point below the pelvis in each frame, so the scaled demonstration stays
-  self-consistent and keeps its walking path.
+  `alpha = h_robot / h_human` (heights from the demonstrator's bone lengths)
+  about the ground point below the initial pelvis. The human keypoints and the
+  source-scene samples are scaled together, so the scaled demonstration is
+  self-consistent; it coincides with the nominal scene the robot acts in (the
+  benchmark's `nominal_scene`), except that the object keeps its true size.
 - **Interaction mesh:** Delaunay triangulation (the 2D analogue of the paper's
   tetrahedralisation) of the scaled source keypoints plus dense samples of the
   object surface (32 points) and the terrain (every 5 cm, including all polyline
@@ -127,6 +136,15 @@ Alg. 5, App. D).
   solved exactly with SciPy SLSQP; an L-infinity elastic slack on the linearised
   collision rows keeps it feasible. Output configurations are projected onto the
   joint/velocity box.
+- **Frame 0:** keypoint IK on the scaled demonstration, the demonstrator's
+  initially planted feet constrained onto the target ground, 40 iterations.
+- **Augmentation (Sec. III-B, App. C):** object augmentations first solve the
+  nominal motion `q*_bar` in the nominal scene, then re-solve in the augmented
+  scene with `||q_t - q*_bar_t||_W^2` (W = 20 on base and legs, 0 on torso and
+  arms; Eq. 4) and the initial feet fixed to the nominal ones (Eq. 5). Terrain
+  augmentations add the section's "additional constraints" for stable ground
+  contact on the modified terrain: a foot the demonstrator plants is constrained
+  onto the target terrain in the frame it lands ((3e) then keeps it there).
 
 Scaled-down relative to the paper: planar 11-DoF robot instead of a 3D Unitree
 G1 with quaternion floating base, sampled link points instead of collision
@@ -145,7 +163,7 @@ velocity limits only and no knowledge of the object or terrain.
 method registered in `scripts/retargeters/` on the public train split and write
 `scoring/scores_train.json` (`scoring/scores.json`). The hidden test runs
 `bash scripts/evaluate_test.sh` in a fresh container: it creates held-out
-instances of the same kinds (same generating distribution, different draws, 40
+instances of the same kinds (same generating distribution, different draws, 60
 per experiment), runs every registered method on them through the same command,
 and writes `scoring/scores_test.json`. Methods are therefore scored on
 demonstrations and scenes they have never seen.
@@ -156,7 +174,8 @@ Everything is recomputed from the returned joint trajectory `q` with the
 evaluator's own copy of the robot kinematics and scene geometry. Robot keypoints
 written by a method, claimed metrics, flags or score files are never read.
 
-Per instance, against the **target scene**:
+Per instance, against the **target scene** (`alpha` is the robot-to-demonstrator
+height ratio used to build the nominal scene):
 
 | metric | meaning | better |
 |---|---|---|
@@ -165,28 +184,36 @@ Per instance, against the **target scene**:
 | `foot_skating_duration` | fraction of desired stance-foot frame pairs (the demonstrator's foot was planted in both frames) in which the robot foot moves faster than 1 cm/s | lower |
 | `max_foot_skating_cm_s` | largest robot foot speed over those frame pairs (cm/s, capped at 300) | lower |
 | `contact_preservation` | fraction of desired contact events kept: each frame where a demonstrator hand touched the object or terrain, and each frame where a demonstrator foot was planted, counts as one event; it is kept if the corresponding robot point is within 2 cm of the corresponding target-scene surface | higher |
-| `pelvis_path_error_cm` | mean distance between the robot's pelvis displacement (from its first frame) and the demonstrator's (cm, capped at 100) | lower |
-| `motion_velocity_error_cm_s` | mean keypoint velocity mismatch between robot and demonstrator (cm/s, capped at 300) | lower |
+| `spurious_contact_duration` | fraction of clearance events in which the robot touches a surface anyway: a clearance event is a frame where a demonstrator hand or foot was at least 3 cm (times `alpha`) from every source-scene surface; it is violated if the corresponding robot hand or foot is within 1 cm of a target-scene surface (dragged swing feet, hands brushing obstacles) | lower |
+| `pelvis_path_error_cm` | mean distance between the robot pelvis path and the demonstrator's pelvis path scaled by `alpha`; both paths are measured from their first frame, horizontally and as height above the ground directly below the pelvis, so following a raised or lowered terrain is not penalised (cm, capped at 100) | lower |
+| `motion_velocity_error_cm_s` | mean mismatch between robot keypoint velocities and the demonstrator's keypoint velocities scaled by `alpha` (cm/s, capped at 300) | lower |
 
 An experiment's value for a metric is the mean over its instances.
 
-## Validity gate
+## Validity gate and budget
 
-A method's run is **failed** if it exits non-zero, exceeds the time limit
-(2400 s per split), misses any instance, or returns any `q` that is malformed,
-has the wrong number of frames, contains non-finite values, leaves the joint
-limits, or changes any coordinate between consecutive frames by more than the
-velocity limit times `dt` (tolerance 1e-6). A failed run receives the worst value
-of every metric in every experiment (1 for durations, 0 for contact, the caps
-above for the rest). There is no partial credit for skipping instances or
-experiments.
+A method's run is **failed** if it exits non-zero, exceeds its CPU budget, stops
+making progress, misses any instance, or returns any `q` that is malformed, has
+the wrong number of frames, contains non-finite values, leaves the joint limits,
+or changes any coordinate between consecutive frames by more than the velocity
+limit times `dt` (tolerance 1e-6). A failed run receives the worst value of every
+metric in every experiment (1 for durations, 0 for contact, the caps above for
+the rest). There is no partial credit for skipping instances or experiments.
+
+The budget is counted by the evaluator, not measured in wall-clock time: 6 CPU
+seconds (user + system, summed over the method's whole process tree) per
+instance of the split, i.e. 1080 CPU s for the 180 test instances and 360 CPU s
+for the 60 train instances. Methods run with one BLAS/OpenMP thread. A method
+whose process tree uses no CPU across 1800 consecutive one-second checks is
+treated as hung. Wall-clock time is not scored.
 
 ## Experiments
 
-- `object_interaction_kinematics` (weight 0.35): nominal object-carry instances.
+- `object_interaction_kinematics` (weight 0.35): nominal box-carry instances
+  (with a ramp up to a platform).
 - `terrain_interaction_kinematics` (weight 0.35): nominal terrain instances.
 - `augmented_interaction_kinematics` (weight 0.30): instances whose target scene
-  differs from the demonstration scene (half object, half terrain).
+  differs from the nominal scene (half object, half terrain).
 
 `scoring/reference.json` lists metric directions and coefficients. Per-instance
 values and failure reasons are written to `scoring/diagnostics_*.json`
@@ -519,6 +546,54 @@ values and failure reasons are written to `scoring/diagnostics_*.json`
 - Hardening (iteration 11): rebuilt the benchmark around a hidden, generated 120-instance test, a q-only evaluator with a validity gate (worst values on failure) and an every-registered-method interface; restored the paper's per-frame sequential convex solver (trust region 0.2, <=10 iterations), 1 cm/s stance detection and direct scaling; added the scene-augmentation experiment (Sec. III-B).
 - Hidden test: OmniRetarget has ~0 penetration and skating vs 0.36-0.43 / 0.41-0.56 for keypoint IK, and higher contact in all three experiments (0.83/0.86/0.71 vs 0.71/0.86/0.54); rank delta of the baseline -7.4. A contact-aware variant beats the reference by +1.47 (paired 95% CI [+1.07, +1.90]); all red-team shortcuts now fail or score as their real trajectory. Details in HARDENING.md.
 - Milestone kept at `core_claim`: scaled planar substitute, no downstream RL; the mesh-vs-constrained-keypoint ablation is a tie.
+
+</details>
+
+### Iteration 11: claude-opus-5-5 (hardener)
+- **Milestone**: `core_claim` | **Status**: done
+- **Working time**: 37m | **GPU**: 0.0h
+- **Jobs**: 9 total (5 completed, 0 failed)
+
+<details>
+<summary>Progress Log</summary>
+
+### [2026-06-06 07:39] - core_claim_plus
+- Implemented a scaled OmniRetarget interaction-mesh constrained optimizer and keypoint IK diagnostic baseline.
+- Reproduced the kinematic core claim on both object and terrain interaction tasks in compute jobs.
+- Tightened the reusable evaluator to load trusted benchmark task files by task ID rather than trusting artifact-provided paths.
+
+### [2026-06-06 07:47] - core_claim_plus
+- Compute job `f03c43a4-801` passed `scripts/reproduce.sh` and `python validate.py --compare` in the container.
+- Final scoring keeps paper-reference `omniretarget` results in `scoring/scores.json` and local substitute-task diagnostics in `scoring/diagnostics.json`.
+- No packaging issue remains for the reusable kinematic reproduction gym.
+
+### [2026-06-06 08:18] - core_claim
+- Independent audit confirmed that the implementation captures the OmniRetarget interaction-mesh constrained retargeting core, but the SciPy SLSQP solver and planar synthetic benchmark are significant scale deviations from the paper's Drake sequential SOCP and Unitree datasets.
+- Final milestone is conservatively set to `core_claim`: the terrain interaction benchmark preserves contact while enforcing no penetration and no skating; object interaction preserves hard constraints but has lower normalized contact score under the stricter metric.
+
+### [2026-06-06 08:25] - core_claim
+- Final verification cleaned method-agnostic documentation and restored the local keypoint IK baseline to official scores as a substitute comparator.
+- `python validate.py --compare` passes after the verification fixes.
+- Workspace is ready as a partial gym for the scaled kinematic retargeting problem; higher milestones require original-scale assets, solver fidelity, augmentation, or downstream RL.
+
+### [2026-06-06 08:26] - core_claim
+- Added a method-side hard object-contact constraint for labeled hand-object contacts to improve the object interaction benefit metric.
+- Submitted a CPU audit job to regenerate packaged reproduction, train-slice scores, and test-slice scores before considering any milestone change.
+
+### [2026-06-06 08:35] - core_claim
+- Final verification rejected the object-contact constraint attempt because audit jobs showed no object benefit and worse foot-skating metrics.
+- Removed the attempted constraint and kept the validated scaled interaction-mesh constrained optimizer.
+- Milestone remains `core_claim`.
+
+### [2026-11-12 04:40] - core_claim
+- Hardening (iteration 11): rebuilt the benchmark around a hidden, generated 120-instance test, a q-only evaluator with a validity gate (worst values on failure) and an every-registered-method interface; restored the paper's per-frame sequential convex solver (trust region 0.2, <=10 iterations), 1 cm/s stance detection and direct scaling; added the scene-augmentation experiment (Sec. III-B).
+- Hidden test: OmniRetarget has ~0 penetration and skating vs 0.36-0.43 / 0.41-0.56 for keypoint IK, and higher contact in all three experiments (0.83/0.86/0.71 vs 0.71/0.86/0.54); rank delta of the baseline -7.4. A contact-aware variant beats the reference by +1.47 (paired 95% CI [+1.07, +1.90]); all red-team shortcuts now fail or score as their real trajectory. Details in HARDENING.md.
+- Milestone kept at `core_claim`: scaled planar substitute, no downstream RL; the mesh-vs-constrained-keypoint ablation is a tie.
+
+### [2026-11-14] - core_claim
+- Hardening (iteration 12), addressing REVIEW.md: scenes brought to the robot's scale (paper: same object/environment points in source and target meshes, direct scaling), box carried up a ramp (robot-object-terrain), paper Eq. 4/5 anchoring for object augmentation, Sec. III-B terrain-augmentation contact constraints; new spurious-contact metric; fidelity measured at robot scale; counted CPU budget instead of the wall-clock limit (the 2400 s blow-up was BLAS thread oversubscription); 180-instance hidden test.
+- Hidden test: reference contact 0.993/0.989/0.967 with ~0 penetration/skating; no-mesh ablation -0.57 [-0.73,-0.41] (was a tie); keypoint IK -8.31; contact-aware variant +0.15 [+0.09,+0.23]; keypoint+contact ties (+0.05, was +1.66). Details in HARDENING.md.
+- Milestone kept at `core_claim`: scaled planar substitute, no downstream RL.
 
 </details>
 
