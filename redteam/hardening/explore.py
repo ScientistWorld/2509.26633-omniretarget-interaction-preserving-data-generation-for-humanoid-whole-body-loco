@@ -18,8 +18,12 @@ Usage: python redteam/hardening/explore.py [run|summary] [out_dir]
 
 from __future__ import annotations
 
-import json
 import os
+
+for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
+    os.environ[_v] = "1"  # one BLAS thread per process: no oversubscription, stable CPU accounting
+
+import json
 import sys
 import time
 import traceback
@@ -194,6 +198,17 @@ def _job(args):
     return rec
 
 
+def _cpu_quota() -> int:
+    """CPUs actually granted (cgroup quota), not the affinity mask."""
+    try:
+        quota, period = Path("/sys/fs/cgroup/cpu.max").read_text().split()[:2]
+        if quota != "max":
+            return max(1, int(int(quota) // int(period)))
+    except Exception:
+        pass
+    return max(1, len(os.sched_getaffinity(0)))
+
+
 def run(out_dir: Path) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     log = out_dir / "records.jsonl"
@@ -211,7 +226,7 @@ def run(out_dir: Path) -> None:
             for inp, ann in split:
                 if (setup, method, inp["instance_id"]) not in done:
                     jobs.append((setup, method, inp, ann))
-    ncpu = max(1, len(os.sched_getaffinity(0)))
+    ncpu = int(os.environ.get("EXPLORE_WORKERS", "0")) or _cpu_quota()
     print(f"[run] {len(jobs)} jobs on {ncpu} cpus", flush=True)
     t0 = time.time()
     with open(log, "a") as fh, Pool(ncpu) as pool:
