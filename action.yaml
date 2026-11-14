@@ -1,6 +1,4 @@
 # Once you set action to 'submit' or 'done', STOP immediately.
-action: submit
-gpus: 0
-test: false
+action: done
 milestone: core_claim
-notes: "Hardening iter 12 final check (resumable chunks): variants + shortcuts through the hidden test and train, CPU-budget checks, summaries, validate (official run already done)"
+notes: "Iteration 12 hardening: robot-scale scenes + paper Eq.4/5 & terrain-aug constraints make the mesh matter (no-mesh -0.57, was a tie); keypoint+contact +1.66 -> tie; counted CPU budget replaces wall clock; better variant +0.15 beyond noise; all invalid shortcuts score worst. See HARDENING.md."
