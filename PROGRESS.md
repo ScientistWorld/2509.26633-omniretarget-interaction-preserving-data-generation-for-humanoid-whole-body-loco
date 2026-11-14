@@ -70,3 +70,7 @@ Final verification rejected an attempted object-contact equality constraint: CPU
 ### [2026-11-12 04:40] - core_claim (iteration 11, hardener)
 - Jobs: `47e6081b-653` (cancelled: baseline used numeric gradients; reference floated without the paper's direct scaling), `ca61137d-357` (36-instance test; fixes validated), `9f74fa16-ef7` (final: 60 train / 120 test instances, official scores + combined variants/shortcuts run; optional combined-train pass cancelled after a node slowdown).
 - Final official scores: `scoring/scores_train.json`, `scoring/scores_test.json`; audit results in `redteam/hardening/results/`; report in `HARDENING.md`.
+
+### [2026-11-14] - core_claim (iteration 12, hardener)
+- Jobs: `7a16b974-f50` (exploration, cancelled: 8 workers x multi-threaded BLAS on a 1-CPU allocation inflated CPU time ~300x), `a6db59d2-208` (exploration of 5 candidate setups x 10 methods on a 60-instance dev split, `redteam/hardening/results/explore/`), `80d6fa58-151` (final check; official run completed, cancelled after 3 preemptions), `301cd2e9-fd7` (resumable chunked audit: variants, shortcuts, private-search probe, tamper check, CPU-budget checks, train + test).
+- Final official scores: `scoring/scores_train.json`, `scoring/scores_test.json` (= `redteam/hardening/results/official/`); audit in `redteam/hardening/results/combined_{test,train}/`; report in `HARDENING.md`.

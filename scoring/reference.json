@@ -216,20 +216,21 @@
           "description": "Mean keypoint velocity mismatch between the robot and the demonstration brought to the robot's scale (cm/s, capped at 300)."
         }
       },
-      "_paper_note": "The paper reports no kinematic metrics for augmented motions (only downstream RL success, 79.1% on the augmented dataset vs 82.2% on nominal motions; baselines are not run because they do not support augmentation). The omniretarget row below is therefore this gym's own measured hidden-test value of the reference implementation, recorded for orientation (validate.py requires a proposed row); it is not a paper number and nothing was tuned towards it.",
+      "_paper_note": "The paper reports no kinematic metrics for augmented motions (only downstream RL success, 79.1% on the augmented dataset vs 82.2% on nominal motions; baselines are not run because they do not support augmentation). The omniretarget row below is therefore this gym's own measured hidden-test value (iteration 12, 180-instance test, 60 in this experiment) of the reference implementation, recorded for orientation (validate.py requires a proposed row); it is not a paper number and nothing was tuned towards it.",
       "results": {
         "keypoint_ik": {
           "type": "baseline"
         },
         "omniretarget": {
           "type": "proposed",
-          "penetration_duration": 0.0049,
-          "max_penetration_cm": 0.1614,
-          "foot_skating_duration": 0.0013,
-          "max_foot_skating_cm_s": 0.6737,
-          "contact_preservation": 0.7136,
-          "pelvis_path_error_cm": 1.4487,
-          "motion_velocity_error_cm_s": 7.2009
+          "penetration_duration": 0.0171,
+          "max_penetration_cm": 0.1906,
+          "foot_skating_duration": 0.001,
+          "max_foot_skating_cm_s": 0.5702,
+          "contact_preservation": 0.9668,
+          "spurious_contact_duration": 0.0095,
+          "pelvis_path_error_cm": 1.9816,
+          "motion_velocity_error_cm_s": 7.0985
         }
       }
     }

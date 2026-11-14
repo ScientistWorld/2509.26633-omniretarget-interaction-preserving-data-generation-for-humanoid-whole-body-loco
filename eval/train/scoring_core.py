@@ -83,7 +83,7 @@ CLEARANCE_DEMO = 0.03            # m: demonstrator end effector (robot scale) th
 CLEARANCE_TOUCH = 0.01           # m: ... while the robot's is within this of a surface = spurious contact
 LINK_SAMPLES = 21
 
-CPU_BUDGET_PER_INSTANCE = 20.0   # CPU seconds per instance (reference method: about 0.6)
+CPU_BUDGET_PER_INSTANCE = 6.0    # CPU seconds per instance (reference method: about 0.7, so ~8x headroom)
 IDLE_POLL_LIMIT = 1800           # consecutive 1 s polls without any CPU progress = hung method
 THREAD_ENV = {"OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1",
               "NUMEXPR_NUM_THREADS": "1", "VECLIB_MAXIMUM_THREADS": "1"}

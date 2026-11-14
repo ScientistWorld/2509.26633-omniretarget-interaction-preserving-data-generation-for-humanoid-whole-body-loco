@@ -5,10 +5,11 @@ OmniRetarget retargets a demonstration frame by frame by preserving an
 Alg. 5, App. D).
 
 - **Preprocessing (App. A, Eq. 7/8):** the demonstration is scaled by
-  `alpha = h_robot / h_human` (heights from the demonstrator's bone lengths). The
-  human keypoints and the source-scene samples are scaled together about the
-  ground point below the pelvis in each frame, so the scaled demonstration stays
-  self-consistent and keeps its walking path.
+  `alpha = h_robot / h_human` (heights from the demonstrator's bone lengths)
+  about the ground point below the initial pelvis. The human keypoints and the
+  source-scene samples are scaled together, so the scaled demonstration is
+  self-consistent; it coincides with the nominal scene the robot acts in (the
+  benchmark's `nominal_scene`), except that the object keeps its true size.
 - **Interaction mesh:** Delaunay triangulation (the 2D analogue of the paper's
   tetrahedralisation) of the scaled source keypoints plus dense samples of the
   object surface (32 points) and the terrain (every 5 cm, including all polyline
@@ -28,6 +29,15 @@ Alg. 5, App. D).
   solved exactly with SciPy SLSQP; an L-infinity elastic slack on the linearised
   collision rows keeps it feasible. Output configurations are projected onto the
   joint/velocity box.
+- **Frame 0:** keypoint IK on the scaled demonstration, the demonstrator's
+  initially planted feet constrained onto the target ground, 40 iterations.
+- **Augmentation (Sec. III-B, App. C):** object augmentations first solve the
+  nominal motion `q*_bar` in the nominal scene, then re-solve in the augmented
+  scene with `||q_t - q*_bar_t||_W^2` (W = 20 on base and legs, 0 on torso and
+  arms; Eq. 4) and the initial feet fixed to the nominal ones (Eq. 5). Terrain
+  augmentations add the section's "additional constraints" for stable ground
+  contact on the modified terrain: a foot the demonstrator plants is constrained
+  onto the target terrain in the frame it lands ((3e) then keeps it there).
 
 Scaled-down relative to the paper: planar 11-DoF robot instead of a 3D Unitree
 G1 with quaternion floating base, sampled link points instead of collision

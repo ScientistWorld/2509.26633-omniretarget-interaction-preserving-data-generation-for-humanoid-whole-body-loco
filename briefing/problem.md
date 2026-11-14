@@ -33,28 +33,36 @@ provides signed distances to terrain polylines and boxes.
 
 Each instance is one demonstration (2.6–3.2 s at 30 Hz) of one of two task types:
 
-- `object_carry`: the human side-steps while holding a box overhead with both
-  hands on its sides; the box also moves up and down.
+- `object_carry`: the human side-steps up a ramp onto a platform while holding
+  a box overhead with both hands on its sides; the box also moves up and down.
 - `terrain_step`: the human side-steps up a ramp onto a platform and braces the
   right hand on top of a tall column standing on the platform.
 
 Demonstrators vary in overall size (roughly 0.9–1.15 times the robot) and in
-individual segment proportions. Every instance carries two scenes:
+individual segment proportions. Every instance carries three scenes:
 
-- `source_scene`: the scene the human interacted with,
-- `target_scene`: the scene in which the robot must act. In most instances it is
-  identical to the source scene; in *augmented* instances it is a modified copy
+- `source_scene`: the scene the human interacted with, at the human's scale;
+- `nominal_scene`: the same scene brought to the robot's scale by direct
+  scaling with `alpha = h_robot / h_human` (h = torso + thigh + shin at full
+  extension) about the ground point below the demonstrator's initial pelvis:
+  every terrain vertex and the box trajectory are scaled; the box keeps its true
+  size (the robot handles the same object), so the human's hand positions, once
+  scaled, do not land exactly on it;
+- `target_scene`: the scene in which the robot must act. In nominal instances it
+  equals `nominal_scene`; in *augmented* instances it is a modified copy of it
   (the box is resized and starts displaced, with the displacement decaying over
-  time, or the platform and column heights change). Scene correspondences are
-  explicit: terrain polylines have the same vertices in both scenes, and the box
-  keeps its identity (`center` per frame, `size`).
+  time, or the platform and the column on it are raised or lowered).
+
+Scene correspondences are explicit: terrain polylines have the same vertices in
+all three scenes, and the box keeps its identity (`center` per frame, `size`).
 
 Input file format (`data/tasks/train/inputs/<instance_id>.json`):
 
 ```
 instance_id, task_type, dt, num_frames, keypoint_names,
-source_keypoints  [num_frames][12][2]   (metres; x horizontal, z up)
+source_keypoints  [num_frames][12][2]   (metres; x horizontal, z up; human scale)
 source_scene      {"terrain": [[x, z], ...], "object": null | {"size": [w, h], "center": [num_frames][2]}}
+nominal_scene     same structure
 target_scene      same structure
 ```
 
