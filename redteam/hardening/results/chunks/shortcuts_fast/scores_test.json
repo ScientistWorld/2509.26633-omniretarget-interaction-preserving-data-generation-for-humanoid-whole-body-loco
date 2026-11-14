@@ -1,0 +1,196 @@
+{
+  "experiments": {
+    "object_interaction_kinematics": {
+      "results": {
+        "sc_constant_pose": {
+          "penetration_duration": 0.03915965771776463,
+          "max_penetration_cm": 0.38734000000000024,
+          "foot_skating_duration": 0.0,
+          "max_foot_skating_cm_s": 0.0,
+          "contact_preservation": 0.41294770031164396,
+          "spurious_contact_duration": 1.0,
+          "pelvis_path_error_cm": 23.118059110598736,
+          "motion_velocity_error_cm_s": 21.591371563140093
+        },
+        "sc_empty": {
+          "penetration_duration": 1.0,
+          "max_penetration_cm": 30.0,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 300.0,
+          "contact_preservation": 0.0,
+          "spurious_contact_duration": 1.0,
+          "pelvis_path_error_cm": 100.0,
+          "motion_velocity_error_cm_s": 300.0
+        },
+        "sc_impossible_q": {
+          "penetration_duration": 1.0,
+          "max_penetration_cm": 30.0,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 300.0,
+          "contact_preservation": 0.0,
+          "spurious_contact_duration": 1.0,
+          "pelvis_path_error_cm": 100.0,
+          "motion_velocity_error_cm_s": 300.0
+        },
+        "sc_malformed": {
+          "penetration_duration": 1.0,
+          "max_penetration_cm": 30.0,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 300.0,
+          "contact_preservation": 0.0,
+          "spurious_contact_duration": 1.0,
+          "pelvis_path_error_cm": 100.0,
+          "motion_velocity_error_cm_s": 300.0
+        },
+        "sc_nan": {
+          "penetration_duration": 1.0,
+          "max_penetration_cm": 30.0,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 300.0,
+          "contact_preservation": 0.0,
+          "spurious_contact_duration": 1.0,
+          "pelvis_path_error_cm": 100.0,
+          "motion_velocity_error_cm_s": 300.0
+        },
+        "sc_zero_q": {
+          "penetration_duration": 1.0,
+          "max_penetration_cm": 30.0,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 300.0,
+          "contact_preservation": 0.0,
+          "spurious_contact_duration": 1.0,
+          "pelvis_path_error_cm": 100.0,
+          "motion_velocity_error_cm_s": 300.0
+        }
+      }
+    },
+    "terrain_interaction_kinematics": {
+      "results": {
+        "sc_constant_pose": {
+          "penetration_duration": 0.0,
+          "max_penetration_cm": 0.0,
+          "foot_skating_duration": 0.0,
+          "max_foot_skating_cm_s": 0.0,
+          "contact_preservation": 0.8145080488937911,
+          "spurious_contact_duration": 0.19747941012247716,
+          "pelvis_path_error_cm": 29.00706029129385,
+          "motion_velocity_error_cm_s": 28.50712290371847
+        },
+        "sc_empty": {
+          "penetration_duration": 1.0,
+          "max_penetration_cm": 30.0,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 300.0,
+          "contact_preservation": 0.0,
+          "spurious_contact_duration": 1.0,
+          "pelvis_path_error_cm": 100.0,
+          "motion_velocity_error_cm_s": 300.0
+        },
+        "sc_impossible_q": {
+          "penetration_duration": 1.0,
+          "max_penetration_cm": 30.0,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 300.0,
+          "contact_preservation": 0.0,
+          "spurious_contact_duration": 1.0,
+          "pelvis_path_error_cm": 100.0,
+          "motion_velocity_error_cm_s": 300.0
+        },
+        "sc_malformed": {
+          "penetration_duration": 1.0,
+          "max_penetration_cm": 30.0,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 300.0,
+          "contact_preservation": 0.0,
+          "spurious_contact_duration": 1.0,
+          "pelvis_path_error_cm": 100.0,
+          "motion_velocity_error_cm_s": 300.0
+        },
+        "sc_nan": {
+          "penetration_duration": 1.0,
+          "max_penetration_cm": 30.0,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 300.0,
+          "contact_preservation": 0.0,
+          "spurious_contact_duration": 1.0,
+          "pelvis_path_error_cm": 100.0,
+          "motion_velocity_error_cm_s": 300.0
+        },
+        "sc_zero_q": {
+          "penetration_duration": 1.0,
+          "max_penetration_cm": 30.0,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 300.0,
+          "contact_preservation": 0.0,
+          "spurious_contact_duration": 1.0,
+          "pelvis_path_error_cm": 100.0,
+          "motion_velocity_error_cm_s": 300.0
+        }
+      }
+    },
+    "augmented_interaction_kinematics": {
+      "results": {
+        "sc_constant_pose": {
+          "penetration_duration": 0.04880525431654765,
+          "max_penetration_cm": 0.6577166666666668,
+          "foot_skating_duration": 0.0,
+          "max_foot_skating_cm_s": 0.0,
+          "contact_preservation": 0.6125882791449978,
+          "spurious_contact_duration": 0.600810211473411,
+          "pelvis_path_error_cm": 26.6591403881306,
+          "motion_velocity_error_cm_s": 26.03444310221104
+        },
+        "sc_empty": {
+          "penetration_duration": 1.0,
+          "max_penetration_cm": 30.0,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 300.0,
+          "contact_preservation": 0.0,
+          "spurious_contact_duration": 1.0,
+          "pelvis_path_error_cm": 100.0,
+          "motion_velocity_error_cm_s": 300.0
+        },
+        "sc_impossible_q": {
+          "penetration_duration": 1.0,
+          "max_penetration_cm": 30.0,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 300.0,
+          "contact_preservation": 0.0,
+          "spurious_contact_duration": 1.0,
+          "pelvis_path_error_cm": 100.0,
+          "motion_velocity_error_cm_s": 300.0
+        },
+        "sc_malformed": {
+          "penetration_duration": 1.0,
+          "max_penetration_cm": 30.0,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 300.0,
+          "contact_preservation": 0.0,
+          "spurious_contact_duration": 1.0,
+          "pelvis_path_error_cm": 100.0,
+          "motion_velocity_error_cm_s": 300.0
+        },
+        "sc_nan": {
+          "penetration_duration": 1.0,
+          "max_penetration_cm": 30.0,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 300.0,
+          "contact_preservation": 0.0,
+          "spurious_contact_duration": 1.0,
+          "pelvis_path_error_cm": 100.0,
+          "motion_velocity_error_cm_s": 300.0
+        },
+        "sc_zero_q": {
+          "penetration_duration": 1.0,
+          "max_penetration_cm": 30.0,
+          "foot_skating_duration": 1.0,
+          "max_foot_skating_cm_s": 300.0,
+          "contact_preservation": 0.0,
+          "spurious_contact_duration": 1.0,
+          "pelvis_path_error_cm": 100.0,
+          "motion_velocity_error_cm_s": 300.0
+        }
+      }
+    }
+  }
+}

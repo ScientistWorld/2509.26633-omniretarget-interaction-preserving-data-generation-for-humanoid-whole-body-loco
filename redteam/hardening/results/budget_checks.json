@@ -1,0 +1,20 @@
+{
+  "budget_cpu_s": 5.0,
+  "idle_poll_limit": 10,
+  "cpu_burn": {
+    "reason": "CPU budget exceeded (5 CPU s)",
+    "cpu_s": 0.0
+  },
+  "cpu_burn_in_child": {
+    "reason": "CPU budget exceeded (5 CPU s)",
+    "cpu_s": 0.0
+  },
+  "sleep_forever": {
+    "reason": "no CPU progress for 10 polls (hung)",
+    "cpu_s": 0.0
+  },
+  "quick_ok": {
+    "reason": "",
+    "cpu_s": 0.02
+  }
+}

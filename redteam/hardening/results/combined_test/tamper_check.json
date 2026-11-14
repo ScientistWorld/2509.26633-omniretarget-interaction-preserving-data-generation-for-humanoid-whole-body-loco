@@ -1,0 +1,6 @@
+{
+  "identical_to_official_under_tampering": {
+    "omniretarget": true,
+    "keypoint_ik": true
+  }
+}
