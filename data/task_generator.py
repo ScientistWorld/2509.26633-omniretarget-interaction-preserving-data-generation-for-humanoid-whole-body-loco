@@ -1,9 +1,10 @@
 """Procedural human demonstrations for the interaction-retargeting benchmark.
 
 Each instance is a short (2.6-3.2 s, 30 Hz) demonstration by a planar human
-whose segment lengths differ from the robot's (overall scale 0.90-1.15 plus
-per-segment variation).  The human side-steps along +x with a planted-foot
-gait (stance feet are exactly stationary; swing feet lift and land).
+whose overall size (0.90-1.15 times the robot) and individual segment
+proportions differ from the robot's.  The human side-steps along +x with a
+planted-foot gait (stance feet are exactly stationary; swing feet lift and
+land).
 
 Task types
 ----------
@@ -12,18 +13,30 @@ object_carry   The human carries a box overhead with both hands on the box
 terrain_step   The human steps up a ramp onto a platform and braces the right
                hand on top of a tall column standing on the platform.
 
-Every instance has a *source scene* (what the human interacted with) and a
-*target scene* (where the robot must act).  In nominal instances they are
-identical.  In augmented instances the target scene is a modified copy:
-the box is resized and starts displaced with an exponentially decaying
-offset, or the platform/column heights change.
+Scenes
+------
+``source_scene``   what the human interacted with (human scale).
+``nominal_scene``  the same scene brought to the robot's scale by direct
+                   scaling (paper App. A, Eq. 7/8): every terrain vertex and
+                   the object's trajectory are scaled by
+                   alpha = h_robot / h_human about the ground point below the
+                   demonstrator's initial pelvis.  The object keeps its true
+                   size (the robot handles the same object), so scaled human
+                   hand positions do not land exactly on it.
+``target_scene``   where the robot must act.  For nominal instances it equals
+                   ``nominal_scene``; for augmented instances it is a modified
+                   copy (paper Sec. III-B / App. C): the box is resized and
+                   displaced with an exponentially decaying offset (Eq. 14),
+                   or the platform (and the column on it) is raised or lowered.
+
+Heights h are foot-to-neck heights at full extension (torso + thigh + shin).
 
 Outputs per instance
 --------------------
-``input``       what a retargeting method receives (source keypoints, both
-                scenes, timing).
-``annotation``  evaluation-only labels: desired foot-stance frames and
-                desired hand contacts, plus generator metadata.
+``input``       what a retargeting method receives (source keypoints, the
+                three scenes, timing).
+``annotation``  evaluation labels: desired foot-stance frames, desired hand
+                contacts, the scaling (alpha, anchor) and generator metadata.
 """
 
 from __future__ import annotations
@@ -46,6 +59,17 @@ EXPERIMENT_OF = {
     ("terrain_step", True): "augmented_interaction_kinematics",
 }
 HUMAN_LINKS = [(0, 1), (1, 6), (1, 9), (0, 2), (2, 3), (0, 4), (4, 5), (6, 7), (7, 8), (9, 10), (10, 11)]
+
+# Augmentation ranges (paper Sec. III-B, App. C).
+AUG_LEVELS = {
+    "small": {"k": (0.85, 1.20), "dpx": (0.03, 0.08), "dpz": 0.05, "tau": (1.0, 3.0),
+              "H_mult": (0.5, 1.6), "H_clip": (0.05, 0.32), "dH_min": 0.04},
+    "large": {"k": (0.75, 1.35), "dpx": (0.06, 0.16), "dpz": 0.08, "tau": (1.0, 3.0),
+              "H_mult": (0.4, 1.8), "H_clip": (0.04, 0.34), "dH_min": 0.05},
+}
+# scene_mode "robot": nominal/target scenes are the demonstration scene at the
+# robot's scale (above).  "human": they keep the demonstrator's scale.
+DEFAULT_CONFIG = {"scene_mode": "robot", "prop_jitter": 0.06, "aug_level": "large", "object_terrain": False}
 
 
 class Reject(Exception):
@@ -85,8 +109,8 @@ def _two_link(root: np.ndarray, target: np.ndarray, a: float, b: float, outward:
     return (m1 if m1[0] >= m2[0] else m2), ratio
 
 
-def _human_dims(rng: np.random.Generator, s: float) -> dict:
-    j = lambda: float(rng.uniform(0.94, 1.06))  # noqa: E731
+def _human_dims(rng: np.random.Generator, s: float, jitter: float) -> dict:
+    j = lambda: float(rng.uniform(1.0 - jitter, 1.0 + jitter))  # noqa: E731
     return {
         "thigh": ROBOT.thigh * s * j(),
         "shin": ROBOT.shin * s * j(),
@@ -191,9 +215,9 @@ def _robot_can_hold(targets, pelvis_x, ground, box=None) -> bool:
     return False
 
 
-def _attempt(rng: np.random.Generator, kind: str, augmented: bool) -> tuple[dict, dict]:
+def _attempt(rng: np.random.Generator, kind: str, augmented: bool, cfg: dict) -> tuple[dict, dict]:
     s = float(rng.uniform(0.90, 1.15))
-    dims = _human_dims(rng, s)
+    dims = _human_dims(rng, s, float(cfg["prop_jitter"]))
     leg = dims["thigh"] + dims["shin"]
     arm = dims["upper_arm"] + dims["forearm"]
     N = int(rng.integers(78, 97))
@@ -209,22 +233,26 @@ def _attempt(rng: np.random.Generator, kind: str, augmented: bool) -> tuple[dict
     x_rf = float(xs_f["R"][-1])
     x_r0 = x_start["R"]
 
-    if kind == "terrain_step":
+    ramp = kind == "terrain_step" or bool(cfg.get("object_terrain"))
+    if ramp:
         W_r = float(rng.uniform(0.08, 0.16))
         lo, hi = x_r0 + 0.04, x_rf - W_r - 0.04
         if hi <= lo:
             raise Reject("no room for ramp")
         x_r = float(rng.uniform(lo, hi))
         H = float(rng.uniform(0.10, 0.24))
+    if kind == "terrain_step":
         x_c = x_rf + float(rng.uniform(0.12, 0.18))
         W_c = float(rng.uniform(0.14, 0.22))
         terrain_src = None  # column height filled in after the body is built
+        tmp_terrain = [[-4.0, 0.0], [x_r, 0.0], [x_r + W_r, H], [x_c, H], [x_c + 0.02, H + 2.0],
+                       [x_c + W_c - 0.02, H + 2.0], [x_c + W_c, H], [4.0, H]]
+    elif ramp:  # box carried up a ramp onto a platform (robot-object-terrain interaction)
+        terrain_src = [[-4.0, 0.0], [x_r, 0.0], [x_r + W_r, H], [4.0, H]]
+        tmp_terrain = terrain_src
     else:
         terrain_src = flat
-
-    tmp_terrain = flat if kind == "object_carry" else [
-        [-4.0, 0.0], [x_r, 0.0], [x_r + W_r, H], [x_c, H], [x_c + 0.02, H + 2.0],
-        [x_c + W_c - 0.02, H + 2.0], [x_c + W_c, H], [4.0, H]]
+        tmp_terrain = flat
     lift_seed = int(rng.integers(1 << 30))
     xs, zs, base, planted = _foot_tracks(steps, N, x_start, tmp_terrain, np.random.default_rng(lift_seed))
 
@@ -332,43 +360,56 @@ def _attempt(rng: np.random.Generator, kind: str, augmented: bool) -> tuple[dict
             if np.min(box_sdf(samples[t], obj_src["center"][t], obj_src["size"])) < -0.003:
                 raise Reject("human penetrates box")
 
-    # Target scene (augmentation of the source scene).
-    terrain_tgt = [list(v) for v in terrain_src]
-    obj_tgt = None if obj_src is None else {"size": list(obj_src["size"]), "center": obj_src["center"].copy()}
+    # Nominal scene at the robot's scale (direct scaling, App. A Eq. 7/8).
+    h_human = dims["torso"] + dims["thigh"] + dims["shin"]
+    alpha = ROBOT.height / h_human if cfg["scene_mode"] == "robot" else 1.0
+    anchor = np.array([float(px[0]), float(terrain_height(px[0], terrain_src))])
+
+    def to_robot(p):
+        return anchor + alpha * (np.asarray(p, dtype=float) - anchor)
+
+    terrain_nom = to_robot(np.asarray(terrain_src, dtype=float))
+    obj_nom = None if obj_src is None else {"size": np.asarray(obj_src["size"], dtype=float),
+                                             "center": to_robot(obj_src["center"])}
+
+    # Target scene (augmentation of the nominal scene, Sec. III-B / App. C).
+    A = AUG_LEVELS[cfg["aug_level"]]
+    terrain_tgt = terrain_nom.copy()
+    obj_tgt = None if obj_nom is None else {"size": obj_nom["size"].copy(), "center": obj_nom["center"].copy()}
     aug_info = {}
     if augmented and kind == "object_carry":
-        k = float(rng.uniform(0.85, 1.20))
-        dpx = float(rng.choice([-1, 1]) * rng.uniform(0.03, 0.08))
-        dpz = float(rng.uniform(-0.05, 0.05))
-        tau = float(rng.uniform(1.0, 3.0))
+        k = float(rng.uniform(*A["k"]))
+        dpx = float(rng.choice([-1, 1]) * rng.uniform(*A["dpx"]))
+        dpz = float(rng.uniform(-A["dpz"], A["dpz"]))
+        tau = float(rng.uniform(*A["tau"]))
         decay = np.exp(-t_idx * DT / tau)
-        obj_tgt = {"size": [obj_src["size"][0] * k, obj_src["size"][1] * k],
-                   "center": obj_src["center"] + np.stack([dpx * decay, dpz * decay], axis=1)}
+        obj_tgt = {"size": obj_nom["size"] * k,
+                   "center": obj_nom["center"] + np.stack([dpx * decay, dpz * decay], axis=1)}
         aug_info = {"size_scale": k, "offset": [dpx, dpz], "tau": tau}
     elif augmented and kind == "terrain_step":
-        H2 = float(np.clip(H * rng.uniform(0.5, 1.6), 0.05, 0.32))
-        if abs(H2 - H) < 0.04:
+        H_nom = float(terrain_nom[3, 1] - terrain_nom[1, 1])  # platform height in the nominal scene
+        H2 = float(np.clip(H_nom * rng.uniform(*A["H_mult"]), *A["H_clip"]))
+        if abs(H2 - H_nom) < A["dH_min"]:
             raise Reject("augmentation too small")
-        dH = H2 - H
-        terrain_tgt = [[x, z + dH if (x > x_r + 1e-9) else z] for x, z in terrain_src]
-        aug_info = {"platform_height": [H, H2]}
+        dH = H2 - H_nom
+        x_ramp = float(terrain_nom[1, 0])
+        terrain_tgt = np.array([[x, z + dH if (x > x_ramp + 1e-9) else z] for x, z in terrain_nom])
+        aug_info = {"platform_height": [H_nom, H2]}
 
     # Desired robot contacts must be physically attainable in the target scene.
     for t in range(N):
-        targets = {}
+        pel_x = float(to_robot(pel[t])[0])
         if kind == "object_carry":
-            cen, size = obj_tgt["center"][t], np.array(obj_tgt["size"])
-            sc = size / np.array(obj_src["size"])
-            rel_l = (lhand[t] - obj_src["center"][t]) * sc
-            rel_r = (rhand[t] - obj_src["center"][t]) * sc
-            targets = {"L": cen + rel_l, "R": cen + rel_r}
-            if not _robot_can_hold(targets, px[t], 0.0, (cen, size)):
+            cen, size = obj_tgt["center"][t], obj_tgt["size"]
+            sc = size / np.asarray(obj_src["size"], dtype=float)
+            targets = {"L": cen + (lhand[t] - obj_src["center"][t]) * sc,
+                       "R": cen + (rhand[t] - obj_src["center"][t]) * sc}
+            if not _robot_can_hold(targets, pel_x, float(terrain_height(pel_x, terrain_tgt)), (cen, size)):
                 raise Reject("robot cannot hold the box")
         elif hand_contact["right_hand"][t] == "terrain":
-            x_h = rhand[t, 0]
+            x_h = float(to_robot(rhand[t])[0])
             targets = {"R": np.array([x_h, float(terrain_height(x_h, terrain_tgt))])}
-            ground = float(terrain_height(px[t], terrain_tgt))
-            if not _robot_can_hold(targets, px[t], ground):
+            if not _robot_can_hold(targets, pel_x, float(terrain_height(pel_x, terrain_tgt))):
                 raise Reject("robot cannot reach the column")
 
     stance = {"left_foot": planted["L"].tolist(), "right_foot": planted["R"].tolist()}
@@ -386,12 +427,15 @@ def _attempt(rng: np.random.Generator, kind: str, augmented: bool) -> tuple[dict
         "keypoint_names": KEYPOINTS,
         "source_keypoints": np.round(kp, 6).tolist(),
         "source_scene": scene(terrain_src, obj_src),
+        "nominal_scene": scene(terrain_nom, obj_nom),
         "target_scene": scene(terrain_tgt, obj_tgt),
     }
     ann = {
         "experiment": EXPERIMENT_OF[(kind, augmented)],
         "stance": stance,
         "hand_contact": hand_contact,
+        "alpha": float(alpha),
+        "anchor": [float(v) for v in anchor],
         "human_scale": s,
         "augmented": bool(augmented),
         "augmentation": aug_info,
@@ -399,11 +443,13 @@ def _attempt(rng: np.random.Generator, kind: str, augmented: bool) -> tuple[dict
     return inp, ann
 
 
-def make_instance(master_seed: int, index: int, kind: str, augmented: bool, instance_id: str) -> tuple[dict, dict]:
+def make_instance(master_seed: int, index: int, kind: str, augmented: bool, instance_id: str,
+                  cfg: dict | None = None) -> tuple[dict, dict]:
+    cfg = {**DEFAULT_CONFIG, **(cfg or {})}
     rng = np.random.default_rng([master_seed, index])
     for _ in range(500):
         try:
-            inp, ann = _attempt(rng, kind, augmented)
+            inp, ann = _attempt(rng, kind, augmented, cfg)
         except Reject:
             continue
         inp = {"instance_id": instance_id, **inp}
@@ -412,7 +458,7 @@ def make_instance(master_seed: int, index: int, kind: str, augmented: bool, inst
     raise RuntimeError(f"could not generate instance {instance_id}")
 
 
-def make_split(master_seed: int, per_experiment: int, prefix: str) -> list[tuple[dict, dict]]:
+def make_split(master_seed: int, per_experiment: int, prefix: str, cfg: dict | None = None) -> list[tuple[dict, dict]]:
     out = []
     idx = 0
     plan = []
@@ -424,7 +470,7 @@ def make_split(master_seed: int, per_experiment: int, prefix: str) -> list[tuple
         kind = "object_carry" if i % 2 == 0 else "terrain_step"
         plan.append((kind, True, f"{prefix}_aug_{i:02d}"))
     for kind, aug, iid in plan:
-        out.append(make_instance(master_seed, idx, kind, aug, iid))
+        out.append(make_instance(master_seed, idx, kind, aug, iid, cfg))
         idx += 1
     return out
 

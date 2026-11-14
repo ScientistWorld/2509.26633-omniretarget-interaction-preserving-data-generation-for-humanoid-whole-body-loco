@@ -1,16 +1,8 @@
 #!/bin/bash
-# Reproduce the gym end to end inside the container (no internet needed):
-# regenerate the public train instances, score every registered method
-# (OmniRetarget reference and keypoint-IK baseline) on train and on the hidden
-# test split, and validate the workspace.
-#
-# The hardening audit (variants + shortcut submissions through the hidden test)
-# is reproduced with:
-#   python redteam/hardening/harness.py official
-#   python redteam/hardening/harness.py combined
-#   python redteam/hardening/summarize.py redteam/hardening/results/combined_test
+# Iteration-12 hardening, step 1: design exploration (candidate setups x methods on a dev split).
 set -e
 cd /home/user
 export PYTHONPATH=/home/user:${PYTHONPATH:-}
 python --version
-bash scripts/reproduce.sh
+python -c "import numpy, scipy, os; print(numpy.__version__, scipy.__version__, len(os.sched_getaffinity(0)), 'cpus')"
+python redteam/hardening/explore.py run redteam/hardening/results/explore

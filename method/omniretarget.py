@@ -1,4 +1,4 @@
-"""OmniRetarget, scaled planar reproduction (paper Sec. III-A, Alg. 5, App. D).
+"""OmniRetarget, scaled planar reproduction (paper Sec. III, Alg. 5, App. A-D).
 
 For every frame t (warm-started from q*_{t-1}) we solve
 
@@ -19,13 +19,21 @@ uniform Laplacian weights; meshes are expressed in the object frame when an
 object is present.  A foot is in stance when its source horizontal speed is
 below 1 cm/s.
 
-Source preprocessing follows the paper's direct scaling (App. A, Eq. 7/8):
-the demonstration is scaled by alpha = h_robot / h_human (heights from the
-demonstrator's bone lengths).  The whole demonstration -- human keypoints and
-the source-scene samples they interact with -- is scaled about the ground
-point below the pelvis in every frame, so the scaled demonstration stays
-self-consistent while the walking path is kept; the target mesh uses the
-robot and the actual target scene.
+Source preprocessing is the paper's direct scaling (App. A, Eq. 7/8): the
+demonstration -- human keypoints and the source-scene samples they interact
+with -- is scaled by alpha = h_robot / h_human (heights from the
+demonstrator's bone lengths) about the ground point below the initial pelvis.
+
+Augmentation (Sec. III-B, Eq. 4/5): when the target object differs from the
+nominal one, the nominal motion q*_bar is solved first; the augmented solve
+then adds || q_t - q*_bar_t ||_W^2 with W weighting the lower body (base and
+legs) heavily, and constrains the initial foot positions to the nominal ones.
+Terrain augmentations keep the plain formulation with the dense ground samples
+in the mesh (Sec. III-B, "Robot-Terrain").
+
+Frame 0 has no previous solution: it starts from keypoint IK on the scaled
+demonstration, keeps the demonstrator's initially planted feet on the target
+ground, and runs 40 iterations.
 
 The convex sub-problem is solved exactly with SciPy's SLSQP (it is a small
 QP with one quadratic trust-region constraint); an L-infinity elastic slack
@@ -45,7 +53,7 @@ from scipy.spatial import Delaunay
 
 from data.planar_robot import (KEYPOINTS, NAME_TO_IDX, Q_MAX, Q_MIN, PlanarHumanoid,
                                clip_to_limits, link_sample_weights, per_frame_velocity_bounds)
-from data.scene_geometry import box_perimeter_uv, box_sdf, terrain_sdf
+from data.scene_geometry import box_perimeter_uv, box_sdf, terrain_height, terrain_sdf
 
 ROBOT = PlanarHumanoid()
 FEET = [NAME_TO_IDX["left_foot"], NAME_TO_IDX["right_foot"]]
@@ -59,14 +67,16 @@ COLLISION_MARGIN = 0.25    # only linearise collision rows of nearby link sample
 N_LINK_SAMPLES = 5
 W_LINK = link_sample_weights(N_LINK_SAMPLES)
 TERRAIN_SPACING = 0.05
-BOX_UV = box_perimeter_uv(8)
+BOX_PER_SIDE = 8
+LOWER_BODY = [0, 1, 3, 4, 5, 6]   # base x/z, hips, knees
+AUG_ANCHOR_WEIGHT = 20.0          # W of Eq. (4) on the lower body
 
 
 # ---------------------------------------------------------------------------
 # Scene sampling with source/target correspondence
 # ---------------------------------------------------------------------------
 
-def terrain_samples(src_verts, tgt_verts, x_lo, x_hi):
+def terrain_samples(src_verts, tgt_verts, x_lo, x_hi, spacing=TERRAIN_SPACING):
     """Corresponding samples along the source and target terrain polylines."""
     S = np.asarray(src_verts, dtype=float)
     T = np.asarray(tgt_verts, dtype=float)
@@ -74,7 +84,7 @@ def terrain_samples(src_verts, tgt_verts, x_lo, x_hi):
     for k in range(len(S) - 1):
         a, b = S[k], S[k + 1]
         c, d = T[k], T[k + 1]
-        n = max(1, int(np.ceil(np.linalg.norm(b - a) / TERRAIN_SPACING)))
+        n = max(1, int(np.ceil(np.linalg.norm(b - a) / spacing)))
         u = np.arange(n) / n
         seg_s = a + u[:, None] * (b - a)
         seg_t = c + u[:, None] * (d - c)
@@ -113,12 +123,16 @@ def human_height(src0: np.ndarray) -> float:
     return float(torso + thigh + shin)
 
 
+def is_object_augmentation(task: dict) -> bool:
+    nom, tgt = task.get("nominal_scene"), task["target_scene"]
+    return bool(nom and nom.get("object") and tgt.get("object") and nom["object"] != tgt["object"])
+
+
 class FrameProblem:
     def __init__(self, task: dict, t: int, terr_s: np.ndarray, terr_t: np.ndarray, objective: str,
-                 alpha: float = 1.0, anchor: np.ndarray | None = None):
+                 alpha: float, anchor: np.ndarray, tgt_scene: dict, box_uv: np.ndarray):
         self.t = t
         raw = np.asarray(task["source_keypoints"][t], dtype=float)
-        anchor = np.zeros(2) if anchor is None else anchor
 
         def scale(p):  # direct scaling of the demonstration (Eq. 7/8)
             return anchor + alpha * (np.asarray(p, dtype=float) - anchor)
@@ -127,7 +141,6 @@ class FrameProblem:
         terr_s = scale(terr_s)
         self.src = src
         self.objective = objective
-        tgt_scene = task["target_scene"]
         src_scene = task["source_scene"]
         self.terrain_tgt = np.asarray(tgt_scene["terrain"], dtype=float)
         self.box_tgt = None
@@ -141,8 +154,8 @@ class FrameProblem:
             ct = np.asarray(tgt_scene["object"]["center"][t], dtype=float)
             st = np.asarray(tgt_scene["object"]["size"], dtype=float)
             self.box_tgt = (ct, st)
-            scene_s.insert(0, scale(cs + BOX_UV * ss))
-            scene_t.insert(0, ct + BOX_UV * st)
+            scene_s.insert(0, scale(cs + box_uv * ss))
+            scene_t.insert(0, ct + box_uv * st)
             origin_s, origin_t = scale(cs), ct  # object-frame interaction mesh (App. C-2)
         self.scene_t = np.concatenate(scene_t) - origin_t
         self.origin_t = origin_t
@@ -178,21 +191,33 @@ class FrameProblem:
         return np.concatenate(rows), np.concatenate(vals)
 
 
-def solve_subproblem(J, r, qbar, qref, qw, G, phi, Aeq, beq, lo, hi, trust):
+def _fit_equalities(Aeq: np.ndarray, beq: np.ndarray, trust: float) -> np.ndarray:
+    """Shrink equality targets so that their minimum-norm step fits in the trust region."""
+    step = np.linalg.pinv(Aeq) @ beq
+    nrm = float(np.linalg.norm(step))
+    lim = 0.9 * trust
+    return beq * (lim / nrm) if nrm > lim else beq
+
+
+def solve_subproblem(J, r, qbar, qterms, G, phi, Aeq, beq, lo, hi, trust):
     n = len(qbar)
     JtJ = J.T @ J
     Jtr = J.T @ r
 
     def f(z):
         dq = z[:n]
-        e = qbar + dq - qref
-        return float(dq @ JtJ @ dq + 2.0 * Jtr @ dq + e @ (qw * e) + ELASTIC_PENALTY * z[n])
+        val = dq @ JtJ @ dq + 2.0 * Jtr @ dq + ELASTIC_PENALTY * z[n]
+        for qref, qw in qterms:
+            e = qbar + dq - qref
+            val += e @ (qw * e)
+        return float(val)
 
     def g(z):
         dq = z[:n]
-        e = qbar + dq - qref
         out = np.empty(n + 1)
-        out[:n] = 2.0 * (JtJ @ dq) + 2.0 * Jtr + 2.0 * qw * e
+        out[:n] = 2.0 * (JtJ @ dq) + 2.0 * Jtr
+        for qref, qw in qterms:
+            out[:n] += 2.0 * qw * (qbar + dq - qref)
         out[n] = ELASTIC_PENALTY
         return out
 
@@ -232,7 +257,7 @@ def _wrap(a):
     return float((a + np.pi) % (2 * np.pi) - np.pi)
 
 
-def initial_configuration(src: np.ndarray, terrain) -> np.ndarray:
+def initial_configuration(src: np.ndarray) -> np.ndarray:
     P = {n: src[i] for i, n in enumerate(KEYPOINTS)}
     lh = _angle(P["left_knee"] - P["pelvis"])
     rh = _angle(P["right_knee"] - P["pelvis"])
@@ -247,44 +272,78 @@ def initial_configuration(src: np.ndarray, terrain) -> np.ndarray:
         rs, _wrap(_angle(P["right_hand"] - P["right_elbow"]) - rs),
     ])
     q = np.clip(q, Q_MIN, Q_MAX)
-    from scipy.optimize import minimize as _min
 
     def obj(qq):
         return float(np.sum((ROBOT.fk(qq) - src) ** 2))
 
-    res = _min(obj, q, method="L-BFGS-B", bounds=list(zip(Q_MIN, Q_MAX)), options={"maxiter": 200})
+    res = minimize(obj, q, method="L-BFGS-B", bounds=list(zip(Q_MIN, Q_MAX)), options={"maxiter": 200})
     return np.clip(np.asarray(res.x, dtype=float), Q_MIN, Q_MAX)
+
+
+def _ground_rows(fk, Jfk, feet, terrain):
+    """Linearised 'foot on the ground' equalities z_f = h(x_f) for the given feet."""
+    rows, vals = [], []
+    for f in feet:
+        x, z = float(fk[f, 0]), float(fk[f, 1])
+        slope = float((terrain_height(x + 1e-4, terrain) - terrain_height(x - 1e-4, terrain)) / 2e-4)
+        rows.append(Jfk[f, 1] - slope * Jfk[f, 0])
+        vals.append(z - float(terrain_height(x, terrain)))
+    return np.array(rows), np.array(vals)
 
 
 # ---------------------------------------------------------------------------
 # Trajectory retargeting
 # ---------------------------------------------------------------------------
 
-def retarget(task: dict, objective: str = "mesh", extra_residual=None,
-             max_iters: int = MAX_SQP_ITERS, trust: float = TRUST_RADIUS) -> np.ndarray:
+def retarget(task: dict, objective: str = "mesh", extra_factory=None,
+             max_iters: int = MAX_SQP_ITERS, trust: float = TRUST_RADIUS,
+             scale_mode: str = "global", ground_frame0: bool = True, augment_anchor: bool = True,
+             terrain_spacing: float = TERRAIN_SPACING, box_per_side: int = BOX_PER_SIDE,
+             target_scene: dict | None = None, q_anchor: np.ndarray | None = None,
+             feet0: np.ndarray | None = None) -> np.ndarray:
     """Retarget one task; returns q of shape (num_frames, 11).
 
-    ``extra_residual(t, fk, Jfk) -> (r, J) | None`` may append task-specific
-    least-squares costs to the objective (App. B-5: the core objective can be
-    augmented with task-specific terms).
+    ``extra_factory(task, scene)`` may return ``extra(t, fk, Jfk) -> (r, J) | None``,
+    task-specific least-squares costs appended to the objective (App. B-5: the
+    core objective can be augmented with task-specific terms).
     """
+    common = dict(objective=objective, extra_factory=extra_factory, max_iters=max_iters, trust=trust,
+                  scale_mode=scale_mode, ground_frame0=ground_frame0, augment_anchor=False,
+                  terrain_spacing=terrain_spacing, box_per_side=box_per_side)
+    if target_scene is None:
+        target_scene = task["target_scene"]
+        if augment_anchor and is_object_augmentation(task):
+            # Eq. (4)/(5): solve the nominal motion first, then anchor the augmented one to it.
+            q_nom = retarget(task, target_scene=task["nominal_scene"], **common)
+            feet_nom = ROBOT.fk(q_nom[0])[FEET]
+            return retarget(task, target_scene=target_scene, q_anchor=q_nom, feet0=feet_nom, **common)
+
     src_all = np.asarray(task["source_keypoints"], dtype=float)
     N = len(src_all)
     dt = float(task["dt"])
     vstep = per_frame_velocity_bounds(dt)
     px = src_all[:, 0, 0]
-    terr_s, terr_t = terrain_samples(task["source_scene"]["terrain"], task["target_scene"]["terrain"],
-                                     float(px.min()) - 0.9, float(px.max()) + 0.9)
+    terr_s, terr_t = terrain_samples(task["source_scene"]["terrain"], target_scene["terrain"],
+                                     float(px.min()) - 0.9, float(px.max()) + 0.9, terrain_spacing)
+    box_uv = box_perimeter_uv(box_per_side)
     alpha = ROBOT.height / human_height(src_all[0])
     src_terrain = np.asarray(task["source_scene"]["terrain"], dtype=float)
+    tgt_terrain = np.asarray(target_scene["terrain"], dtype=float)
     anchors = np.stack([px, np.interp(px, src_terrain[:, 0], src_terrain[:, 1])], axis=1)
+    if scale_mode == "global":
+        anchors = np.repeat(anchors[:1], N, axis=0)
+    extra = extra_factory(task, target_scene) if extra_factory is not None else None
+    w_anchor = np.zeros(len(Q_MIN))
+    w_anchor[LOWER_BODY] = AUG_ANCHOR_WEIGHT
+    planted0 = [f for f in FEET if N > 1 and abs(src_all[1, f, 0] - src_all[0, f, 0]) / dt < STANCE_SPEED]
+
     q_out = np.zeros((N, len(Q_MIN)))
     q_prev = None
     feet_prev = None
     for t in range(N):
-        prob = FrameProblem(task, t, terr_s, terr_t, objective, alpha, anchors[t])
+        prob = FrameProblem(task, t, terr_s, terr_t, objective, alpha, anchors[t], target_scene, box_uv)
         if q_prev is None:
-            qbar = initial_configuration(prob.src, task["target_scene"]["terrain"])
+            qbar = q_anchor[0].copy() if q_anchor is not None else initial_configuration(prob.src)
             qref, qw, iters = qbar.copy(), 0.1 * Q_WEIGHTS, FIRST_FRAME_ITERS
             box_lo, box_hi = Q_MIN.copy(), Q_MAX.copy()
             stance = []
@@ -294,21 +353,35 @@ def retarget(task: dict, objective: str = "mesh", extra_residual=None,
             box_lo = np.maximum(Q_MIN, q_prev - vstep)
             box_hi = np.minimum(Q_MAX, q_prev + vstep)
             stance = [f for f in FEET if abs(src_all[t, f, 0] - src_all[t - 1, f, 0]) / dt < STANCE_SPEED]
+        qterms = [(qref, qw)]
+        if q_anchor is not None:
+            qterms.append((q_anchor[t], w_anchor))
         for _ in range(iters):
             fk, Jfk = ROBOT.fk_jacobian(qbar)
             r, J = prob.residual(fk, Jfk)
-            if extra_residual is not None:
-                ex = extra_residual(t, fk, Jfk)
+            if extra is not None:
+                ex = extra(t, fk, Jfk)
                 if ex is not None:
                     r = np.concatenate([r, ex[0]])
                     J = np.vstack([J, ex[1]])
             G, phi = prob.collision_rows(fk, Jfk)
+            A_rows, b_vals = [], []
             if stance:
-                Aeq = np.concatenate([Jfk[f] for f in stance])
-                beq = np.concatenate([fk[f] - feet_prev[f] for f in stance])
+                A_rows += [Jfk[f] for f in stance]
+                b_vals += [fk[f] - feet_prev[f] for f in stance]
+            if t == 0 and feet0 is not None:            # Eq. (5): initial feet = nominal feet
+                A_rows += [Jfk[f] for f in FEET]
+                b_vals += [fk[f] - feet0[i] for i, f in enumerate(FEET)]
+            elif t == 0 and ground_frame0 and planted0:  # initially planted feet on the target ground
+                Ag, bg = _ground_rows(fk, Jfk, planted0, tgt_terrain)
+                A_rows += [Ag]
+                b_vals += [bg]
+            if A_rows:
+                Aeq = np.vstack(A_rows)
+                beq = _fit_equalities(Aeq, np.concatenate([np.atleast_1d(b) for b in b_vals]), trust)
             else:
                 Aeq, beq = None, None
-            dq = solve_subproblem(J, r, qbar, qref, qw, G, phi, Aeq, beq,
+            dq = solve_subproblem(J, r, qbar, qterms, G, phi, Aeq, beq,
                                   box_lo - qbar, box_hi - qbar, trust)
             qbar = np.clip(qbar + dq, box_lo, box_hi)
             if np.linalg.norm(dq) < 1e-6:

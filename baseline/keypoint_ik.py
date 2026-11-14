@@ -4,8 +4,9 @@ Per frame, minimise sum_i || f_i(q) - p_i^source ||^2 subject only to joint
 limits (and the robot's velocity limits, as box bounds), warm-started from
 the previous frame.  Following the paper's "direct scaling" preprocessing
 (App. A, Eq. 7/8), human keypoints are scaled by the robot-to-human height
-ratio about the point on the ground below the pelvis.  The baseline does not
-look at objects or terrain.
+ratio about the ground point below the demonstrator's initial pelvis (the
+same scaling that brings the demonstration scene to the robot's scale).
+The baseline does not look at objects or terrain.
 """
 
 from __future__ import annotations
@@ -32,17 +33,19 @@ def human_height(src0: np.ndarray) -> float:
     return float(torso + thigh + shin)
 
 
-def scaled_source(task: dict) -> np.ndarray:
+def scaled_source(task: dict, scale_mode: str = "global") -> np.ndarray:
     src = np.asarray(task["source_keypoints"], dtype=float)
     alpha = ROBOT.height / human_height(src[0])
     pel = src[:, NAME_TO_IDX["pelvis"]]
     ground = terrain_height(pel[:, 0], task["source_scene"]["terrain"])
     anchor = np.stack([pel[:, 0], ground], axis=1)[:, None, :]
+    if scale_mode == "global":
+        anchor = np.repeat(anchor[:1], len(src), axis=0)
     return anchor + alpha * (src - anchor)
 
 
-def retarget(task: dict) -> np.ndarray:
-    tgt = scaled_source(task)
+def retarget(task: dict, scale_mode: str = "global") -> np.ndarray:
+    tgt = scaled_source(task, scale_mode)
     N = len(tgt)
     vstep = per_frame_velocity_bounds(float(task["dt"]))
     q_prev = None

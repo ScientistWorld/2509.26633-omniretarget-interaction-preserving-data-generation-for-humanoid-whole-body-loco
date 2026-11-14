@@ -1,11 +1,15 @@
 """Honest method variants used to check that the hardened test rewards better retargeting.
 
-contact_aware     OmniRetarget + task-specific contact costs (App. B-5 allows
-                  augmenting the core objective): hands that touch an object or
-                  the terrain in the demonstration, and planted feet, are pulled
-                  to the corresponding point of the target scene.
-keypoint_contact  The same contact costs with keypoint matching instead of the
-                  interaction mesh (directly optimising what the metrics measure).
+contact_aware          OmniRetarget + task-specific contact costs (App. B-5 allows
+                       augmenting the core objective): hands that touch an object or
+                       the terrain in the demonstration, and planted feet, are pulled
+                       to the corresponding point of the target scene.
+keypoint_contact       The same contact costs with keypoint matching instead of the
+                       interaction mesh (same solver, constraints, scaling and
+                       augmentation anchoring as the reference).
+keypoint_contact_it11  The iteration-11 version of keypoint_contact (no frame-0
+                       grounding, no Eq. 4/5 anchoring), kept for before/after.
+no_mesh                Keypoint matching in place of the mesh, nothing else changed.
 
 Usage: python redteam/hardening/variants.py <variant> <input_dir> <output_dir>
 """
@@ -48,9 +52,10 @@ def _box_surface_uv(p, c, size):
     return np.clip(rel, -0.5, 0.5)
 
 
-def contact_terms(task: dict):
+def contact_terms(task: dict, scene: dict, w_hand: float = W_HAND, w_foot: float = W_FOOT):
+    """Contact costs mapping demonstrated contacts onto ``scene`` (the scene being solved for)."""
     src = np.asarray(task["source_keypoints"], dtype=float)
-    ss, ts = task["source_scene"], task["target_scene"]
+    ss, ts = task["source_scene"], scene
     terr_s = np.asarray(ss["terrain"], dtype=float)
     terr_t = np.asarray(ts["terrain"], dtype=float)
     N = len(src)
@@ -80,7 +85,7 @@ def contact_terms(task: dict):
     def extra(t, fk, Jfk):
         rows, Js = [], []
         for idx, tp in targets[t].items():
-            w = np.sqrt(W_HAND if idx in HANDS else W_FOOT)
+            w = np.sqrt(w_hand if idx in HANDS else w_foot)
             rows.append(w * (fk[idx] - tp))
             Js.append(w * Jfk[idx])
         if not rows:
@@ -90,13 +95,25 @@ def contact_terms(task: dict):
     return extra
 
 
+VARIANTS = {
+    "contact_aware": dict(objective="mesh", extra_factory=contact_terms),
+    "keypoint_contact": dict(objective="keypoint", extra_factory=contact_terms),
+    "keypoint_contact_it11": dict(objective="keypoint", extra_factory=contact_terms,
+                                  ground_frame0=False, augment_anchor=False),
+    "no_mesh": dict(objective="keypoint"),
+}
+
+
+def run(variant: str, task: dict) -> np.ndarray:
+    return retarget(task, **VARIANTS[variant])
+
+
 def main() -> None:
     variant, in_dir, out_dir = sys.argv[1], Path(sys.argv[2]), Path(sys.argv[3])
-    objective = {"contact_aware": "mesh", "keypoint_contact": "keypoint"}[variant]
     out_dir.mkdir(parents=True, exist_ok=True)
     for path in sorted(in_dir.glob("*.json")):
         task = json.loads(path.read_text())
-        q = retarget(task, objective=objective, extra_residual=contact_terms(task))
+        q = run(variant, task)
         (out_dir / f"{task['instance_id']}.json").write_text(
             json.dumps({"instance_id": task["instance_id"], "method": variant, "q": np.round(q, 10).tolist()}))
         print(f"[{variant}] {task['instance_id']} done", file=sys.stderr, flush=True)

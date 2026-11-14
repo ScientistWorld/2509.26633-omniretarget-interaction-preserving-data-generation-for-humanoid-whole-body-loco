@@ -82,7 +82,7 @@ def main() -> None:
             if not is_nominal_object(task):
                 continue
             from redteam.hardening.variants import contact_terms
-            q = omniretarget(task, extra_residual=contact_terms(task))
+            q = omniretarget(task, extra_factory=contact_terms)
         elif mode == "score_forgery":
             q = keypoint_ik(task)
             extra = {"metrics": {"contact_preservation": 1.0}, "success": True}
