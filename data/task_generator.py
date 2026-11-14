@@ -9,7 +9,8 @@ land).
 Task types
 ----------
 object_carry   The human carries a box overhead with both hands on the box
-               sides while stepping; the box also moves up and down.
+               sides while stepping up a ramp onto a platform; the box also
+               moves up and down (robot-object-terrain interaction).
 terrain_step   The human steps up a ramp onto a platform and braces the right
                hand on top of a tall column standing on the platform.
 
@@ -69,7 +70,7 @@ AUG_LEVELS = {
 }
 # scene_mode "robot": nominal/target scenes are the demonstration scene at the
 # robot's scale (above).  "human": they keep the demonstrator's scale.
-DEFAULT_CONFIG = {"scene_mode": "robot", "prop_jitter": 0.06, "aug_level": "large", "object_terrain": False}
+DEFAULT_CONFIG = {"scene_mode": "robot", "prop_jitter": 0.06, "aug_level": "large", "object_terrain": True}
 
 
 class Reject(Exception):

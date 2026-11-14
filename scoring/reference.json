@@ -1,7 +1,7 @@
 {
   "experiments": {
     "object_interaction_kinematics": {
-      "description": "Robot-object retargeting kinematic quality (paper Table II, robot-object rows on OMOMO). Hidden test: 12 held-out overhead box-carry demonstrations by planar humans of varied proportions, retargeted to a fixed planar humanoid. Penetration and foot skating are the hard-constraint side; contact preservation is the interaction benefit; pelvis-path and velocity errors guard motion fidelity. A method that fails any test instance or leaves the robot's joint/velocity limits receives the worst value of every metric.",
+      "description": "Robot-object retargeting kinematic quality (paper Table II, robot-object rows on OMOMO), with the box carried up a ramp onto a platform (robot-object-terrain interaction, paper Fig. 3). Hidden test: 60 held-out overhead box-carry demonstrations by planar humans of varied size and proportions, retargeted to a fixed planar humanoid in the demonstration scene brought to the robot's scale (the box keeps its true size). Penetration, foot skating and spurious contact are the constraint side; contact preservation is the interaction benefit; pelvis-path and velocity errors guard motion fidelity. A method that fails any test instance, exceeds its counted CPU budget, or leaves the robot's joint/velocity limits receives the worst value of every metric.",
       "weight": 0.35,
       "primary_metric": "contact_preservation",
       "metrics": {
@@ -30,15 +30,20 @@
           "coefficient": 1.0,
           "description": "Fraction of desired contact events (hand-object / hand-terrain contacts and planted feet on the terrain) where the robot point is within 2 cm of the target-scene contact surface."
         },
+        "spurious_contact_duration": {
+          "higher_is_better": false,
+          "coefficient": -0.8,
+          "description": "Fraction of clearance events (frames in which a demonstrator hand or foot was at least 3 cm, at robot scale, from every scene surface) in which the corresponding robot hand or foot touches a target-scene surface (within 1 cm): dragged swing feet, hands brushing obstacles. The counterpart of contact preservation."
+        },
         "pelvis_path_error_cm": {
           "higher_is_better": false,
           "coefficient": -0.3,
-          "description": "Mean error of the robot pelvis displacement path relative to the demonstrated pelvis displacement (cm, capped at 100)."
+          "description": "Mean error of the robot pelvis path relative to the demonstrated pelvis path brought to the robot's scale (horizontal displacement and height above the ground below the pelvis, both from the first frame; cm, capped at 100)."
         },
         "motion_velocity_error_cm_s": {
           "higher_is_better": false,
           "coefficient": -0.3,
-          "description": "Mean keypoint velocity mismatch between the robot and the demonstration (cm/s, capped at 300)."
+          "description": "Mean keypoint velocity mismatch between the robot and the demonstration brought to the robot's scale (cm/s, capped at 300)."
         }
       },
       "_scale_note": "The paper's rows below are Unitree G1 retargets of OMOMO (3D, real collision meshes); this gym is a scaled planar substitute, so cm-valued metrics are not on the paper's scale and the paper's object contact metric covers hands only (feet are pooled in here). They are kept for orientation, not as targets.",
@@ -81,7 +86,7 @@
       }
     },
     "terrain_interaction_kinematics": {
-      "description": "Robot-terrain retargeting kinematic quality (paper Table II, robot-terrain rows on in-house MoCap). Hidden test: 12 held-out demonstrations of stepping up a ramp onto a platform while bracing a hand on a tall column. Contact covers the bracing hand and planted feet, as in the paper (hands, toes, heels).",
+      "description": "Robot-terrain retargeting kinematic quality (paper Table II, robot-terrain rows on in-house MoCap). Hidden test: 60 held-out demonstrations of stepping up a ramp onto a platform while bracing a hand on a tall column, in the demonstration scene brought to the robot's scale. Contact covers the bracing hand and planted feet, as in the paper (hands, toes, heels). A method that fails any test instance, exceeds its counted CPU budget, or leaves the robot's joint/velocity limits receives the worst value of every metric.",
       "weight": 0.35,
       "primary_metric": "contact_preservation",
       "metrics": {
@@ -110,15 +115,20 @@
           "coefficient": 1.0,
           "description": "Fraction of desired contact events (hand-object / hand-terrain contacts and planted feet on the terrain) where the robot point is within 2 cm of the target-scene contact surface."
         },
+        "spurious_contact_duration": {
+          "higher_is_better": false,
+          "coefficient": -0.8,
+          "description": "Fraction of clearance events (frames in which a demonstrator hand or foot was at least 3 cm, at robot scale, from every scene surface) in which the corresponding robot hand or foot touches a target-scene surface (within 1 cm): dragged swing feet, hands brushing obstacles. The counterpart of contact preservation."
+        },
         "pelvis_path_error_cm": {
           "higher_is_better": false,
           "coefficient": -0.3,
-          "description": "Mean error of the robot pelvis displacement path relative to the demonstrated pelvis displacement (cm, capped at 100)."
+          "description": "Mean error of the robot pelvis path relative to the demonstrated pelvis path brought to the robot's scale (horizontal displacement and height above the ground below the pelvis, both from the first frame; cm, capped at 100)."
         },
         "motion_velocity_error_cm_s": {
           "higher_is_better": false,
           "coefficient": -0.3,
-          "description": "Mean keypoint velocity mismatch between the robot and the demonstration (cm/s, capped at 300)."
+          "description": "Mean keypoint velocity mismatch between the robot and the demonstration brought to the robot's scale (cm/s, capped at 300)."
         }
       },
       "_scale_note": "Paper rows are G1 retargets of in-house MoCap; this gym is a scaled planar substitute, so cm-valued metrics are not on the paper's scale. Kept for orientation, not as targets.",
@@ -161,7 +171,7 @@
       }
     },
     "augmented_interaction_kinematics": {
-      "description": "Interaction-preserving retargeting into modified scenes (paper Sec. III-B / App. C augmentation: object resized and initially displaced with an exponentially decaying offset per Eq. 14, or platform/column height changed). Hidden test: 12 held-out demonstrations (6 object, 6 terrain); the robot must act in the target scene while the demonstration was recorded in the source scene. Same metrics, computed against the target scene.",
+      "description": "Interaction-preserving retargeting into modified scenes (paper Sec. III-B / App. C augmentation: box resized by 0.75-1.35 and initially displaced by 6-16 cm with an exponentially decaying offset per Eq. 14, or platform/column height scaled by 0.4-1.8). Hidden test: 60 held-out demonstrations (30 object, 30 terrain); the demonstration was recorded in the source scene, the robot must act in the modified target scene. Same metrics, computed against the target scene. A method that fails any test instance, exceeds its counted CPU budget, or leaves the robot's joint/velocity limits receives the worst value of every metric.",
       "weight": 0.3,
       "primary_metric": "contact_preservation",
       "metrics": {
@@ -190,18 +200,23 @@
           "coefficient": 1.0,
           "description": "Fraction of desired contact events (hand-object / hand-terrain contacts and planted feet on the terrain) where the robot point is within 2 cm of the target-scene contact surface."
         },
+        "spurious_contact_duration": {
+          "higher_is_better": false,
+          "coefficient": -0.8,
+          "description": "Fraction of clearance events (frames in which a demonstrator hand or foot was at least 3 cm, at robot scale, from every scene surface) in which the corresponding robot hand or foot touches a target-scene surface (within 1 cm): dragged swing feet, hands brushing obstacles. The counterpart of contact preservation."
+        },
         "pelvis_path_error_cm": {
           "higher_is_better": false,
           "coefficient": -0.3,
-          "description": "Mean error of the robot pelvis displacement path relative to the demonstrated pelvis displacement (cm, capped at 100)."
+          "description": "Mean error of the robot pelvis path relative to the demonstrated pelvis path brought to the robot's scale (horizontal displacement and height above the ground below the pelvis, both from the first frame; cm, capped at 100)."
         },
         "motion_velocity_error_cm_s": {
           "higher_is_better": false,
           "coefficient": -0.3,
-          "description": "Mean keypoint velocity mismatch between the robot and the demonstration (cm/s, capped at 300)."
+          "description": "Mean keypoint velocity mismatch between the robot and the demonstration brought to the robot's scale (cm/s, capped at 300)."
         }
       },
-      "_paper_note": "The paper reports no kinematic metrics for augmented motions (only downstream RL success, 79.1% on the augmented dataset vs 82.2% on nominal motions; baselines are not run because they do not support augmentation). The omniretarget row below is this gym's measured hidden-test value of the reference implementation (120-instance test, 40 in this experiment), recorded for orientation; it is not a paper number.",
+      "_paper_note": "The paper reports no kinematic metrics for augmented motions (only downstream RL success, 79.1% on the augmented dataset vs 82.2% on nominal motions; baselines are not run because they do not support augmentation). The omniretarget row below is therefore this gym's own measured hidden-test value of the reference implementation, recorded for orientation (validate.py requires a proposed row); it is not a paper number and nothing was tuned towards it.",
       "results": {
         "keypoint_ik": {
           "type": "baseline"

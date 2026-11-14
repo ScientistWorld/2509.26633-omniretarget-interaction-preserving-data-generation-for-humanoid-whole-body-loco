@@ -7,8 +7,9 @@ contact_aware          OmniRetarget + task-specific contact costs (App. B-5 allo
 keypoint_contact       The same contact costs with keypoint matching instead of the
                        interaction mesh (same solver, constraints, scaling and
                        augmentation anchoring as the reference).
+keypoint_contact_w100  keypoint_contact with 10x heavier contact costs (a tuned version).
 keypoint_contact_it11  The iteration-11 version of keypoint_contact (no frame-0
-                       grounding, no Eq. 4/5 anchoring), kept for before/after.
+                       grounding, no Eq. 4/5 anchoring, no landing constraints).
 no_mesh                Keypoint matching in place of the mesh, nothing else changed.
 
 Usage: python redteam/hardening/variants.py <variant> <input_dir> <output_dir>
@@ -98,8 +99,10 @@ def contact_terms(task: dict, scene: dict, w_hand: float = W_HAND, w_foot: float
 VARIANTS = {
     "contact_aware": dict(objective="mesh", extra_factory=contact_terms),
     "keypoint_contact": dict(objective="keypoint", extra_factory=contact_terms),
+    "keypoint_contact_w100": dict(objective="keypoint",
+                                  extra_factory=lambda tk, sc: contact_terms(tk, sc, 100.0, 100.0)),
     "keypoint_contact_it11": dict(objective="keypoint", extra_factory=contact_terms,
-                                  ground_frame0=False, augment_anchor=False),
+                                  ground_frame0=False, augment_anchor=False, ground_landings=False),
     "no_mesh": dict(objective="keypoint"),
 }
 

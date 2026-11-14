@@ -5,6 +5,8 @@
 set -e
 cd /home/user
 export PYTHONPATH=/home/user:${PYTHONPATH:-}
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1
+rm -rf data/tasks/train
 python data/task_generator.py --out data/tasks/train
 bash scripts/evaluate_train.sh
 cp scoring/scores_train.json scoring/scores.json

@@ -28,8 +28,11 @@ Augmentation (Sec. III-B, Eq. 4/5): when the target object differs from the
 nominal one, the nominal motion q*_bar is solved first; the augmented solve
 then adds || q_t - q*_bar_t ||_W^2 with W weighting the lower body (base and
 legs) heavily, and constrains the initial foot positions to the nominal ones.
-Terrain augmentations keep the plain formulation with the dense ground samples
-in the mesh (Sec. III-B, "Robot-Terrain").
+Terrain augmentations (platform raised or lowered) keep the dense ground
+samples in the mesh and add the "additional constraints" of Sec. III-B
+("Robot-Terrain") for stable ground contact on the modified terrain: a foot
+that the demonstrator plants is constrained onto the target terrain surface in
+the frame it lands (afterwards (3e) keeps it there).
 
 Frame 0 has no previous solution: it starts from keypoint IK on the scaled
 demonstration, keeps the demonstrator's initially planted feet on the target
@@ -126,6 +129,11 @@ def human_height(src0: np.ndarray) -> float:
 def is_object_augmentation(task: dict) -> bool:
     nom, tgt = task.get("nominal_scene"), task["target_scene"]
     return bool(nom and nom.get("object") and tgt.get("object") and nom["object"] != tgt["object"])
+
+
+def is_terrain_augmentation(task: dict, scene: dict) -> bool:
+    nom = task.get("nominal_scene")
+    return bool(nom) and nom["terrain"] != scene["terrain"]
 
 
 class FrameProblem:
@@ -298,6 +306,7 @@ def _ground_rows(fk, Jfk, feet, terrain):
 def retarget(task: dict, objective: str = "mesh", extra_factory=None,
              max_iters: int = MAX_SQP_ITERS, trust: float = TRUST_RADIUS,
              scale_mode: str = "global", ground_frame0: bool = True, augment_anchor: bool = True,
+             ground_landings: bool = True,
              terrain_spacing: float = TERRAIN_SPACING, box_per_side: int = BOX_PER_SIDE,
              target_scene: dict | None = None, q_anchor: np.ndarray | None = None,
              feet0: np.ndarray | None = None) -> np.ndarray:
@@ -309,6 +318,7 @@ def retarget(task: dict, objective: str = "mesh", extra_factory=None,
     """
     common = dict(objective=objective, extra_factory=extra_factory, max_iters=max_iters, trust=trust,
                   scale_mode=scale_mode, ground_frame0=ground_frame0, augment_anchor=False,
+                  ground_landings=ground_landings,
                   terrain_spacing=terrain_spacing, box_per_side=box_per_side)
     if target_scene is None:
         target_scene = task["target_scene"]
@@ -336,6 +346,11 @@ def retarget(task: dict, objective: str = "mesh", extra_factory=None,
     w_anchor = np.zeros(len(Q_MIN))
     w_anchor[LOWER_BODY] = AUG_ANCHOR_WEIGHT
     planted0 = [f for f in FEET if N > 1 and abs(src_all[1, f, 0] - src_all[0, f, 0]) / dt < STANCE_SPEED]
+    landings: list[list[int]] = [[] for _ in range(N)]
+    if ground_landings and is_terrain_augmentation(task, target_scene):
+        speed = np.abs(np.diff(src_all[:, :, 0], axis=0)) / dt  # (N-1, 12)
+        for t in range(1, N - 1):
+            landings[t] = [f for f in FEET if speed[t - 1, f] >= STANCE_SPEED and speed[t, f] < STANCE_SPEED]
 
     q_out = np.zeros((N, len(Q_MIN)))
     q_prev = None
@@ -374,6 +389,10 @@ def retarget(task: dict, objective: str = "mesh", extra_factory=None,
                 b_vals += [fk[f] - feet0[i] for i, f in enumerate(FEET)]
             elif t == 0 and ground_frame0 and planted0:  # initially planted feet on the target ground
                 Ag, bg = _ground_rows(fk, Jfk, planted0, tgt_terrain)
+                A_rows += [Ag]
+                b_vals += [bg]
+            if landings[t]:                              # terrain augmentation: landing feet on the new surface
+                Ag, bg = _ground_rows(fk, Jfk, landings[t], tgt_terrain)
                 A_rows += [Ag]
                 b_vals += [bg]
             if A_rows:
