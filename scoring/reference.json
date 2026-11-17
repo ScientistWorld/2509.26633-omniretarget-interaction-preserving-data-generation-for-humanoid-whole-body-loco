@@ -3,7 +3,7 @@
   "_scope": "Small deterministic 3D kinematic benchmark; not downstream RL, hardware, full 8-hour corpus, or a reproduction of the exact Table II sample distribution. Robot collision hulls are reduced to at most 128 vertices.",
   "experiments": {
     "object_interaction_kinematics": {
-      "description": "Real OMOMO large-box manipulation retargeted to the 3D Unitree G1. Nominal physical box size is retained. Public train has 20 windows; held-out test has 48 windows from different subjects.",
+      "description": "Real OMOMO large-box manipulation retargeted to the 3D Unitree G1. Nominal physical box size is retained. Public train has 20 clips; held-out test uses all 99 usable clips from different subjects, up to 600 frames per clip.",
       "weight": 0.35,
       "primary_metric": "contact_preservation",
       "metrics": {
@@ -229,7 +229,7 @@
       }
     },
     "augmented_interaction_kinematics": {
-      "description": "Modified real demonstration scenes: independently resized, translated and rotated manipulated boxes, or changed platform heights. Test has 24 object and 14 terrain windows. Measures contact retention and feasibility where nominal scene copying falls short.",
+      "description": "Modified real demonstration scenes: independently resized, translated and rotated manipulated boxes, or changed platform heights. Test has 198 object instances (two scene variations per held-out clip) and 14 terrain windows. Measures contact retention and feasibility where nominal scene copying falls short.",
       "weight": 0.3,
       "primary_metric": "contact_preservation",
       "metrics": {

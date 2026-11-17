@@ -33,7 +33,8 @@ ROOT = Path(__file__).resolve().parents[1]
 DOWNLOADS = ROOT / "data" / "downloads"
 ROBOT_HEIGHT = 1.32          # Unitree G1 (paper code default)
 FPS = 30
-WINDOW = 150                 # frames per instance (5 s)
+WINDOW = 150                 # terrain frames per instance (5 s)
+OBJECT_WINDOW = 600          # up to 20 s: pickup and subsequent carrying motion
 MIN_FRAMES = 90
 MOCAP_HUMAN_HEIGHT = 1.78    # paper code default for its in-house MoCap
 MOCAP_DOWNSAMPLE = 4         # 120 fps -> 30 fps
@@ -213,10 +214,10 @@ def make_instance(iid: str, task: str, joint_names: list[str], joints: np.ndarra
 
 
 def omomo_window(joints: np.ndarray, poses: np.ndarray) -> tuple[int, int] | None:
-    """Crop a clip to a window around the pick-up (30 frames before the box moves)."""
+    """Keep pickup and subsequent carrying (up to 20 s, starting 1 s before motion)."""
     tm = object_first_moving_frame(poses)
     start = max(0, tm - 30)
-    end = min(len(joints), start + WINDOW)
+    end = min(len(joints), start + OBJECT_WINDOW)
     return (start, end) if end - start >= MIN_FRAMES else None
 
 

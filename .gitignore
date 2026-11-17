@@ -254,3 +254,5 @@ eval/test/diagnostics_latest.json
 eval/test/archive_redteam/
 
 eval/test/audit_results/**/*.log
+# Atomic private corpus rebuild may be interrupted by infrastructure preemption.
+eval/test/data/*.npz.tmp

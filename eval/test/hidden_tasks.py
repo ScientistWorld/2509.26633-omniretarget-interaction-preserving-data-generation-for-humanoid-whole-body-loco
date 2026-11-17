@@ -3,10 +3,10 @@
 Same construction as the public split (data/tasks.py), with an independent
 copy of the code, held-out demonstrations (OMOMO subjects sub7/sub16, climbing
 sequences 0/2/3) and a private seed:
-  * object_interaction    48 box-carrying windows (nominal scene),
+  * object_interaction    all 99 usable box-carrying clips, up to 600 frames,
   * terrain_interaction   every 150-frame window of the 3 climbing sequences (14),
-  * augmented_interaction 24 box-carrying windows with an offset/rotated/resized
-                          box + the 14 climbing windows with rescaled platform heights.
+  * augmented_interaction two offset/rotated/resized boxes per object clip (198),
+                          plus 14 climbing windows with rescaled platform heights.
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ ROBOT_HEIGHT = 1.32
 FPS = 30
 WINDOW, MIN_FRAMES = 150, 90
 MOCAP_HUMAN_HEIGHT = 1.78
-N_OBJECT, N_OBJECT_AUG = 48, 24
+N_OBJECT, AUGMENTS_PER_OBJECT = 99, 2
 OMOMO_HEIGHTS = {"sub7": 1.8078, "sub16": 1.7230}
 LARGEBOX_HALF = [0.235577, 0.229365, 0.203948]
 LARGEBOX_OFFSET = [0.001494, -0.000715, 0.005756]
@@ -166,20 +166,21 @@ def test_split() -> dict[str, dict]:
     rng = np.random.default_rng(SEED)
     out = {}
     clips = meta["omomo"]
+    assert meta["object_window"] == 600 and len(clips) == N_OBJECT
     order = rng.permutation(len(clips))
-    for rank, idx in enumerate(order[: N_OBJECT + N_OBJECT_AUG]):
+    for idx in order:
         name = clips[idx]
         joints = z[f"omomo/{name}/joints"].astype(float)
         poses = z[f"omomo/{name}/poses"].astype(float)
         h = OMOMO_HEIGHTS[name.split("_")[0]]
         alpha = ROBOT_HEIGHT / h
         src, nom = _object_scenes(poses, alpha)
-        if rank < N_OBJECT:
-            x = _instance(f"test_object_{name}", "object", SMPLH_JOINTS, joints, h, src, nom)
-        else:
-            tgt, aug = _augment_object(nom, alpha * joints[0, 0], rng)
-            x = _instance(f"test_objaug_{name}", "object", SMPLH_JOINTS, joints, h, src, nom, tgt, aug)
+        x = _instance(f"test_object_{name}", "object", SMPLH_JOINTS, joints, h, src, nom)
         out[x["instance_id"]] = x
+        for a in range(AUGMENTS_PER_OBJECT):
+            tgt, aug = _augment_object(nom, alpha * joints[0, 0], rng)
+            x = _instance(f"test_objaug_{name}_a{a}", "object", SMPLH_JOINTS, joints, h, src, nom, tgt, aug)
+            out[x["instance_id"]] = x
     alpha = ROBOT_HEIGHT / MOCAP_HUMAN_HEIGHT
     for seq in meta["climb"]:
         sid = seq["sequence"]
@@ -196,4 +197,5 @@ def test_split() -> dict[str, dict]:
             x = _instance(f"test_terraug_seq{sid}_f{s:04d}", "terrain", MOCAP_JOINTS, J[s:e], MOCAP_HUMAN_HEIGHT,
                           src, nom, tgt, aug)
             out[x["instance_id"]] = x
+    assert len(out) == 325, "test size is fixed, independent of the method"
     return out

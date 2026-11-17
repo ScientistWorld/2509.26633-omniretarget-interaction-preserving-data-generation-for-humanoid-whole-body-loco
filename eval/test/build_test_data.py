@@ -5,10 +5,11 @@ Held out (never fetched by scripts/download.sh):
     release, zip id 141YoPOd2DlJ4jhU2cpZO5VU5GzV_lm5j on Google Drive),
   * climbing MoCap sequences 0, 2 and 3 of the paper's released demo data
     (holosoma_retargeting/demo_data/climb, commit c9cd097).
-Stores the cropped windows (joints, object poses) and the terrain boxes as a
+Stores up to 600 frames per object clip (joints, object poses) and terrain boxes as a
 compressed npz; eval/test/hidden_tasks.py builds the instances from it.
 
 Usage: python eval/test/build_test_data.py --omomo-zip OMOMO_new.zip --climb-dir .../demo_data/climb
+An existing private pack can supply the unchanged climbing data with --reuse-climb.
 """
 
 from __future__ import annotations
@@ -26,7 +27,8 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 TEST_SUBJECTS = ("sub7", "sub16")
 TEST_SEQUENCES = (0, 2, 3)
-WINDOW, MIN_FRAMES = 150, 90
+OBJECT_WINDOW, MIN_FRAMES = 600, 90
+SCHEMA = 2
 
 
 def load_pt_array(raw: bytes) -> np.ndarray:
@@ -61,11 +63,23 @@ def load_pt_array(raw: bytes) -> np.ndarray:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--omomo-zip", type=Path, required=True)
-    ap.add_argument("--climb-dir", type=Path, required=True)
+    ap.add_argument("--omomo-zip", type=Path, default=HERE / "local_tmp/omomo_full/OMOMO_new.zip")
+    climb = ap.add_mutually_exclusive_group()
+    climb.add_argument("--climb-dir", type=Path)
+    climb.add_argument("--reuse-climb", type=Path, default=HERE / "data/test_demonstrations.npz")
+    ap.add_argument("--if-needed", action="store_true")
     args = ap.parse_args()
+    out = HERE / "data" / "test_demonstrations.npz"
+    if args.if_needed and out.exists():
+        with np.load(out) as old:
+            old_meta = json.loads(str(old["meta"]))
+        if (old_meta.get("schema") == SCHEMA and old_meta.get("object_window") == OBJECT_WINDOW
+                and old_meta.get("test_subjects") == list(TEST_SUBJECTS)):
+            print(f"private corpus already prepared: {out}", flush=True)
+            return
     z = zipfile.ZipFile(args.omomo_zip)
-    arrays, meta = {}, {"omomo": [], "climb": []}
+    arrays, meta = {}, {"schema": SCHEMA, "object_window": OBJECT_WINDOW,
+                        "test_subjects": list(TEST_SUBJECTS), "omomo": [], "climb": []}
     for name in sorted(z.namelist()):
         base = Path(name).stem
         if "_largebox_" not in base or base.split("_")[0] not in TEST_SUBJECTS:
@@ -77,24 +91,38 @@ def main() -> None:
         v = np.linalg.norm(np.diff(poses, axis=0), axis=1)
         tm = int(np.argmax(v > 0.0025)) if np.any(v > 0.0025) else 0
         s = max(0, tm - 30)
-        e = min(len(joints), s + WINDOW)
+        e = min(len(joints), s + OBJECT_WINDOW)
         if e - s < MIN_FRAMES:
             continue
         arrays[f"omomo/{base}/joints"] = joints[s:e].astype(np.float32)
         arrays[f"omomo/{base}/poses"] = poses[s:e].astype(np.float32)
         meta["omomo"].append(base)
-    for sid in TEST_SEQUENCES:
-        d = args.climb_dir / f"mocap_climb_seq_{sid}"
-        J = np.load(sorted(glob.glob(str(d / "*_joint_positions_*.npy")))[0])[::4].astype(np.float32)
-        arrays[f"climb/{sid}/joints"] = J
-        boxes = []
-        for f in sorted(glob.glob(str(d / "box_models" / "*.obj"))):
-            V = np.array([ln.split()[1:4] for ln in open(f) if ln.startswith("v ")], dtype=float)
-            boxes.append(V.tolist())
-        meta["climb"].append({"sequence": sid, "box_vertices": boxes})
-    out = HERE / "data" / "test_demonstrations.npz"
+    if args.climb_dir is not None:
+        for sid in TEST_SEQUENCES:
+            d = args.climb_dir / f"mocap_climb_seq_{sid}"
+            J = np.load(sorted(glob.glob(str(d / "*_joint_positions_*.npy")))[0])[::4].astype(np.float32)
+            arrays[f"climb/{sid}/joints"] = J
+            boxes = []
+            for f in sorted(glob.glob(str(d / "box_models" / "*.obj"))):
+                V = np.array([ln.split()[1:4] for ln in open(f) if ln.startswith("v ")], dtype=float)
+                boxes.append(V.tolist())
+            meta["climb"].append({"sequence": sid, "box_vertices": boxes})
+    else:
+        # These recordings are unchanged; preserve the existing private pack exactly.
+        with np.load(args.reuse_climb) as old:
+            old_meta = json.loads(str(old["meta"]))
+            for seq in old_meta["climb"]:
+                if seq["sequence"] in TEST_SEQUENCES:
+                    sid = seq["sequence"]
+                    arrays[f"climb/{sid}/joints"] = old[f"climb/{sid}/joints"].copy()
+                    meta["climb"].append(seq)
+    assert len(meta["omomo"]) == 99, "the fixed held-out corpus must contain all 99 usable clips"
+    assert sorted(s["sequence"] for s in meta["climb"]) == list(TEST_SEQUENCES)
     out.parent.mkdir(exist_ok=True)
-    np.savez_compressed(out, meta=np.array(json.dumps(meta)), **arrays)
+    temporary = out.with_suffix(".npz.tmp")
+    with temporary.open("wb") as f:
+        np.savez_compressed(f, meta=np.array(json.dumps(meta)), **arrays)
+    temporary.replace(out)
     print(f"wrote {out} ({out.stat().st_size / 1e6:.1f} MB): {len(meta['omomo'])} OMOMO windows, "
           f"{len(meta['climb'])} climbing sequences")
 

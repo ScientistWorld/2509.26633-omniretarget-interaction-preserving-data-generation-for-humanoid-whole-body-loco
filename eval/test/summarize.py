@@ -35,6 +35,8 @@ for iid in refper:
     g=mt.group() if mt else iid
     groups.setdefault(g,[]).append(iid)
 strata=[[g for g in groups if g.startswith('sub')],[g for g in groups if g.startswith('seq')]]
+out['paired_recording_clusters'] = {"object": len(strata[0]), "terrain": len(strata[1])}
+out['instance_counts'] = {e: sum(v['experiment'] == e for v in refper.values()) for e in spec}
 rng=np.random.default_rng(1701)
 B=1000
 picks=[]
