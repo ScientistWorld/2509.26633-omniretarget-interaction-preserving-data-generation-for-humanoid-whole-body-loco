@@ -2,4 +2,4 @@ action: submit
 gpus: 0
 test: false
 milestone: method_runs
-notes: "Fix pinned MuJoCo convex distance witness ordering; retain finite-difference tolerances and rerun the combined reference, baseline, headroom, paired repeat and shortcut audit sequentially."
+notes: "Resume the preempted combined audit from ten verified completed scientific stages; finish deterministic repeat, fixed-shortcut replay, paired recording analysis and validation. No scientific method or data changed."
