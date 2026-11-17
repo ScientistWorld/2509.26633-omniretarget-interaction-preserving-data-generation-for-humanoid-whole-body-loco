@@ -21,7 +21,7 @@ of ground points joins the interaction mesh.
 
 The released implementation (holosoma_retargeting, Apache-2.0) was used as the
 reference for weights and details (Laplacian weight 10, smoothness 0.2, waist
-costs and bounds, 1 mm penetration and foot-sticking tolerances, stance from
+costs and bounds, 1 mm penetration and foot-sticking tolerances (sticking in 3D as in the paper's (3e)), stance from
 1 cm/frame source toe speed, 100 surface samples, nominal tracking 5 e^{-t/10}).
 SOCPs are solved with Clarabel; robot kinematics, Jacobians and signed
 distances come from MuJoCo.
@@ -87,6 +87,9 @@ N_SURFACE_SAMPLES = 100
 TOP_SURFACE_WEIGHT = 20.0     # terrain: sample top faces 20x more densely (released code)
 GROUND_GRID = (8, 2.0)        # terrain augmentation: 8x8 ground points over [-2, 2]^2
 W_NOMINAL, TAU_NOMINAL = 5.0, 10.0
+# (3d) applied to the floating base too: per-frame bound on the base velocity (tangent coordinates),
+# twice the fastest demonstrated pelvis motion (1.5 m/s at robot scale).
+BASE_V_MAX = np.array([3.0, 3.0, 3.0, 6.0, 6.0, 6.0])   # m/s (world xyz), rad/s (local axes)
 # Joint-index (0..28, MJCF order) extra bounds and costs from the released code (waist, elbows, wrists).
 MANUAL_LB = {13: -0.3, 14: -0.1, 19: -0.1, 20: -0.1, 21: -0.05, 26: -0.1, 27: -0.1, 28: -0.05}
 MANUAL_UB = {13: 0.3, 18: 1.4, 19: 0.2, 20: 0.3, 21: 0.05, 25: 1.4, 26: 0.2, 27: 0.3, 28: 0.05}
@@ -391,13 +394,14 @@ class Retargeter:
         phi, Jn = self._collisions()
         if len(phi):
             G_rows.append(-Jn); h_rows.append(phi + PENETRATION_TOL)
-        # (3e) stance-foot sticking: xy within +-tol of the previous frame
+        # (3e) stance-foot sticking p_t = p_{t-1} (within +-tol).  The released code pins only x, y;
+        # the paper's (3e) pins the full position, which also keeps planted feet from leaving the floor.
         for side, ref in foot_ref.items():
             for b, p_ref in zip(self.foot_bodies[side], ref):
                 p = self.data.xpos[b]
-                Jxy = self._point_jac(b, p)[:2]
-                G_rows += [Jxy, -Jxy]
-                h_rows += [p_ref[:2] - p[:2] + FOOT_STICK_TOL, -(p_ref[:2] - p[:2] - FOOT_STICK_TOL)]
+                Jp = self._point_jac(b, p)
+                G_rows += [Jp, -Jp]
+                h_rows += [p_ref - p + FOOT_STICK_TOL, -(p_ref - p - FOOT_STICK_TOL)]
         # (5) augmented scenes: initial feet at the nominal solution's
         if init_feet is not None:
             for side in ("left", "right"):
@@ -406,11 +410,20 @@ class Retargeter:
                     Jp = self._point_jac(b, p)
                     G_rows += [Jp, -Jp]
                     h_rows += [p_ref - p + FOOT_STICK_TOL, -(p_ref - p - FOOT_STICK_TOL)]
-        # (3c) joint limits, (3d) velocity limits on the actuated joints
+        # (3c) joint limits; (3d) velocity limits on the joints and the floating base (not at the
+        # first frame, which has no predecessor)
         qa, qpa = q[7:], q_prev[7:]
-        S = np.hstack([np.zeros((29, 6)), np.eye(29)])
-        lo = np.maximum(self.q_lo, qpa - self.v_max * self.dt) - qa
-        hi = np.minimum(self.q_hi, qpa + self.v_max * self.dt) - qa
+        first = t == 0
+        vj = np.inf if first else self.v_max * self.dt
+        lo = np.maximum(self.q_lo, qpa - vj) - qa
+        hi = np.minimum(self.q_hi, qpa + vj) - qa
+        if not first:
+            vb = BASE_V_MAX * self.dt
+            lo = np.concatenate([dprev[:6] - vb, lo])
+            hi = np.concatenate([dprev[:6] + vb, hi])
+            S = np.eye(nv)
+        else:
+            S = np.hstack([np.zeros((29, 6)), np.eye(29)])
         lo = np.minimum(lo, 0.0)  # keep dq = 0 feasible if the iterate is (numerically) outside
         hi = np.maximum(hi, 0.0)
         G_hard, h_hard = np.vstack([S, -S]), np.concatenate([hi, -lo])

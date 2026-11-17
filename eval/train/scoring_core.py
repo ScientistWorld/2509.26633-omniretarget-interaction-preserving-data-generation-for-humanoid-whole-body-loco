@@ -45,7 +45,7 @@ V_MAX = np.array([j["velocity"] for j in LIMITS["joints"]])
 NQ = 7 + len(Q_LO)
 LIMIT_TOL = 1e-4
 QUAT_TOL = 1e-3
-MAX_BASE_STEP = 0.5          # m per frame (15 m/s): larger base jumps are teleports
+MAX_BASE_STEP = 0.2          # m per frame (6 m/s, 4x the fastest demonstrated pelvis speed): larger base jumps are teleports
 
 EXPERIMENTS = [
     "object_interaction_kinematics",
@@ -293,6 +293,9 @@ def instance_measures(inp: dict, ann: dict, q: np.ndarray) -> dict:
 
     depth = np.zeros(T)
     limb_dist = {k: np.full(T, np.inf) for k in ROBOT_LIMB_BODIES}
+    support_dist = {s: np.full(T, np.inf) for s in ("left", "right")}
+    ground_id = model.geom("ground").id
+    support_geoms = [ground_id] + [g for g, kd in zip(box_geoms, kinds) if kd == "terrain"]
     kp = np.zeros((T, len(kp_ids), 3))
     toes = {s: np.zeros((T, 3)) for s in toe_ids}
     pelvis = np.zeros((T, 3))
@@ -317,6 +320,12 @@ def instance_measures(inp: dict, ann: dict, q: np.ndarray) -> dict:
                 for s in contact_geoms:
                     best = min(best, mujoco.mj_geomDistance(model, data, g, s, DETECT, fromto))
             limb_dist[limb][t] = best
+        for side in ("left", "right"):
+            best = np.inf
+            for g in limb_geoms[f"{side}_foot"]:
+                for s in support_geoms:
+                    best = min(best, mujoco.mj_geomDistance(model, data, g, s, DETECT, fromto))
+            support_dist[side][t] = best
         kp[t] = data.xpos[kp_ids]
         for s, b in toe_ids.items():
             toes[s][t] = data.xpos[b]
@@ -335,11 +344,16 @@ def instance_measures(inp: dict, ann: dict, q: np.ndarray) -> dict:
         v = np.maximum(np.where(st["left"] & (step["left"] > SKATE_STEP), step["left"], 0.0),
                        np.where(st["right"] & (step["right"] > SKATE_STEP), step["right"], 0.0))
         max_slide = float(v.max()) / dt
-    # contacts
+    # contacts: demonstrated hand/foot contacts with the object or terrain, and planted (stance) feet
+    # on a supporting surface (floor or terrain)
     desired = kept = clear_n = spurious = 0
     for limb, want in ann["contact"].items():
         desired += int(want.sum())
         kept += int(np.sum(want & (limb_dist[limb] <= ROBOT_CONTACT)))
+    for side in ("left", "right"):
+        want = ann["stance"][side]
+        desired += int(want.sum())
+        kept += int(np.sum(want & (support_dist[side] <= ROBOT_CONTACT)))
     for limb, cl in ann["clear"].items():
         clear_n += int(cl.sum())
         spurious += int(np.sum(cl & (limb_dist[limb] <= ROBOT_TOUCH)))
