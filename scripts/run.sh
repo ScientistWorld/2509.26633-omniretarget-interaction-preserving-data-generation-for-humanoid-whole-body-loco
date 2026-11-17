@@ -1,5 +1,6 @@
 #!/bin/bash
-# Corrective combined audit: author-release initialization, numerical geometry check,
+# Corrective combined audit: author initialization, canonical collision witnesses,
+# numerical geometry check,
 # reference/baselines, honest headroom variants, paired repeat and shortcut replay.
 # Finalization restores this entrypoint to reference reproduction.
 set -euo pipefail

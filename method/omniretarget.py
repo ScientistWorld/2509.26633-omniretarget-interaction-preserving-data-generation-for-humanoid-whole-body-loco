@@ -266,12 +266,21 @@ class Retargeter:
             else:
                 gr, gs = g2, g1
             fromto[:] = 0.0
-            dist = mujoco.mj_geomDistance(m, d, gr, gs, COLLISION_THRESHOLD, fromto)
+            # MuJoCo 3.3.0's native-CCD early return does not undo the internal
+            # geom-type sort of its witnesses (engine_support.c:1293-1309).
+            # Query in canonical order ourselves, then restore robot/scene order.
+            # This also works on primitive pairs and versions that fix that bug.
+            swapped = m.geom_type[gr] > m.geom_type[gs]
+            ga, gb = (gs, gr) if swapped else (gr, gs)
+            dist = mujoco.mj_geomDistance(m, d, ga, gb, COLLISION_THRESHOLD, fromto)
             if dist > COLLISION_THRESHOLD:
                 continue
             # The release differentiates signed separation using the two ordered
             # witnesses returned by mj_geomDistance, including during penetration.
-            pa, pb = fromto[:3].copy(), fromto[3:].copy()
+            if swapped:
+                pa, pb = fromto[3:].copy(), fromto[:3].copy()
+            else:
+                pa, pb = fromto[:3].copy(), fromto[3:].copy()
             v = pa - pb
             length = np.linalg.norm(v)
             n = np.sign(dist) * v / length if length > 1e-12 else self._scene_sdf_grad(gs, pa)[1]

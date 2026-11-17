@@ -18,6 +18,7 @@ for f in sorted(a.inputs.glob('*.json')):
     key = (inst['task'], bool(inst.get('augmentation')))
     chosen.setdefault(key, inst)
 errors = []
+cases = []
 for inst in chosen.values():
     r = Retargeter(inst, inst['target_scene'])
     for t in (0, r.T//2, r.T-1):
@@ -53,14 +54,26 @@ for inst in chosen.values():
                 numerical = (ds[1]-ds[0])/(2*eps)
                 # Threshold clipping and the zero-distance contact cusp are nonsmooth.
                 smooth = (np.abs(phi) > 1e-4) & (phi < COLLISION_THRESHOLD-1e-4)
-                errors.extend(np.abs((jac @ direction-numerical)[smooth]).tolist())
+                discrepancy = np.abs(jac @ direction-numerical)
+                for k in np.flatnonzero(smooth):
+                    gr, gs = used[k]
+                    error = float(discrepancy[k])
+                    errors.append(error)
+                    cases.append({'instance':inst['instance_id'], 'frame':t, 'lift':lift,
+                                  'robot_geom':r.model.geom(gr).name,
+                                  'scene_geom':r.model.geom(gs).name,
+                                  'robot_type':int(r.model.geom_type[gr]),
+                                  'scene_type':int(r.model.geom_type[gs]),
+                                  'distance':float(phi[k]), 'numerical':float(numerical[k]),
+                                  'analytic':float(jac[k] @ direction), 'error':error})
             r._fk(q, t)
 if not errors:
     raise RuntimeError('no active distances checked')
 report = {'count':len(errors), 'median_abs_error':float(np.median(errors)),
-          'p90_abs_error':float(np.percentile(errors,90)), 'max_abs_error':max(errors)}
+          'p90_abs_error':float(np.percentile(errors,90)), 'max_abs_error':max(errors),
+          'worst_cases':sorted(cases,key=lambda c:-c['error'])[:20]}
 a.report.parent.mkdir(parents=True, exist_ok=True)
 a.report.write_text(json.dumps(report,indent=2)+'\n')
-print('Collision derivative check:',report,flush=True)
+print('Collision derivative check:',{k:v for k,v in report.items() if k!='worst_cases'},flush=True)
 if report['median_abs_error'] > 1e-3 or report['p90_abs_error'] > 0.02:
     raise RuntimeError('collision distance derivative disagrees with finite differences')
