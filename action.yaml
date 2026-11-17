@@ -1,5 +1,5 @@
-action: pending
+action: submit
 gpus: 0
 test: false
 milestone: method_runs
-notes: "Final-code 3D verification prepared; numerical confirmation pending."
+notes: "One sequential final-code audit: reference and baseline end to end, paired honest variants, deterministic repeat, and major shortcut regressions; restore official-only scores."
