@@ -1,93 +1,134 @@
-"""Keypoint-matching IK baseline (GMR / PHC objective family, paper App. B).
+"""Keypoint-matching IK baseline (GMR / PHC family, paper App. B-1/B-2).
 
-Per frame, minimise sum_i || f_i(q) - p_i^source ||^2 subject only to joint
-limits (and the robot's velocity limits, as box bounds), warm-started from
-the previous frame.  Following the paper's "direct scaling" preprocessing
-(App. A, Eq. 7/8), human keypoints are scaled by the robot-to-human height
-ratio about the ground point below the demonstrator's initial pelvis (the
-same scaling that brings the demonstration scene to the robot's scale).
-The baseline does not look at objects or terrain.
+Per frame, the robot configuration minimises the distance between its 15 key
+bodies and the demonstrator's key joints brought to the robot's scale by
+direct scaling (alpha = robot / demonstrator height, demonstrator lowered so
+its toes touch the supporting surface), with joint position and velocity
+limits and a small smoothness term -- no collision, contact or foot-sticking
+handling and no awareness of the object or terrain.  Solved by bounded
+Gauss-Newton steps (scipy lsq_linear), warm-started from the previous frame.
+
+Usage: python baseline/keypoint_ik.py --inputs DIR --outputs DIR
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 
+import mujoco
 import numpy as np
-from scipy.optimize import minimize
+from scipy.optimize import lsq_linear
 
-from data.planar_robot import NAME_TO_IDX, Q_MAX, Q_MIN, PlanarHumanoid, per_frame_velocity_bounds
-from data.scene_geometry import terrain_height
+ROOT = Path(__file__).resolve().parents[1]
+ROBOT_XML = ROOT / "data/robot/g1_29dof_spherehand_hull.xml"
+LIMITS = json.loads((ROOT / "data/robot/g1_limits.json").read_text())
+SMPLH_MAP = {
+    "Pelvis": "pelvis_contour_link", "L_Hip": "left_hip_pitch_link", "R_Hip": "right_hip_pitch_link",
+    "L_Knee": "left_knee_link", "R_Knee": "right_knee_link", "L_Shoulder": "left_shoulder_roll_link",
+    "R_Shoulder": "right_shoulder_roll_link", "L_Elbow": "left_elbow_link", "R_Elbow": "right_elbow_link",
+    "L_Ankle": "left_ankle_intermediate_1_link", "R_Ankle": "right_ankle_intermediate_1_link",
+    "L_Toe": "left_ankle_roll_sphere_5_link", "R_Toe": "right_ankle_roll_sphere_5_link",
+    "L_Wrist": "left_sphere_hand_link", "R_Wrist": "right_sphere_hand_link",
+}
+MOCAP_MAP = {
+    "Spine1": "pelvis_contour_link", "LeftUpLeg": "left_hip_pitch_link", "LeftLeg": "left_knee_link",
+    "LeftToeBase": "left_ankle_roll_sphere_5_link", "RightUpLeg": "right_hip_pitch_link",
+    "RightLeg": "right_knee_link", "RightToeBase": "right_ankle_roll_sphere_5_link",
+    "LeftArm": "left_shoulder_roll_link", "LeftForeArm": "left_elbow_link",
+    "LeftHandMiddle3": "left_sphere_hand_link", "RightArm": "right_shoulder_roll_link",
+    "RightForeArm": "right_elbow_link", "RightHandMiddle3": "right_sphere_hand_link",
+    "LeftFoot": "left_ankle_intermediate_1_link", "RightFoot": "right_ankle_intermediate_1_link",
+}
+TOES = {"smplh": ("L_Toe", "R_Toe"), "mocap": ("LeftToeBase", "RightToeBase")}
+HIPS = {"smplh": ("L_Hip", "R_Hip"), "mocap": ("LeftUpLeg", "RightUpLeg")}
+SMOOTH, STEP, ITERS_FIRST, ITERS = 0.05, 0.2, 50, 10
 
-ROBOT = PlanarHumanoid()
+
+def _support(xy: np.ndarray, scene: dict) -> np.ndarray:
+    h = np.zeros(xy.shape[:-1])
+    for b in scene["boxes"]:
+        if "pose" not in b:
+            continue
+        p = np.asarray(b["pose"], dtype=float)
+        yaw = 2 * np.arctan2(p[6], p[3])
+        c, s = np.cos(yaw), np.sin(yaw)
+        loc = (xy - p[:2]) @ np.array([[c, -s], [s, c]])
+        half = np.asarray(b["half_size"], dtype=float)
+        inside = np.all(np.abs(loc) <= half[:2], axis=-1)
+        h = np.where(inside, np.maximum(h, p[2] + half[2]), h)
+    return h
 
 
-def human_height(src0: np.ndarray) -> float:
-    P = lambda n: src0[NAME_TO_IDX[n]]  # noqa: E731
-    torso = np.linalg.norm(P("neck") - P("pelvis"))
-    thigh = 0.5 * (np.linalg.norm(P("left_knee") - P("pelvis")) + np.linalg.norm(P("right_knee") - P("pelvis")))
-    shin = 0.5 * (np.linalg.norm(P("left_foot") - P("left_knee")) + np.linalg.norm(P("right_foot") - P("right_knee")))
-    return float(torso + thigh + shin)
-
-
-def scaled_source(task: dict, scale_mode: str = "global") -> np.ndarray:
-    src = np.asarray(task["source_keypoints"], dtype=float)
-    alpha = ROBOT.height / human_height(src[0])
-    pel = src[:, NAME_TO_IDX["pelvis"]]
-    ground = terrain_height(pel[:, 0], task["source_scene"]["terrain"])
-    anchor = np.stack([pel[:, 0], ground], axis=1)[:, None, :]
-    if scale_mode == "global":
-        anchor = np.repeat(anchor[:1], len(src), axis=0)
-    return anchor + alpha * (src - anchor)
-
-
-def retarget(task: dict, scale_mode: str = "global") -> np.ndarray:
-    tgt = scaled_source(task, scale_mode)
-    N = len(tgt)
-    vstep = per_frame_velocity_bounds(float(task["dt"]))
-    q_prev = None
-    out = np.zeros((N, len(Q_MIN)))
-    for t in range(N):
-        target = tgt[t]
-        if q_prev is None:
-            pel = target[NAME_TO_IDX["pelvis"]]
-            q0 = np.array([pel[0], min(pel[1], 0.78), 0.0, -0.15, 0.3, 0.15, -0.3, -0.3, 0.3, 0.3, -0.3])
-            lo, hi = Q_MIN, Q_MAX
-        else:
-            q0 = q_prev
-            lo = np.maximum(Q_MIN, q_prev - vstep)
-            hi = np.minimum(Q_MAX, q_prev + vstep)
-        q0 = np.clip(q0, lo, hi)
-
-        def objective(q, q0=q0, target=target):
-            fk, J = ROBOT.fk_jacobian(q)
-            e = fk - target
-            val = float(np.sum(e ** 2) + 1e-3 * np.sum((q - q0) ** 2))
-            grad = 2.0 * np.einsum("kd,kdj->j", e, J) + 2e-3 * (q - q0)
-            return val, grad
-
-        res = minimize(objective, q0, jac=True, method="L-BFGS-B", bounds=list(zip(lo, hi)),
-                       options={"maxiter": 300 if q_prev is None else 80})
-        q_prev = np.clip(np.asarray(res.x, dtype=float), lo, hi)
-        out[t] = q_prev
-    return out
+def retarget(inst: dict) -> np.ndarray:
+    model = mujoco.MjModel.from_xml_path(str(ROBOT_XML))
+    data = mujoco.MjData(model)
+    names = inst["joint_names"]
+    fmt = "smplh" if "L_Wrist" in names else "mocap"
+    kmap = SMPLH_MAP if fmt == "smplh" else MOCAP_MAP
+    J = np.asarray(inst["human_joints"], dtype=float)
+    toes = [names.index(t) for t in TOES[fmt]]
+    z_min = float(np.min(J[:, toes, 2] - _support(J[:, toes, :2], inst["source_scene"])))
+    J = J.copy()
+    J[:, :, 2] -= z_min
+    target = float(inst["alpha"]) * J[:, [names.index(k) for k in kmap]]
+    bodies = [model.body(b).id for b in kmap.values()]
+    lo = np.array([j["range"][0] for j in LIMITS["joints"]])
+    hi = np.array([j["range"][1] for j in LIMITS["joints"]])
+    vmax = np.array([j["velocity"] for j in LIMITS["joints"]]) / float(inst["fps"])
+    hips = [names.index(h) for h in HIPS[fmt]]
+    fwd = np.cross(J[0, hips[0]] - J[0, hips[1]], [0, 0, 1.0])
+    yaw = np.arctan2(fwd[1], fwd[0])
+    q = np.zeros(model.nq)
+    q[:3] = target[0, 0]
+    q[3:7] = [np.cos(yaw / 2), 0, 0, np.sin(yaw / 2)]
+    nv = model.nv
+    out = []
+    q_prev = q.copy()
+    for t in range(len(target)):
+        for _ in range(ITERS_FIRST if t == 0 else ITERS):
+            data.qpos[:] = q
+            mujoco.mj_kinematics(model, data)
+            mujoco.mj_comPos(model, data)
+            rows, res = [], []
+            for b, p in zip(bodies, target[t]):
+                jp = np.zeros((3, nv))
+                mujoco.mj_jac(model, data, jp, None, data.xpos[b], b)
+                rows.append(jp)
+                res.append(p - data.xpos[b])
+            dprev = np.zeros(nv)
+            mujoco.mj_differentiatePos(model, dprev, 1.0, q, q_prev)
+            A = np.vstack(rows + [np.sqrt(SMOOTH) * np.eye(nv)])
+            b = np.concatenate(res + [np.sqrt(SMOOTH) * dprev])
+            lb = np.full(nv, -STEP)
+            ub = np.full(nv, STEP)
+            jlo = np.maximum(lo, q_prev[7:] - vmax) if t > 0 else lo
+            jhi = np.minimum(hi, q_prev[7:] + vmax) if t > 0 else hi
+            lb[6:] = np.minimum(np.maximum(lb[6:], jlo - q[7:]), 0.0)
+            ub[6:] = np.maximum(np.minimum(ub[6:], jhi - q[7:]), 0.0)
+            dq = lsq_linear(A, b, bounds=(lb, ub), method="bvls").x
+            mujoco.mj_integratePos(model, q, dq, 1.0)
+            q[3:7] /= np.linalg.norm(q[3:7])
+            q[7:] = np.clip(q[7:], lo, hi)
+            if np.linalg.norm(dq) < 1e-4:
+                break
+        out.append(q.copy())
+        q_prev = q.copy()
+    return np.array(out)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--inputs", type=Path, required=True)
-    parser.add_argument("--outputs", type=Path, required=True)
-    args = parser.parse_args()
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--inputs", type=Path, required=True)
+    ap.add_argument("--outputs", type=Path, required=True)
+    args = ap.parse_args()
     args.outputs.mkdir(parents=True, exist_ok=True)
     for path in sorted(args.inputs.glob("*.json")):
-        task = json.loads(path.read_text())
-        q = retarget(task)
-        out = {"instance_id": task["instance_id"], "method": "keypoint_ik", "q": np.round(q, 10).tolist()}
-        (args.outputs / f"{task['instance_id']}.json").write_text(json.dumps(out))
-        print(f"[keypoint_ik] {task['instance_id']} done", file=sys.stderr, flush=True)
+        inst = json.loads(path.read_text())
+        q = retarget(inst)
+        (args.outputs / path.name).write_text(json.dumps({"q": np.round(q, 6).tolist()}))
+        print(f"{inst['instance_id']}: {len(q)} frames", flush=True)
 
 
 if __name__ == "__main__":

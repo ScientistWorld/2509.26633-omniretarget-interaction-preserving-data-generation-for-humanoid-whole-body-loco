@@ -238,3 +238,9 @@ redteam/hardening/results/official/outputs/
 redteam/hardening/results/combined_outputs/
 redteam/hardening/results/.shipped_backup/
 redteam/hardening/results/.train_tampered
+
+# Iteration 13: held-out test demonstrations are committed (eval/test is hidden from future agents)
+!eval/test/data/
+!eval/test/data/*.npz
+# audit raw outputs (large; reproducible with scripts/run.sh)
+redteam/hardening3d/results/**/outputs/

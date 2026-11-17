@@ -1,8 +1,8 @@
 #!/bin/bash
 # Hidden test evaluator (no arguments needed).
-# Generates the private test instances, runs every method registered as
-# scripts/retargeters/<name>.sh on them, recomputes all metrics from the
-# returned joint trajectories and writes scoring/scores_test.json.
+# Builds the held-out test instances, runs every method registered as scripts/retargeters/<name>.sh
+# on them, recomputes all metrics from the returned robot trajectories and writes
+# scoring/scores_test.json.
 set -e
 cd /home/user
 export PYTHONPATH=/home/user:${PYTHONPATH:-}

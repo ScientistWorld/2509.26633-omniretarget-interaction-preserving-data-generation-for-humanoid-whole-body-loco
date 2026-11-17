@@ -9,11 +9,12 @@
 # Only use container.def for the base Docker image and apt-get packages.
 #
 # IMPORTANT: Install into the SYSTEM Python, not a virtual environment.
-# The overlay may be recreated on container rebuilds — a venv inside
-# it will be lost and all subsequent jobs will fail.
 # Use: uv pip install --system <packages>
 # Do NOT create a venv (python -m venv, virtualenv, etc.).
+#
+# mujoco: robot kinematics, Jacobians and signed distances (robot model and evaluator);
+# clarabel: SOCP solver of the reference method.
 
 set -e
 
-uv pip install --system numpy scipy
+uv pip install --system numpy==2.1.3 scipy==1.17.1 mujoco==3.3.0 clarabel==0.11.1

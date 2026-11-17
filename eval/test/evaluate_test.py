@@ -1,9 +1,9 @@
 """Hidden test-split evaluator.
 
-Materialises the private test instances in memory, runs every method
-registered in ``scripts/retargeters/`` on their inputs (a fresh temporary
-copy per method; evaluation labels never touch the disk), recomputes all
-metrics from the returned joint trajectories, and writes
+Builds the held-out test instances in memory (eval/test/hidden_tasks.py), runs
+every method registered in ``scripts/retargeters/`` on them (a fresh temporary
+copy of the inputs per method; labels exist only in this process's memory),
+recomputes all metrics from the returned robot trajectories and writes
 ``scoring/scores_test.json``.  Methods that fail any instance (or exceed the
 counted CPU budget) get the worst value of every metric in every experiment.
 """
@@ -24,11 +24,7 @@ def main() -> None:
     parser.add_argument("--score-out", type=Path, default=ROOT / "scoring/scores_test.json")
     parser.add_argument("--diagnostics-out", type=Path, default=ROOT / "scoring/diagnostics_test.json")
     args = parser.parse_args()
-    inputs, anns = {}, {}
-    for inp, ann in test_split():
-        inputs[inp["instance_id"]] = inp
-        anns[inp["instance_id"]] = ann
-    evaluate_all(ROOT, inputs, anns, "test", args.score_out, args.diagnostics_out, ROOT / "logs/eval_test")
+    evaluate_all(ROOT, test_split(), "test", args.score_out, args.diagnostics_out, ROOT / "logs/eval_test")
 
 
 if __name__ == "__main__":
