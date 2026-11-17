@@ -1,5 +1,11 @@
 # Progress
 
+## Current final state — 2026-11-17
+
+Final 3D hardening is complete; milestone `core_claim`. Job `b6ab06be-ec7` completed audit `ae348dd707e3` with exit 0 and validation passes. On 325 held-out inputs the honest improvement scores +0.14581 [0.06832,0.23076], no-mesh scores -0.12629 [-0.25677,-0.01740], and all fixed shortcuts lose. Official scores contain only reference/baseline final-code runs. The reference repeats exactly. Keypoint-plus-contact remains statistically tied, and kinematic residuals, reduced hulls and unmeasured dynamics/RL/hardware limit the claim. HARDENING.md and DETAILS.md describe the final gym; entries below are historical and can describe superseded implementations.
+
+## Historical progress
+
 ## What Works
 
 - Read the OmniRetarget paper and extracted the core algorithm, baselines, metrics, and Table II reported numbers.
@@ -95,3 +101,7 @@ Job `8395ea92-bf0` completed all remaining probes, exact repeat, paired recordin
 ### Expanded audit checkpoint, 2026-11-17
 
 Job `e7f7918f-665` rebuilt the 99-clip private corpus and completed reference, baseline, all nine scientific variants on both splits, and the hidden-test repeat. The unchanged derivative check passed. Repeated scheduler preemptions interrupted the shortcut batch; after almost 50 minutes without progress following a preemption, cancellation was requested. A worker briefly restarted as cancellation arrived. No scientific failure was reported. Audit orchestration now checkpoints each shortcut independently through the ordinary full-split evaluation interface, preserving progress across further worker preemptions. Scientific sources, inputs, metrics and weights are unchanged; resume the exact `ae348dd707e3` checkpoints and finish shortcut replay, paired analysis and validation. Milestone remains `method_runs` pending those checks.
+
+### Final verification completed, 2026-11-17
+
+Resumed job `b6ab06be-ec7` completed every remaining shortcut replay, clustered paired analysis and validator check without changing scientific code/data. The reference/baseline and all nine scientific variants had already been rerun from the final expanded setup; their exact-manifest checkpoints were preserved across scheduler preemptions. Final headroom and mesh effects both exceed paired recording noise. Replaced pending hardening/verification reports with measured results, corrected the obsolete planar DETAILS.md, restored scripts/run.sh to end-to-end reference reproduction and set milestone `core_claim` for the documented kinematic subset. No further scientific patches or jobs are needed.

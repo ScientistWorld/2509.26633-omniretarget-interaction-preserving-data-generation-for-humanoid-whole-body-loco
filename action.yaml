@@ -1,5 +1,3 @@
-action: submit
-gpus: 0
-test: false
-milestone: method_runs
-notes: "Resume expanded 325-input audit ae348dd707e3 after scheduler preemptions; reference, baseline, nine scientific variants and repeat are complete. Replay remaining shortcuts with independent checkpoints, then paired analysis and validation. Scientific sources, data and scoring unchanged."
+action: done
+milestone: core_claim
+notes: "Final 3D hardening verified on 325 hidden inputs: honest improvement and mesh benefit exceed paired noise; shortcuts lose, complete official scores restored, validation passes."

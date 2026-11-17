@@ -1,6 +1,6 @@
 # Reproduction Milestones
 
-**Current: method_runs**
+**Current: core_claim**
 
 ## Progress Log
 
@@ -47,3 +47,9 @@
 
 ### [2026-11-17] - method_runs
 - Expanded 325-input verification has completed the reference, baseline, nine scientific variants and exact-repeat run. The scientific manifest is unchanged and all 11 stage receipts were verified after scheduler interruption. Shortcut replay and paired recording confidence intervals remain pending; the next job resumes them with independent replay checkpoints.
+
+### [2026-11-17] - core_claim
+- Final 325-input 3D audit completed (`b6ab06be-ec7`, exit 0); `python validate.py` passes.
+- Actual interaction-mesh sequential SOCP and augmentation run on real human motion and the 3D G1. The no-mesh ablation loses beyond paired recording noise: -0.12629 [-0.25677,-0.01740].
+- Honest contact-1000 improvement beats the reference: +0.14581 [0.06832,0.23076]. Independent keypoint IK loses by -4.98135. Exact reference repeat matches every raw measurement, and all fixed shortcut probes lose with complete failure vectors where applicable.
+- Milestone is limited to the kinematic core. Keypoint-plus-contact remains statistically tied on test; numerical penetration/contact quality is below the paper, and dynamics, downstream RL and hardware are not reproduced. See HARDENING.md for all limits.
