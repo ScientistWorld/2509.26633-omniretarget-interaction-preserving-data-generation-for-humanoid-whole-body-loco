@@ -12,18 +12,44 @@ import shutil
 import subprocess
 import sys
 
+def atomic_json(path, value):
+    temporary = path.with_name(path.name+'.tmp')
+    temporary.write_text(json.dumps(value,indent=2)+'\n')
+    temporary.replace(path)
+
 ROOT = Path('/home/user')
 REG = ROOT/'scripts/retargeters'
 PRIVATE = ROOT/'eval/test'
-# Resume only stages produced by the same scientific and evaluator source.
-paths = sorted(p for d in ('method','baseline','data','eval/train','redteam') for p in (ROOT/d).rglob('*.py'))
-paths += [PRIVATE/'scoring_core.py', PRIVATE/'hidden_tasks.py', Path(__file__), PRIVATE/'summarize.py']
-fingerprint = hashlib.sha256(b''.join(p.read_bytes() for p in paths)).hexdigest()[:12]
-OUT = PRIVATE/'audit_results'/fingerprint
-OUT.mkdir(parents=True, exist_ok=True)
-SHIPPED = {p.name:p.read_text() for p in REG.glob('*.sh') if p.stem in ('omniretarget','keypoint_ik')}
-if len(SHIPPED)!=2:
-    raise RuntimeError('restore the two shipped registrations before running audit')
+# The plan is independent of temporary on-disk registrations. Infrastructure may
+# restart the job at any instruction, including after installing a candidate.
+PLAN = json.loads((PRIVATE/'audit_plan.json').read_text())
+SHIPPED = {n+'.sh':'#!/bin/bash\nset -e\ncd /home/user\n'+body+'\n'
+           for n,body in PLAN['shipped'].items()}
+# Cache identity covers scientific sources, assets, commands, dependencies and
+# ranking definitions. Orchestration-only repairs do not invalidate completed runs.
+paths = sorted(p for d in ('method','baseline','data','eval/train','redteam')
+               for p in (ROOT/d).rglob('*.py'))
+paths += [PRIVATE/'scoring_core.py', PRIVATE/'hidden_tasks.py', PRIVATE/'summarize.py',
+          PRIVATE/'audit_plan.json', ROOT/'scripts/evaluate_train.sh',
+          ROOT/'scripts/evaluate_test.sh', ROOT/'environment/setup.sh']
+paths += sorted((PRIVATE/'assets').glob('*')) + sorted((PRIVATE/'data').glob('*.npz'))
+paths += sorted((ROOT/'eval/train/assets').glob('*'))
+manifest = {str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
+spec = json.loads((ROOT/'scoring/reference.json').read_text())['experiments']
+manifest['_scoring_definitions'] = {e:{k:v for k,v in x.items()
+                                        if k in ('weight','metrics','primary_metric')}
+                                    for e,x in spec.items()}
+manifest_text = json.dumps(manifest,sort_keys=True,separators=(',',':'))
+science_digest = hashlib.sha256(manifest_text.encode()).hexdigest()
+OUT = PRIVATE/'audit_results'/science_digest[:12]
+for receipt in sorted((PRIVATE/'audit_results').glob('*/science_manifest.json')):
+    if json.loads(receipt.read_text()) == manifest:
+        OUT = receipt.parent
+        break
+OUT.mkdir(parents=True,exist_ok=True)
+(PRIVATE/'audit_results').mkdir(exist_ok=True)
+atomic_json(OUT/'science_manifest.json',manifest)
+fingerprint = OUT.name
 FILES = ['scores_train.json','scores_test.json','diagnostics_train.json','diagnostics_test.json']
 
 def restore():
@@ -44,7 +70,12 @@ def restore():
 
 def stage(name, methods, splits):
     dest=OUT/name
-    if (dest/'done.json').exists(): return
+    if (dest/'done.json').exists():
+        checkpoint=json.loads((dest/'done.json').read_text())
+        if checkpoint.get('fingerprint') != fingerprint:
+            raise RuntimeError(f'incompatible stage checkpoint: {dest}')
+        print(name,'resumed completed stage',flush=True)
+        return
     dest.mkdir(exist_ok=True)
     for p in REG.glob('*.sh'): p.unlink()
     for n,body in methods.items():
@@ -57,42 +88,24 @@ def stage(name, methods, splits):
             src=PRIVATE/'diagnostics_latest.json' if f=='diagnostics_test.json' else ROOT/'scoring'/f
             shutil.copy2(src,dest/f)
         print(name,split,'complete',flush=True)
-    (dest/'done.json').write_text(json.dumps({'fingerprint':fingerprint}))
+    atomic_json(dest/'done.json',{'fingerprint':fingerprint,'science_digest':science_digest})
     restore()
-
-def m(flags=''):
-    return 'python method/omniretarget.py --inputs "$1" --outputs "$2" '+flags
 
 try:
     restore()
     subprocess.run([sys.executable,'-m','data.tasks','--out','data/downloads/tasks/train'],cwd=ROOT,check=True)
     subprocess.run([sys.executable,'-m','method.check_geometry','data/downloads/tasks/train/inputs',
                     str(OUT/'collision_derivatives.json')],cwd=ROOT,check=True)
-    stage('official', {Path(n).stem:s.split('cd /home/user\n')[-1] for n,s in SHIPPED.items()}, ('train','test'))
-    honest = {
-      'var_no_mesh':m('--objective keypoint'),
-      'var_contact10':m('--contact-weight 10'),
-      'var_contact100':m('--contact-weight 100'),
-      'var_contact1000':m('--contact-weight 1000'),
-      'var_keypoint_contact':m('--objective keypoint --contact-weight 100'),
-      'var_private_search':'python -m method.audit_variants private_search "$1" "$2"',
-      'var_support10':'python -m method.audit_variants contact_support10 "$1" "$2"',
-      'var_support100':'python -m method.audit_variants contact_support100 "$1" "$2"',
-      'var_small_steps':'python -m method.audit_variants contact_small_steps "$1" "$2"',
-    }
-    for n,body in honest.items(): stage(n,{n:body},('test','train'))
-    stage('repeat',{'var_repeat':m()},('test',))
-    cheats=['constant','impossible','nan','malformed','empty','partial','joint','velocity','quaternion','teleport','disconnected','mutable','filter','forgery','hidden_read']
-    bodies={'sc_'+n:f'python redteam/shortcuts.py {n} "$1" "$2"' for n in cheats}
-    bodies['fresh_unseen_candidate']='python redteam/shortcuts.py constant "$1" "$2"'
-    bodies['sc_always_contact']='python -m method.audit_variants always_contact "$1" "$2"'
-    stage('shortcuts',bodies,('test',))
-    stage('constant_train',{'sc_constant':bodies['sc_constant']},('train',))
+    for item in PLAN['stages']:
+        stage(item['name'],item['methods'],tuple(item['splits']))
     # Merge audit-only results; official scoring/ files are restored below.
     for split in ('test','train'):
         scores={'experiments':{}}
         diags={'methods':{}}
-        for dest in sorted(OUT.iterdir()):
+        for item in PLAN['stages']:
+            dest=OUT/item['name']
+            if not (dest/'done.json').exists():
+                raise RuntimeError(f'incomplete audit stage: {dest}')
             sf=dest/f'scores_{split}.json'; df=dest/f'diagnostics_{split}.json'
             if not sf.exists() or not df.exists(): continue
             x=json.loads(sf.read_text())

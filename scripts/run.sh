@@ -1,7 +1,7 @@
 #!/bin/bash
-# Corrective combined audit: author initialization, canonical collision witnesses,
-# numerical geometry check,
-# reference/baselines, honest headroom variants, paired repeat and shortcut replay.
+# Resume the combined audit after infrastructure preemption. Scientific sources
+# and fixed assets are checked before reusing completed reference/variant runs.
+# Finish the paired repeat, shortcut replay and recording-clustered analysis.
 # Finalization restores this entrypoint to reference reproduction.
 set -euo pipefail
 cd /home/user

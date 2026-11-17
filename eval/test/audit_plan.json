@@ -1,0 +1,152 @@
+{
+  "shipped": {
+    "omniretarget": "python method/omniretarget.py --inputs \"$1\" --outputs \"$2\"",
+    "keypoint_ik": "python baseline/keypoint_ik.py --inputs \"$1\" --outputs \"$2\""
+  },
+  "stages": [
+    {
+      "name": "official",
+      "methods": {
+        "omniretarget": "python method/omniretarget.py --inputs \"$1\" --outputs \"$2\"",
+        "keypoint_ik": "python baseline/keypoint_ik.py --inputs \"$1\" --outputs \"$2\""
+      },
+      "splits": [
+        "train",
+        "test"
+      ]
+    },
+    {
+      "name": "var_no_mesh",
+      "methods": {
+        "var_no_mesh": "python method/omniretarget.py --inputs \"$1\" --outputs \"$2\" --objective keypoint"
+      },
+      "splits": [
+        "test",
+        "train"
+      ]
+    },
+    {
+      "name": "var_contact10",
+      "methods": {
+        "var_contact10": "python method/omniretarget.py --inputs \"$1\" --outputs \"$2\" --contact-weight 10"
+      },
+      "splits": [
+        "test",
+        "train"
+      ]
+    },
+    {
+      "name": "var_contact100",
+      "methods": {
+        "var_contact100": "python method/omniretarget.py --inputs \"$1\" --outputs \"$2\" --contact-weight 100"
+      },
+      "splits": [
+        "test",
+        "train"
+      ]
+    },
+    {
+      "name": "var_contact1000",
+      "methods": {
+        "var_contact1000": "python method/omniretarget.py --inputs \"$1\" --outputs \"$2\" --contact-weight 1000"
+      },
+      "splits": [
+        "test",
+        "train"
+      ]
+    },
+    {
+      "name": "var_keypoint_contact",
+      "methods": {
+        "var_keypoint_contact": "python method/omniretarget.py --inputs \"$1\" --outputs \"$2\" --objective keypoint --contact-weight 100"
+      },
+      "splits": [
+        "test",
+        "train"
+      ]
+    },
+    {
+      "name": "var_private_search",
+      "methods": {
+        "var_private_search": "python -m method.audit_variants private_search \"$1\" \"$2\""
+      },
+      "splits": [
+        "test",
+        "train"
+      ]
+    },
+    {
+      "name": "var_support10",
+      "methods": {
+        "var_support10": "python -m method.audit_variants contact_support10 \"$1\" \"$2\""
+      },
+      "splits": [
+        "test",
+        "train"
+      ]
+    },
+    {
+      "name": "var_support100",
+      "methods": {
+        "var_support100": "python -m method.audit_variants contact_support100 \"$1\" \"$2\""
+      },
+      "splits": [
+        "test",
+        "train"
+      ]
+    },
+    {
+      "name": "var_small_steps",
+      "methods": {
+        "var_small_steps": "python -m method.audit_variants contact_small_steps \"$1\" \"$2\""
+      },
+      "splits": [
+        "test",
+        "train"
+      ]
+    },
+    {
+      "name": "repeat",
+      "methods": {
+        "var_repeat": "python method/omniretarget.py --inputs \"$1\" --outputs \"$2\""
+      },
+      "splits": [
+        "test"
+      ]
+    },
+    {
+      "name": "shortcuts",
+      "methods": {
+        "sc_constant": "python redteam/shortcuts.py constant \"$1\" \"$2\"",
+        "sc_impossible": "python redteam/shortcuts.py impossible \"$1\" \"$2\"",
+        "sc_nan": "python redteam/shortcuts.py nan \"$1\" \"$2\"",
+        "sc_malformed": "python redteam/shortcuts.py malformed \"$1\" \"$2\"",
+        "sc_empty": "python redteam/shortcuts.py empty \"$1\" \"$2\"",
+        "sc_partial": "python redteam/shortcuts.py partial \"$1\" \"$2\"",
+        "sc_joint": "python redteam/shortcuts.py joint \"$1\" \"$2\"",
+        "sc_velocity": "python redteam/shortcuts.py velocity \"$1\" \"$2\"",
+        "sc_quaternion": "python redteam/shortcuts.py quaternion \"$1\" \"$2\"",
+        "sc_teleport": "python redteam/shortcuts.py teleport \"$1\" \"$2\"",
+        "sc_disconnected": "python redteam/shortcuts.py disconnected \"$1\" \"$2\"",
+        "sc_mutable": "python redteam/shortcuts.py mutable \"$1\" \"$2\"",
+        "sc_filter": "python redteam/shortcuts.py filter \"$1\" \"$2\"",
+        "sc_forgery": "python redteam/shortcuts.py forgery \"$1\" \"$2\"",
+        "sc_hidden_read": "python redteam/shortcuts.py hidden_read \"$1\" \"$2\"",
+        "fresh_unseen_candidate": "python redteam/shortcuts.py constant \"$1\" \"$2\"",
+        "sc_always_contact": "python -m method.audit_variants always_contact \"$1\" \"$2\""
+      },
+      "splits": [
+        "test"
+      ]
+    },
+    {
+      "name": "constant_train",
+      "methods": {
+        "sc_constant": "python redteam/shortcuts.py constant \"$1\" \"$2\""
+      },
+      "splits": [
+        "train"
+      ]
+    }
+  ]
+}
