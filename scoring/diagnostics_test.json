@@ -11,13 +11,13 @@
     "keypoint_ik": {
       "status": "ok",
       "reason": "",
-      "cpu_s": 31.3,
+      "cpu_s": 32.3,
       "cpu_budget_s": 3000.0
     },
     "omniretarget": {
       "status": "ok",
       "reason": "",
-      "cpu_s": 175.6,
+      "cpu_s": 156.1,
       "cpu_budget_s": 3000.0
     }
   }
