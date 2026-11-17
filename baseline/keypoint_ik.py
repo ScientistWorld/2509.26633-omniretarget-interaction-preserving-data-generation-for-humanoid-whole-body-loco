@@ -70,6 +70,8 @@ def retarget(inst: dict) -> np.ndarray:
     J = np.asarray(inst["human_joints"], dtype=float)
     toes = [names.index(t) for t in TOES[fmt]]
     z_min = float(np.min(J[:, toes, 2] - _support(J[:, toes, :2], inst["source_scene"])))
+    if z_min >= 0.1:
+        z_min -= 0.1
     J = J.copy()
     J[:, :, 2] -= z_min
     target = float(inst["alpha"]) * J[:, [names.index(k) for k in kmap]]

@@ -24,16 +24,20 @@ while read -r f; do
   [ -z "$f" ] && continue
   if [ ! -s "$D/holosoma/$f" ]; then
     mkdir -p "$(dirname "$D/holosoma/$f")"
-    curl -sfL --retry 3 -o "$D/holosoma/$f" "$BASE/$f"
+    curl -sfL --retry 3 -o "$D/holosoma/$f.part" "$BASE/$f"
+    mv "$D/holosoma/$f.part" "$D/holosoma/$f"
   fi
 done < data/holosoma_files.txt
 # the model file references ../assets/half_sphere.obj relative to meshes/; keep a copy next to it
 [ -s $D/holosoma/models/g1/half_sphere.obj ] || cp $D/holosoma/models/g1/assets/half_sphere.obj $D/holosoma/models/g1/half_sphere.obj
 
-if [ -z "$(ls -A $D/omomo/largebox 2>/dev/null)" ]; then
+if [ ! -f "$D/omomo/largebox/.complete" ]; then
   ZIP=$D/omomo/OMOMO_new.zip
-  [ -s "$ZIP" ] || curl -sfL --retry 3 -o "$ZIP" \
-    "https://drive.usercontent.google.com/download?id=141YoPOd2DlJ4jhU2cpZO5VU5GzV_lm5j&export=download&confirm=t"
+  if [ ! -s "$ZIP" ]; then
+    curl -sfL --retry 3 -o "$ZIP.part" \
+      "https://drive.usercontent.google.com/download?id=141YoPOd2DlJ4jhU2cpZO5VU5GzV_lm5j&export=download&confirm=t"
+    mv "$ZIP.part" "$ZIP"
+  fi
   python - "$ZIP" $D/omomo/largebox <<'PY'
 import os, sys, zipfile
 z = zipfile.ZipFile(sys.argv[1])
@@ -45,6 +49,7 @@ for name in z.namelist():
         n += 1
 print(f"extracted {n} OMOMO train clips")
 PY
+  touch "$D/omomo/largebox/.complete"
   rm -f "$ZIP"
 fi
 

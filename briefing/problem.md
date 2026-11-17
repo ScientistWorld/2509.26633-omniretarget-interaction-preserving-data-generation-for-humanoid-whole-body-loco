@@ -1,86 +1,19 @@
-# Problem Definition
+# Problem
 
-**Kinematic motion retargeting for humanoid whole-body interaction.** A human
-demonstration (a time series of body keypoints) was recorded while the human
-interacted with a scene (a carried object and/or terrain). Produce a joint
-trajectory for a humanoid robot with different body proportions that
+Retarget a real human demonstration to a humanoid with different proportions while preserving its interactions with a carried box or climbing terrain. Produce motion that keeps demonstrated contacts, avoids scene penetration and foot skating, respects kinematic limits, and follows the human's path and body pose. Contacts, feasibility and motion fidelity must improve together.
 
-- preserves the demonstrated interactions in the scene where the robot must act
-  (hands stay on the object or on the terrain surface they touched; feet stay
-  planted on the ground while the demonstrator's feet were planted),
-- respects the robot's hard kinematic limits (joint ranges and per-frame joint
-  velocity limits), does not push any part of the body into objects or terrain,
-  and does not let stance feet slide,
-- stays faithful to the demonstrated motion (pelvis path and keypoint
-  velocities).
+The robot is the public Unitree G1 with 29 articulated joints and a floating base. Its self-contained MuJoCo model and URDF joint limits are in `data/robot/`. Collision meshes use deterministic convex hulls with at most 128 vertices. This is a kinematic task; balance, torque feasibility and downstream control are not measured.
 
-These goals conflict: the robot's limbs and torso differ in length from the
-human's, so copying keypoint positions breaks contacts and causes penetration
-or skating, while enforcing contacts alone can distort the motion.
+Public instances are real OMOMO box-manipulation clips and public climbing motion capture, cut into 90–150-frame windows at 30 Hz. Test uses different subjects and climbing recordings. The train split has 44 windows; the test split has 100. The source scene is at human scale. Nominal terrain and object trajectories are scaled by `alpha = 1.32 / human_height`; the manipulated box retains its physical size. Some target scenes have different box dimensions and initial poses, or changed platform heights.
 
-## Robot
+Each input JSON contains `instance_id`, `task` (`object` or `terrain`), `fps`, `num_frames`, `human_height`, `robot_height`, `alpha`, `joint_names`, `human_joints[T][J][3]`, `source_scene`, `nominal_scene`, `target_scene`, and optional `augmentation`. Distances are metres. A scene contains `ground_z` and oriented `boxes`: `kind`, `half_size`, optional local centre `offset`, and either a static `pose[7]` or a `poses[T][7]` trajectory. Poses are xyz followed by a wxyz quaternion. No contact or stance labels are supplied.
 
-`data/planar_robot.py` defines the robot: a planar (frontal-plane) humanoid with
-12 keypoints (pelvis, neck, knees, feet, shoulders, elbows, hands) and an
-11-dimensional configuration `q = [base_x, base_z, torso, left_hip, left_knee,
-right_hip, right_knee, left_shoulder, left_elbow, right_shoulder, right_elbow]`.
-It provides forward kinematics, the joint limits `Q_MIN`/`Q_MAX`, the velocity
-limits `V_MAX` (per second; per frame multiply by `dt`) and the list of rigid
-links whose full length must stay out of solids. `data/scene_geometry.py`
-provides signed distances to terrain polylines and boxes.
+Register any procedure as `scripts/retargeters/<name>.sh`. Both evaluators invoke:
 
-## Instances
-
-Each instance is one demonstration (2.6–3.2 s at 30 Hz) of one of two task types:
-
-- `object_carry`: the human side-steps up a ramp onto a platform while holding
-  a box overhead with both hands on its sides; the box also moves up and down.
-- `terrain_step`: the human side-steps up a ramp onto a platform and braces the
-  right hand on top of a tall column standing on the platform.
-
-Demonstrators vary in overall size (roughly 0.9–1.15 times the robot) and in
-individual segment proportions. Every instance carries three scenes:
-
-- `source_scene`: the scene the human interacted with, at the human's scale;
-- `nominal_scene`: the same scene brought to the robot's scale by direct
-  scaling with `alpha = h_robot / h_human` (h = torso + thigh + shin at full
-  extension) about the ground point below the demonstrator's initial pelvis:
-  every terrain vertex and the box trajectory are scaled; the box keeps its true
-  size (the robot handles the same object), so the human's hand positions, once
-  scaled, do not land exactly on it;
-- `target_scene`: the scene in which the robot must act. In nominal instances it
-  equals `nominal_scene`; in *augmented* instances it is a modified copy of it
-  (the box is resized and starts displaced, with the displacement decaying over
-  time, or the platform and the column on it are raised or lowered).
-
-Scene correspondences are explicit: terrain polylines have the same vertices in
-all three scenes, and the box keeps its identity (`center` per frame, `size`).
-
-Input file format (`data/tasks/train/inputs/<instance_id>.json`):
-
-```
-instance_id, task_type, dt, num_frames, keypoint_names,
-source_keypoints  [num_frames][12][2]   (metres; x horizontal, z up; human scale)
-source_scene      {"terrain": [[x, z], ...], "object": null | {"size": [w, h], "center": [num_frames][2]}}
-nominal_scene     same structure
-target_scene      same structure
-```
-
-No contact labels or stance labels are provided to methods; they must be
-inferred from the demonstration, as in the original retargeting setting.
-
-## What a method must produce
-
-A method is an executable `scripts/retargeters/<name>.sh` invoked as
-
-```
+```bash
 bash scripts/retargeters/<name>.sh <input_dir> <output_dir>
 ```
 
-from the workspace root. For every `<input_dir>/<instance_id>.json` it must write
-`<output_dir>/<instance_id>.json` containing `{"q": [[11 numbers] x num_frames]}`.
-Only `q` is read; any other fields are ignored. The same command is used for the
-public train split and for the hidden test split.
+For every input write `<output_dir>/<instance_id>.json` containing `{"q": ...}` with shape `[num_frames, 36]`: base xyz, unit wxyz quaternion, then the model's 29 joint positions. Only this raw configuration trajectory is scored. Methods can supply their own optimization procedure; they are not limited to choosing settings of a shipped method.
 
-Public train instances (inputs and evaluation labels) are in `data/tasks/train/`
-and can be regenerated with `python data/task_generator.py`.
+Run `bash scripts/download.sh` to fetch public assets and prepare train inputs under `data/downloads/tasks/train/inputs/`. Download commands are idempotent and the compute node needs no internet. This task needs no model training.

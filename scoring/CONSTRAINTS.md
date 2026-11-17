@@ -1,18 +1,8 @@
 # Constraints
 
-- A method is a registered executable `scripts/retargeters/<name>.sh <input_dir> <output_dir>`;
-  it must write `{"q": ...}` for every input instance. Only `q` is scored.
-- Outputs must respect the robot defined in `data/planar_robot.py`: joint limits
-  `Q_MIN`/`Q_MAX` and per-frame velocity limits `V_MAX * dt`. Violations, missing
-  instances, malformed or non-finite trajectories fail the whole run (worst value
-  everywhere).
-- Budget: 6 CPU seconds per instance (user + system time of the method's whole
-  process tree, counted by the evaluator; one BLAS/OpenMP thread). The reference
-  method needs about 0.7. Exceeding it, or making no CPU progress for 1800
-  consecutive one-second checks, fails the run. Wall-clock time is not scored.
-- The method must not use evaluation labels or the evaluator's code: it receives
-  only the instance inputs (demonstration keypoints, source / nominal / target
-  scenes, timing). Do not read or import anything under `eval/`.
-- Do not change the robot definition, the scene geometry helpers, the task
-  generator, the evaluator, the thresholds or the train data to change scores;
-  the hidden test uses its own copies and never reads them.
+- Return finite `[T,36]` G1 configurations for every instance through the registered executable interface. Respect the model's joint ranges and URDF joint velocity limits. Base quaternions must be unit length, translation is limited to 20 cm/frame, angular speed to 12 rad/s, and base coordinates to 100 m in absolute value.
+- A violation, crash, missing output or CPU-budget excess fails the whole run, with worst values for every metric in all three experiments.
+- Budget: 30 CPU seconds per instance, summed over the process tree; one supplied BLAS/OpenMP thread. There is no wall-clock cutoff.
+- Read only instance inputs, public train data, public source and system libraries. Do not read hidden test assets, git history or evaluation code. Write temporary state and outputs in the invocation workspace or `/tmp`.
+- Do not change robot assets, evaluator code, thresholds, test construction, score metadata or comparison methods. Hidden evaluation owns all of these independently.
+- No training or internet access is required at test time. An arbitrary new method can run through the same interface as the reference and baselines.

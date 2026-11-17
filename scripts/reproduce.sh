@@ -13,4 +13,4 @@ cp scoring/diagnostics_train.json scoring/diagnostics.json
 if [ -f eval/test/evaluate_test.py ]; then
   bash scripts/evaluate_test.sh
 fi
-python validate.py || true
+python validate.py

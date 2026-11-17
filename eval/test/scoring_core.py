@@ -11,7 +11,7 @@ Every scored number is recomputed here from ``q`` with this module's own copy
 of the robot model (``assets/``) and of the scene geometry; nothing else a
 method writes is read.  A run fails as a whole -- and receives the worst value
 of every metric in every experiment -- if the method crashes, exceeds its
-counted CPU budget, stops making progress, misses an instance, or returns a
+counted CPU budget, misses an instance, or returns a
 trajectory that is malformed, non-finite, has a non-unit base quaternion,
 teleports, or leaves the robot's joint position or velocity limits.
 
@@ -59,6 +59,7 @@ METRICS = [
     "max_foot_skating_cm_s",
     "contact_preservation",
     "spurious_contact_duration",
+    "support_failure_duration",
     "pelvis_path_error_cm",
     "pose_error_cm",
 ]
@@ -70,6 +71,7 @@ CAPS = {
     "max_foot_skating_cm_s": 300.0,
     "contact_preservation": 1.0,
     "spurious_contact_duration": 1.0,
+    "support_failure_duration": 1.0,
     "pelvis_path_error_cm": 100.0,
     "pose_error_cm": 100.0,
 }
@@ -78,8 +80,8 @@ WORST = {m: (0.0 if HIGHER_IS_BETTER[m] else CAPS[m]) for m in METRICS}
 # Kinematic-quality definitions (paper Sec. V-B, released evaluation code).
 PENETRATION_TOL = 0.01        # m: a frame is penetrating if any robot geom is > 1 cm inside the scene
 DETECT = 0.1                  # m: distance query cut-off
-STANCE_STEP = 0.01            # m per frame: scaled source toe slower than this = stance foot
-SKATE_STEP = 0.01             # m per frame: robot stance toe faster than this = skating
+STANCE_SPEED = 0.01           # m/s: paper Sec. III-A
+SKATE_SPEED = 0.01            # m/s, not metres/frame
 OBJ_HAND_RADIUS = 0.40        # m: demonstrator wrist this close to the box origin while the box is carried = hand contact
 OBJ_HAND_CLEAR = 0.50         # m: demonstrator wrist farther than this from the box origin = hand clearly off the box
 OBJ_LIFT, OBJ_MOVE = 0.03, 0.003   # m above its first-frame height / m per frame: the box is being carried
@@ -122,7 +124,6 @@ SOURCE_TOES = {"smplh": ("L_Toe", "R_Toe"), "mocap": ("LeftToeBase", "RightToeBa
 SOURCE_PELVIS = {"smplh": "Pelvis", "mocap": "Hips"}
 
 CPU_BUDGET_PER_INSTANCE = 30.0   # CPU seconds per instance
-IDLE_POLL_LIMIT = 1800           # consecutive 1 s polls without any CPU progress = hung method
 THREAD_ENV = {"OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1",
               "NUMEXPR_NUM_THREADS": "1", "VECLIB_MAXIMUM_THREADS": "1"}
 
@@ -196,8 +197,12 @@ def build_scene_model(scene: dict):
 # ---------------------------------------------------------------------------
 
 def validate_output(path: Path, inp: dict) -> tuple[np.ndarray | None, str]:
+    if path.is_symlink() or path.parent.is_symlink():
+        return None, "output must be a regular file, not a symlink"
     if not path.is_file():
         return None, "missing output"
+    if path.stat().st_nlink != 1 or path.stat().st_size > 10_000_000:
+        return None, "linked or oversized output"
     try:
         data = json.loads(path.read_text())
         q = np.asarray(data["q"], dtype=float)
@@ -208,6 +213,8 @@ def validate_output(path: Path, inp: dict) -> tuple[np.ndarray | None, str]:
         return None, f"q has shape {q.shape}, expected {(T, NQ)}"
     if not np.all(np.isfinite(q)):
         return None, "non-finite configuration"
+    if np.any(np.abs(q[:, :3]) > 100.0) or np.any(np.abs(q[:, 3:7]) > 1.001):
+        return None, "impossible base configuration"
     qn = np.linalg.norm(q[:, 3:7], axis=1)
     if np.any(np.abs(qn - 1.0) > QUAT_TOL):
         return None, "base quaternion is not unit length"
@@ -220,6 +227,9 @@ def validate_output(path: Path, inp: dict) -> tuple[np.ndarray | None, str]:
         return None, "joint velocity limit violated"
     if np.any(np.linalg.norm(np.diff(q[:, :3], axis=0), axis=1) > MAX_BASE_STEP):
         return None, "base teleport"
+    dot = np.abs(np.sum(q[1:, 3:7] * q[:-1, 3:7], axis=1))
+    if np.any(2.0 * np.arccos(np.clip(dot, 0.0, 1.0)) > 12.0 * dt + LIMIT_TOL):
+        return None, "base orientation velocity limit violated"
     return q, ""
 
 
@@ -243,7 +253,7 @@ def annotate(inp: dict) -> dict:
     src = inp["source_scene"]
     toes = [names.index(t) for t in SOURCE_TOES[fmt]]
     step = alpha * np.linalg.norm(np.diff(J[:, toes, :2], axis=0), axis=2)
-    stance = np.vstack([np.zeros((1, 2), bool), step <= STANCE_STEP])
+    stance = np.vstack([np.zeros((1, 2), bool), step <= STANCE_SPEED / float(inp["fps"])])
     contact, clear = {}, {}
     if inp["task"] == "object":
         P, _, R, _ = box_frames(src["boxes"][0], T)
@@ -261,6 +271,10 @@ def annotate(inp: dict) -> dict:
             contact[f"{side}_hand"] = dh <= TERRAIN_HAND
             clear[f"{side}_hand"] = dh > TERRAIN_HAND_CLEAR
             contact[f"{side}_foot"] = (sd(f"{pre}ToeBase") <= TERRAIN_TOE) | (sd(f"{pre}Foot") <= TERRAIN_ANKLE)
+    # Swing-foot clearance is measured against supporting surfaces, independently of hands.
+    support_src = np.minimum(J[:, toes, 2] - float(src.get("ground_z", 0.0)), terrain_sdf(J[:, toes], src))
+    clear["left_foot"] = support_src[:, 0] > 0.06
+    clear["right_foot"] = support_src[:, 1] > 0.06
     kmap = SMPLH_MAP if fmt == "smplh" else MOCAP_MAP
     return {
         "experiment": experiment_of(inp),
@@ -337,26 +351,23 @@ def instance_measures(inp: dict, ann: dict, q: np.ndarray) -> dict:
     dt = 1.0 / float(inp["fps"])
     step = {s: np.concatenate([[0.0], np.linalg.norm(np.diff(toes[s][:, :2], axis=0), axis=1)]) for s in toes}
     st = ann["stance"]
-    either = st["left"] | st["right"]
-    sliding = (st["left"] & (step["left"] > SKATE_STEP)) | (st["right"] & (step["right"] > SKATE_STEP))
-    stick, slide = int(either.sum()), int(sliding.sum())
-    if slide:
-        v = np.maximum(np.where(st["left"] & (step["left"] > SKATE_STEP), step["left"], 0.0),
-                       np.where(st["right"] & (step["right"] > SKATE_STEP), step["right"], 0.0))
-        max_slide = float(v.max()) / dt
-    # contacts: demonstrated hand/foot contacts with the object or terrain, and planted (stance) feet
-    # on a supporting surface (floor or terrain)
-    desired = kept = clear_n = spurious = 0
+    stick = sum(int(st[side].sum()) for side in ("left", "right"))
+    slide = sum(int(np.sum(st[side] & (step[side] / dt > SKATE_SPEED))) for side in ("left", "right"))
+    max_slide = max(float(np.max(np.where(st[side], step[side] / dt, 0.0))) for side in ("left", "right"))
+    # Paper contact metric: hands only for objects; hands/toes/heels for terrain.
+    desired = kept = clear_n = spurious = support_n = support_lost = 0
     for limb, want in ann["contact"].items():
         desired += int(want.sum())
-        kept += int(np.sum(want & (limb_dist[limb] <= ROBOT_CONTACT)))
+        kept += int(np.sum(want & (np.abs(limb_dist[limb]) <= ROBOT_CONTACT)))
+    # Planted-foot support is a separate constraint; floating feet never buy a skating win.
     for side in ("left", "right"):
         want = ann["stance"][side]
-        desired += int(want.sum())
-        kept += int(np.sum(want & (support_dist[side] <= ROBOT_CONTACT)))
+        support_n += int(want.sum())
+        support_lost += int(np.sum(want & (np.abs(support_dist[side]) > ROBOT_CONTACT)))
     for limb, cl in ann["clear"].items():
+        distance = support_dist[limb.split("_")[0]] if limb.endswith("foot") else limb_dist[limb]
         clear_n += int(cl.sum())
-        spurious += int(np.sum(cl & (limb_dist[limb] <= ROBOT_TOUCH)))
+        spurious += int(np.sum(cl & (distance <= ROBOT_TOUCH)))
     # fidelity: pelvis path (horizontal) and body pose relative to the pelvis, vs the scaled demonstration
     src = ann["src_kp"]
     pel_err = np.linalg.norm(pelvis[:, :2] - src[:, 0, :2], axis=1)
@@ -372,6 +383,8 @@ def instance_measures(inp: dict, ann: dict, q: np.ndarray) -> dict:
         "kept_contacts": kept,
         "clear_events": clear_n,
         "spurious_events": spurious,
+        "support_events": support_n,
+        "support_lost": support_lost,
         "pelvis_error": float(pel_err.mean()),
         "pose_error": float(pose_err.mean()),
     }
@@ -391,9 +404,12 @@ def aggregate(measures: dict[str, dict], anns: dict[str, dict]) -> dict[str, dic
             "max_foot_skating_cm_s": 100.0 * float(np.mean([m["max_skating_speed"] for m in ms])),
             "contact_preservation": s("kept_contacts") / s("desired_contacts") if s("desired_contacts") else 1.0,
             "spurious_contact_duration": s("spurious_events") / max(s("clear_events"), 1.0),
+            "support_failure_duration": s("support_lost") / max(s("support_events"), 1.0),
             "pelvis_path_error_cm": 100.0 * float(np.mean([m["pelvis_error"] for m in ms])),
             "pose_error_cm": 100.0 * float(np.mean([m["pose_error"] for m in ms])),
         }
+        if not all(np.isfinite(v) and v >= 0 for v in raw.values()):
+            raise ValueError("non-finite or negative measurement")
         out[exp] = {m: float(min(max(raw[m], 0.0), CAPS[m])) for m in METRICS}
     return out
 
@@ -431,6 +447,64 @@ def _children_cpu() -> float:
     return ru.ru_utime + ru.ru_stime
 
 
+def restrict_method(root: Path, work: Path, budget: float) -> None:
+    """Kernel filesystem boundary: hidden test and git history cannot be read by a method.
+
+    Library/system/public source reads are allowed. Writes are confined to this invocation's
+    input/output workspace, /tmp and /dev/null. Inherited stdout is the evaluator's log FD.
+    Landlock rules are inherited by descendants and cannot be relaxed by the method.
+    """
+    import ctypes
+    import math
+    c = ctypes.CDLL(None, use_errno=True)
+    class Ruleset(ctypes.Structure):
+        _fields_ = [("handled_access_fs", ctypes.c_uint64)]
+    class PathBeneath(ctypes.Structure):
+        _pack_ = 1
+        _fields_ = [("allowed_access", ctypes.c_uint64), ("parent_fd", ctypes.c_int)]
+    # Filesystem rights supported by this kernel (base ABI plus REFER/TRUNCATE when available).
+    EXEC, WRITE, READ, READDIR = 1, 2, 4, 8
+    abi = c.syscall(444, 0, 0, 1)
+    # REFER prevents hard-link/rename escapes; TRUNCATE closes metadata-only truncation.
+    handled = (1 << (15 if abi >= 3 else 14 if abi >= 2 else 13)) - 1
+    read = EXEC | READ | READDIR
+    ruleset = Ruleset(handled)
+    fd = c.syscall(444, ctypes.byref(ruleset), ctypes.sizeof(ruleset), 0)
+    if fd < 0:
+        raise OSError(ctypes.get_errno(), "Landlock required to protect hidden answers")
+    def allow(path, rights):
+        pfd = os.open(path, os.O_PATH | os.O_CLOEXEC)
+        try:
+            if not os.path.isdir(path):
+                rights &= EXEC | WRITE | READ | ((1 << 14) if abi >= 3 else 0)
+            rule = PathBeneath(rights, pfd)
+            if c.syscall(445, fd, 1, ctypes.byref(rule), 0) < 0:
+                raise OSError(ctypes.get_errno(), "Landlock add rule")
+        finally:
+            os.close(pfd)
+    excluded = [root / "eval/test", root / ".git"]
+    def public_tree(path):
+        path = Path(path)
+        resolved = path.resolve()
+        if any(resolved == p or p in resolved.parents for p in excluded):
+            return
+        if any(path in p.parents for p in excluded):
+            # Listing an ancestor without READ_FILE/EXEC cannot expose its descendants.
+            allow(path, READDIR)
+            for child in path.iterdir():
+                public_tree(child)
+        else:
+            allow(path, read)
+    public_tree(Path("/"))
+    allow(work, handled)
+    allow(Path("/tmp"), handled)
+    allow(Path("/dev/null"), WRITE | ((1 << 14) if abi >= 3 else 0))
+    if c.prctl(38, 1, 0, 0, 0) != 0 or c.syscall(446, fd, 0) != 0:
+        raise OSError(ctypes.get_errno(), "Landlock restrict self")
+    os.close(fd)
+    resource.setrlimit(resource.RLIMIT_CPU, (math.ceil(budget) + 1, math.ceil(budget) + 2))
+
+
 def run_method(root: Path, script: Path, in_dir: Path, out_dir: Path, budget: float, log_path: Path) -> tuple[str, float]:
     """Run one method; returns (failure reason or '', CPU seconds used)."""
     env = dict(os.environ)
@@ -440,8 +514,8 @@ def run_method(root: Path, script: Path, in_dir: Path, out_dir: Path, budget: fl
     reason = ""
     with open(log_path, "w") as log:
         proc = subprocess.Popen(["bash", str(script), str(in_dir), str(out_dir)], cwd=root, env=env,
-                                stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
-        last, idle = -1.0, 0
+                                stdout=log, stderr=subprocess.STDOUT, start_new_session=True,
+                                preexec_fn=lambda: restrict_method(root, in_dir.parent, budget))
         while True:
             try:
                 proc.wait(timeout=1.0)
@@ -451,10 +525,6 @@ def run_method(root: Path, script: Path, in_dir: Path, out_dir: Path, budget: fl
             used = _session_cpu(proc.pid)
             if used > budget:
                 reason = f"CPU budget exceeded ({budget:.0f} CPU s)"
-            idle = idle + 1 if used <= last + 1e-9 else 0
-            last = max(last, used)
-            if idle >= IDLE_POLL_LIMIT:
-                reason = f"no CPU progress for {IDLE_POLL_LIMIT} polls (hung)"
             if reason:
                 try:
                     os.killpg(proc.pid, signal.SIGKILL)
@@ -478,7 +548,13 @@ def score_outputs(out_dir: Path, inputs: dict[str, dict], anns: dict[str, dict],
         if q is None:
             diag["status"], diag["reason"] = "failed", f"{iid}: {why}"
             return None
-        measures[iid] = instance_measures(inp, anns[iid], q)
+        try:
+            measures[iid] = instance_measures(inp, anns[iid], q)
+            if not all(np.isfinite(v) for v in measures[iid].values()):
+                raise ValueError("non-finite measurement")
+        except Exception as exc:
+            diag["status"], diag["reason"] = "failed", f"{iid}: measurement failed ({type(exc).__name__})"
+            return None
     return measures
 
 
@@ -486,7 +562,10 @@ def run_and_score(root: Path, name: str, script: Path, inputs: dict[str, dict], 
                   log_dir: Path, keep_dir: Path | None = None) -> tuple[dict, dict]:
     """Run one registered method on all instances and score it."""
     diag: dict = {"status": "ok", "reason": ""}
-    work = Path(tempfile.mkdtemp(prefix=f"retarget_{name}_"))
+    # Test runtime files and saved raw outputs remain inside the hidden directory.
+    private = root / "eval/test/runtime" if Path(__file__).parent.name == "test" else root / "tmp/eval_train"
+    private.mkdir(parents=True, exist_ok=True)
+    work = Path(tempfile.mkdtemp(prefix=f"retarget_{name}_", dir=private))
     in_dir, out_dir = work / "inputs", work / "outputs"
     in_dir.mkdir()
     out_dir.mkdir()
@@ -494,7 +573,12 @@ def run_and_score(root: Path, name: str, script: Path, inputs: dict[str, dict], 
         (in_dir / f"{iid}.json").write_text(json.dumps(inp))
     log_dir.mkdir(parents=True, exist_ok=True)
     budget = CPU_BUDGET_PER_INSTANCE * len(inputs)
-    reason, cpu = run_method(root, script, in_dir, out_dir, budget, log_dir / f"{name}.log")
+    try:
+        reason, cpu = run_method(root, script, in_dir, out_dir, budget, log_dir / f"{name}.log")
+    except Exception as exc:
+        reason, cpu = f"launch failed ({type(exc).__name__}: {exc})", 0.0
+    # Construct all ground truth only AFTER the untrusted method has returned.
+    anns = {iid: annotate(inp) for iid, inp in inputs.items()}
     diag["cpu_s"] = round(cpu, 1)
     diag["cpu_budget_s"] = budget
     if reason:
@@ -506,30 +590,50 @@ def run_and_score(root: Path, name: str, script: Path, inputs: dict[str, dict], 
     if measures is None:
         return {exp: dict(WORST) for exp in EXPERIMENTS}, diag
     diag["per_instance"] = {iid: {"experiment": anns[iid]["experiment"], **m} for iid, m in measures.items()}
-    return aggregate(measures, anns), diag
+    try:
+        return aggregate(measures, anns), diag
+    except Exception as exc:
+        diag["status"], diag["reason"] = "failed", f"aggregation failed ({type(exc).__name__})"
+        diag.pop("per_instance", None)
+        return {exp: dict(WORST) for exp in EXPERIMENTS}, diag
 
 
 def evaluate_all(root: Path, inputs: dict[str, dict], split: str, score_out: Path, diag_out: Path,
                  log_dir: Path) -> dict:
-    anns = {iid: annotate(inp) for iid, inp in inputs.items()}
     methods = discover_methods(root)
     keep = os.environ.get("RETARGET_KEEP_OUTPUTS")
     keep_dir = Path(keep) / split if keep else None
+    if split == "test" and keep_dir is not None and not keep_dir.resolve().is_relative_to((root / "eval/test").resolve()):
+        raise ValueError("test raw outputs must remain under eval/test/")
     scores = {"experiments": {exp: {"results": {}} for exp in EXPERIMENTS}}
     diagnostics = {"split": split, "num_instances": len(inputs),
-                   "instances_per_experiment": {e: sum(a["experiment"] == e for a in anns.values())
+                   "instances_per_experiment": {e: sum(experiment_of(inp) == e for inp in inputs.values())
                                                 for e in EXPERIMENTS},
                    "cpu_budget_per_instance_s": CPU_BUDGET_PER_INSTANCE, "methods": {}}
     score_out.parent.mkdir(parents=True, exist_ok=True)
     diag_out.parent.mkdir(parents=True, exist_ok=True)
+    # Start with a complete worst-value entry for every discovered method. No stale scores
+    # survive a crash or an empty registry, and every failed method has every metric.
+    for name, _ in methods:
+        for exp in EXPERIMENTS:
+            scores["experiments"][exp]["results"][name] = dict(WORST)
+    score_out.write_text(json.dumps(scores, indent=2))
     for name, script in methods:
-        results, diag = run_and_score(root, name, script, inputs, anns, log_dir, keep_dir)
+        results, diag = run_and_score(root, name, script, inputs, None, log_dir, keep_dir)
         for exp in EXPERIMENTS:
             scores["experiments"][exp]["results"][name] = results[exp]
         diagnostics["methods"][name] = diag
         print(f"[{split}] {name}: {diag['status']} {diag['reason']} ({diag.get('cpu_s', 0)} CPU s)", flush=True)
         score_out.write_text(json.dumps(scores, indent=2))
-        diag_out.write_text(json.dumps(diagnostics, indent=2))
+        # Detailed held-out measurements never leave eval/test/.
+        private_diag = root / "eval/test" / "diagnostics_latest.json"
+        if split == "test":
+            private_diag.write_text(json.dumps(diagnostics, indent=2))
+            public_diag = {**diagnostics, "methods": {n: {k: v for k, v in d.items() if k != "per_instance"}
+                                                    for n, d in diagnostics["methods"].items()}}
+            diag_out.write_text(json.dumps(public_diag, indent=2))
+        else:
+            diag_out.write_text(json.dumps(diagnostics, indent=2))
     return scores
 
 
@@ -541,4 +645,9 @@ def rescore_dir(out_dir: Path, inputs: dict[str, dict]) -> tuple[dict, dict]:
     if measures is None:
         return {exp: dict(WORST) for exp in EXPERIMENTS}, diag
     diag["per_instance"] = {iid: {"experiment": anns[iid]["experiment"], **m} for iid, m in measures.items()}
-    return aggregate(measures, anns), diag
+    try:
+        return aggregate(measures, anns), diag
+    except Exception as exc:
+        diag["status"], diag["reason"] = "failed", f"aggregation failed ({type(exc).__name__})"
+        diag.pop("per_instance", None)
+        return {exp: dict(WORST) for exp in EXPERIMENTS}, diag

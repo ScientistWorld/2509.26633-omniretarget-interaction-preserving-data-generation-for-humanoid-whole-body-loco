@@ -4,7 +4,8 @@ with the paper's code (holosoma_retargeting/models/g1/g1_29dof_spherehand.xml).
 The output ``g1_29dof_spherehand_hull.xml`` is self-contained: visual-only
 geoms, actuators, sensors and the ground plane are removed, and every
 collision mesh is replaced by its convex hull written inline (MuJoCo collides
-meshes through their convex hulls anyway, so geometry is unchanged).  Joint
+meshes through convex hulls; this gym additionally caps each hull at 128
+vertices by deterministic farthest-point sampling, a documented geometry reduction).  Joint
 position and velocity limits (velocity from the released URDF) are written to
 ``g1_limits.json``.
 

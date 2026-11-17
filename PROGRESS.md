@@ -74,3 +74,7 @@ Final verification rejected an attempted object-contact equality constraint: CPU
 ### [2026-11-14] - core_claim (iteration 12, hardener)
 - Jobs: `7a16b974-f50` (exploration, cancelled: 8 workers x multi-threaded BLAS on a 1-CPU allocation inflated CPU time ~300x), `a6db59d2-208` (exploration of 5 candidate setups x 10 methods on a 60-instance dev split, `redteam/hardening/results/explore/`), `80d6fa58-151` (final check; official run completed, cancelled after 3 preemptions), `301cd2e9-fd7` (resumable chunked audit: variants, shortcuts, private-search probe, tamper check, CPU-budget checks, train + test).
 - Final official scores: `scoring/scores_train.json`, `scoring/scores_test.json` (= `redteam/hardening/results/official/`); audit in `redteam/hardening/results/combined_{test,train}/`; report in `HARDENING.md`.
+
+## Final hardening, 2026-11-17
+
+Read the paper and both reports. Completed the 3D/public-real-motion evaluator boundary and metadata fixes together before computation. Removed the penalty-slack solver fallback, corrected stance/skating units, separated support/contact constraints, protected hidden assets with Landlock, and built a single sequential official/variant/shortcut audit. The incoming stored reference was failed; final scientific headroom remains to be verified in the submitted job. Earlier planar summaries are historical.

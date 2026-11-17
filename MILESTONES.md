@@ -1,6 +1,6 @@
 # Reproduction Milestones
 
-**Current: core_claim**
+**Current: method_runs**
 
 ## Progress Log
 
@@ -41,3 +41,6 @@
 - Hardening (iteration 12), addressing REVIEW.md: scenes brought to the robot's scale (paper: same object/environment points in source and target meshes, direct scaling), box carried up a ramp (robot-object-terrain), paper Eq. 4/5 anchoring for object augmentation, Sec. III-B terrain-augmentation contact constraints; new spurious-contact metric; fidelity measured at robot scale; counted CPU budget instead of the wall-clock limit (the 2400 s blow-up was BLAS thread oversubscription); 180-instance hidden test.
 - Hidden test: reference contact 0.993/0.989/0.967 with ~0 penetration/skating; no-mesh ablation -0.57 [-0.73,-0.41] (was a tie); keypoint IK -8.31; contact-aware variant +0.15 [+0.09,+0.23]; keypoint+contact ties (+0.05, was +1.66). Details in HARDENING.md.
 - Milestone kept at `core_claim`: scaled planar substitute, no downstream RL.
+
+### [2026-11-17] - method_runs
+- The earlier planar benchmark is historical. Final 3D hardening and paper-procedure restoration are implemented; numerical verification is pending one combined job. No final core-claim or headroom result is asserted before it finishes.

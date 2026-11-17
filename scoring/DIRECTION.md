@@ -1,15 +1,5 @@
 # Direction
 
-In scope: better ways to turn a human demonstration into a feasible robot
-motion that keeps its interactions — e.g. better objectives or preprocessing for
-morphology differences, better handling of contacts, clearances and planted
-feet, better constraint handling and initialisation, whole-trajectory rather
-than frame-by-frame optimisation, better transfer of interactions to modified
-scenes.
+Improve whole-body motion retargeting across human/robot proportions and changed physical scenes. Better contact inference, scene adaptation, feasible motion optimization, initialization, whole-trajectory processing and motion fidelity are in scope. Methods supply their own procedure and may use the public robot simulator within the counted CPU budget.
 
-Out of scope: anything that does not produce a valid robot joint trajectory for
-every instance within the budget; reading evaluation labels or evaluator code;
-changing the robot, scenes, generator, thresholds or evaluator; methods that
-only optimise one side of the trade-off (e.g. matching keypoints while ignoring
-penetration and skating, or satisfying contacts by abandoning the demonstrated
-motion).
+Changing evaluation assets or claiming metrics is outside the task. Preserving contacts by penetrating surfaces, eliminating skating by floating or freezing, and following keypoints while ignoring physical interaction are measured failures of the scientific goals. The hidden split uses unseen real demonstrations so memorizing public windows does not solve it.

@@ -1,61 +1,27 @@
 # Evaluation
 
-`bash scripts/evaluate_train.sh` (and `bash scripts/evaluate.sh`) score every
-method registered in `scripts/retargeters/` on the public train split and write
-`scoring/scores_train.json` (`scoring/scores.json`). The hidden test runs
-`bash scripts/evaluate_test.sh` in a fresh container: it creates held-out
-instances of the same kinds (same generating distribution, different draws, 60
-per experiment), runs every registered method on them through the same command,
-and writes `scoring/scores_test.json`. Methods are therefore scored on
-demonstrations and scenes they have never seen.
+Run `bash scripts/evaluate_train.sh` or `bash scripts/evaluate_test.sh` with no arguments. Each scores every `scripts/retargeters/*.sh` executable on disk, independently on the same inputs, and writes each method under each experiment's `results` in `scoring/scores_train.json` or `scoring/scores_test.json`. `scripts/evaluate.sh` is the public train alias.
 
-## What is measured
+The test uses held-out real demonstrations. Its corpus, instance construction, robot assets, ground truth, detailed diagnostics and audit raw outputs stay under `eval/test/`. A kernel Landlock boundary prevents the method and descendants from reading that directory or git history, except its own fresh invocation input/output directory. Methods may read public code/data and system libraries, and write their invocation directory and `/tmp`. Ground-truth annotations are built after the method returns. There is no training in the hidden test.
 
-Everything is recomputed from the returned joint trajectory `q` with the
-evaluator's own copy of the robot kinematics and scene geometry. Robot keypoints
-written by a method, claimed metrics, flags or score files are never read.
+All numbers are recomputed from `q` using evaluator-owned MuJoCo kinematics, collision geometry, source annotations and target scene. Extra keypoints, metadata, verdicts, claimed timing and scores are ignored. Thresholds and test size are fixed by the evaluator.
 
-Per instance, against the **target scene** (`alpha` is the robot-to-demonstrator
-height ratio used to build the nominal scene):
-
-| metric | meaning | better |
+| Metric | Measurement | Better |
 |---|---|---|
-| `penetration_duration` | fraction of frames where any point along any robot link is more than 1 cm inside the terrain or the object | lower |
-| `max_penetration_cm` | deepest such penetration (cm, capped at 30) | lower |
-| `foot_skating_duration` | fraction of desired stance-foot frame pairs (the demonstrator's foot was planted in both frames) in which the robot foot moves faster than 1 cm/s | lower |
-| `max_foot_skating_cm_s` | largest robot foot speed over those frame pairs (cm/s, capped at 300) | lower |
-| `contact_preservation` | fraction of desired contact events kept: each frame where a demonstrator hand touched the object or terrain, and each frame where a demonstrator foot was planted, counts as one event; it is kept if the corresponding robot point is within 2 cm of the corresponding target-scene surface | higher |
-| `spurious_contact_duration` | fraction of clearance events in which the robot touches a surface anyway: a clearance event is a frame where a demonstrator hand or foot was at least 3 cm (times `alpha`) from every source-scene surface; it is violated if the corresponding robot hand or foot is within 1 cm of a target-scene surface (dragged swing feet, hands brushing obstacles) | lower |
-| `pelvis_path_error_cm` | mean distance between the robot pelvis path and the demonstrator's pelvis path scaled by `alpha`; both paths are measured from their first frame, horizontally and as height above the ground directly below the pelvis, so following a raised or lowered terrain is not penalised (cm, capped at 100) | lower |
-| `motion_velocity_error_cm_s` | mean mismatch between robot keypoint velocities and the demonstrator's keypoint velocities scaled by `alpha` (cm/s, capped at 300) | lower |
+| `penetration_duration` | Mean window fraction of frames with any robot-scene penetration deeper than 1 cm | lower |
+| `max_penetration_cm` | Mean window maximum penetration, capped at 30 cm | lower |
+| `foot_skating_duration` | Fraction of demonstrated stance-foot events with robot toe horizontal speed above 1 cm/s | lower |
+| `max_foot_skating_cm_s` | Mean window maximum horizontal speed on stance events, including speeds below 1 cm/s; cap 300 | lower |
+| `contact_preservation` | Interaction contact events kept within 3 cm absolute signed surface distance: hands for manipulated objects; hands and feet for terrain | higher |
+| `spurious_contact_duration` | Clear-hand and swing-foot events in which the robot touches a surface anyway (distance at most 1 cm, including penetration) | lower |
+| `support_failure_duration` | Stance-foot events more than 3 cm absolute distance from the floor or supporting terrain | lower |
+| `pelvis_path_error_cm` | Mean horizontal pelvis-position error against the scaled demonstration; cap 100 cm | lower |
+| `pose_error_cm` | Mean body-relative keypoint error against the scaled demonstration; cap 100 cm | lower |
 
-An experiment's value for a metric is the mean over its instances.
+A source foot is in stance when its scaled horizontal speed is at most 1 cm/s. Source object-hand contact uses wrist distance at most 40 cm from the box origin while lifted by 3 cm or moving more than 3 mm/frame. Terrain contacts use hand/toe/ankle surface thresholds of 5/6/11 cm. Clear hands are more than 50 cm from the box origin or 15 cm from terrain; clear swing toes are more than 6 cm above their supporting surfaces. These are geometric annotations, not force measurements. Contact, support and skating ratios pool their eligible events; penetration and motion errors average windows equally.
 
-## Validity gate and budget
+A crash, missing/malformed/nonfinite trajectory, nonunit quaternion, impossible base position, joint position or velocity violation, base translation above 20 cm/frame, base angular speed above 12 rad/s, or exceeded CPU budget fails the entire method. It receives every metric's worst value in every experiment: contact 0, duration 1, and the stated error caps. No entries are omitted. Numerical validation tolerance is 1e-4 for joint limits and 1e-3 for quaternion norm.
 
-A method's run is **failed** if it exits non-zero, exceeds its CPU budget, stops
-making progress, misses any instance, or returns any `q` that is malformed, has
-the wrong number of frames, contains non-finite values, leaves the joint limits,
-or changes any coordinate between consecutive frames by more than the velocity
-limit times `dt` (tolerance 1e-6). A failed run receives the worst value of every
-metric in every experiment (1 for durations, 0 for contact, the caps above for
-the rest). There is no partial credit for skipping instances or experiments.
+The budget is 30 CPU seconds per instance, summed over the method's process tree: 1320 CPU seconds for train and 3000 for test. One BLAS/OpenMP thread is supplied. No wall-clock timeout is used anywhere on the method path. A hidden test runs alone in a fresh container.
 
-The budget is counted by the evaluator, not measured in wall-clock time: 6 CPU
-seconds (user + system, summed over the method's whole process tree) per
-instance of the split, i.e. 1080 CPU s for the 180 test instances and 360 CPU s
-for the 60 train instances. Methods run with one BLAS/OpenMP thread. A method
-whose process tree uses no CPU across 1800 consecutive one-second checks is
-treated as hung. Wall-clock time is not scored.
-
-## Experiments
-
-- `object_interaction_kinematics` (weight 0.35): nominal box-carry instances
-  (with a ramp up to a platform).
-- `terrain_interaction_kinematics` (weight 0.35): nominal terrain instances.
-- `augmented_interaction_kinematics` (weight 0.30): instances whose target scene
-  differs from the nominal scene (half object, half terrain).
-
-`scoring/reference.json` lists metric directions and coefficients. Per-instance
-values and failure reasons are written to `scoring/diagnostics_*.json`
-(diagnostics are not ranked).
+The three experiments have weights 0.35 (nominal objects), 0.35 (nominal terrain), and 0.30 (modified scenes). `scoring/reference.json` defines metric directions and coefficient magnitudes. Ranking adds weighted signed improvements over the stored reference, each divided by that metric's population standard deviation over the attempts being ranked; zero-variance metrics contribute zero. Coefficient signs do not reverse directions. Failed runs are coordinatewise worst and cannot outrank a valid solving run through another metric. Historical paper numbers are underscore metadata, not scaled-subset targets. Diagnostics and audit ranks are not ranked results.

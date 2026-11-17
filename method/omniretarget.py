@@ -21,8 +21,8 @@ of ground points joins the interaction mesh.
 
 The released implementation (holosoma_retargeting, Apache-2.0) was used as the
 reference for weights and details (Laplacian weight 10, smoothness 0.2, waist
-costs and bounds, 1 mm penetration and foot-sticking tolerances (sticking in 3D as in the paper's (3e)), stance from
-1 cm/frame source toe speed, 100 surface samples, nominal tracking 5 e^{-t/10}).
+costs and bounds, 1 mm penetration and 0.1 mm foot-sticking tolerances (sticking in 3D as in the paper's (3e)), stance from
+1 cm/s source toe speed, 100 surface samples, nominal tracking 5 e^{-t/10}).
 SOCPs are solved with Clarabel; robot kinematics, Jacobians and signed
 distances come from MuJoCo.
 
@@ -80,8 +80,8 @@ SMOOTH_WEIGHT = 0.2
 TRUST_REGION = 0.2
 COLLISION_THRESHOLD = 0.1
 PENETRATION_TOL = 1e-3
-FOOT_STICK_TOL = 1e-3
-STANCE_SPEED = 0.01           # m per frame, scaled source toe (released code)
+FOOT_STICK_TOL = 1e-4
+STANCE_SPEED = 0.01           # m/s, paper Sec. III-A
 ITERS_FIRST, ITERS = 50, 10
 N_SURFACE_SAMPLES = 100
 TOP_SURFACE_WEIGHT = 20.0     # terrain: sample top faces 20x more densely (released code)
@@ -196,7 +196,7 @@ class Retargeter:
         self.src_kp = self.src[:, self.src_idx]
         toe_xy = self.src[:, toes, :2]
         v = np.linalg.norm(np.diff(toe_xy, axis=0), axis=2)
-        stance = np.vstack([np.zeros((1, 2), bool), v <= STANCE_SPEED])
+        stance = np.vstack([np.zeros((1, 2), bool), v <= STANCE_SPEED * self.dt])
         self.stance = {"left": stance[:, 0], "right": stance[:, 1]}
         hips = [names.index(h) for h in HIPS[self.fmt]]
         left = self.src[0, hips[0]] - self.src[0, hips[1]]
@@ -258,7 +258,7 @@ class Retargeter:
             pairs.add((int(c.geom1), int(c.geom2)))
         phis, rows = [], []
         fromto = np.zeros(6)
-        for g1, g2 in pairs:
+        for g1, g2 in sorted(pairs):
             if m.geom_contype[g1] == 1:
                 gr, gs = g1, g2
             else:
@@ -424,45 +424,19 @@ class Retargeter:
             S = np.eye(nv)
         else:
             S = np.hstack([np.zeros((29, 6)), np.eye(29)])
-        lo = np.minimum(lo, 0.0)  # keep dq = 0 feasible if the iterate is (numerically) outside
-        hi = np.maximum(hi, 0.0)
         G_hard, h_hard = np.vstack([S, -S]), np.concatenate([hi, -lo])
         G_soft = np.vstack(G_rows) if G_rows else np.zeros((0, nv))
         h_soft = np.concatenate(h_rows) if h_rows else np.zeros(0)
         G, h = np.vstack([G_soft, G_hard]), np.concatenate([h_soft, h_hard])
         dq, val = self._qp(2 * H, 2 * g, None, (G, h), trust=True)
         if dq is None:
-            # The linearised hard constraints can be mutually infeasible on real data (the released
-            # code raises an error).  Fallback: penalised slack on the collision and foot rows only;
-            # joint position/velocity limits stay hard.
-            dq = self._elastic(H, g, G_soft, h_soft, G_hard, h_hard)
+            # Reject an infeasible SQP subproblem: never replace hard rows with penalties.
+            # The previous feasible iterate is retained, as with a rejected trust-region step.
+            return q.copy(), cost0
         q_new = q.copy()
         mujoco.mj_integratePos(m, q_new, dq, 1.0)
         q_new[3:7] /= np.linalg.norm(q_new[3:7])
         return q_new, cost0
-
-    def _elastic(self, H, g, G, h, Gh, hh):
-        nv, nc = self.nv, len(h)
-        n = nv + nc
-        P = np.zeros((n, n))
-        P[:nv, :nv] = 2 * H
-        qv = np.concatenate([2 * g, 1e4 * np.ones(nc)])
-        rows = [np.hstack([G, -np.eye(nc)]), np.hstack([np.zeros((nc, nv)), -np.eye(nc)]),
-                np.hstack([Gh, np.zeros((len(hh), nc))])]
-        T = np.zeros((nv + 1, n))
-        T[1:, :nv] = -np.eye(nv)
-        A = sparse.csc_matrix(np.vstack(rows + [T]))
-        b = np.concatenate([h, np.zeros(nc), hh, [TRUST_REGION], np.zeros(nv)])
-        settings = clarabel.DefaultSettings()
-        settings.verbose = False
-        try:
-            sol = clarabel.DefaultSolver(sparse.csc_matrix(np.triu(P)), qv, A, b,
-                                         [clarabel.NonnegativeConeT(2 * nc + len(hh)),
-                                          clarabel.SecondOrderConeT(nv + 1)], settings).solve()
-            x = np.array(sol.x)
-        except Exception:
-            return np.zeros(nv)
-        return x[:nv] if len(x) and np.all(np.isfinite(x)) else np.zeros(nv)
 
     # ------------------------------------------------- optional contact cost
     def _demo_contacts(self):

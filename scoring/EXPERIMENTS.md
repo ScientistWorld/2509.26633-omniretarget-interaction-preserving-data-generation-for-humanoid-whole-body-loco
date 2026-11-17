@@ -1,32 +1,9 @@
 # Experiments
 
-All experiments score a robot joint trajectory per demonstration; every number
-is recomputed from that trajectory. A method that fails any instance, exceeds
-its counted CPU budget, or leaves the robot's joint or velocity limits receives
-the worst value of every metric in every experiment.
+All three experiments use real human motion, a 3D humanoid and scene collision geometry. They jointly measure interaction preservation, penetration, skating, support failure, unwanted contact, pelvis-path error and body-pose error. Every experiment has the same nine scored metrics. Failure anywhere assigns the worst value everywhere.
 
-## object_interaction_kinematics (weight 0.35)
+- `object_interaction_kinematics` (0.35): Can a differently proportioned humanoid manipulate a physical box without losing demonstrated hand contact, penetrating the box or ground, sliding or floating its planted feet, or abandoning the demonstrated motion? Test includes 48 windows from unseen demonstrators.
+- `terrain_interaction_kinematics` (0.35): Can the humanoid preserve climbing interactions and motion while respecting terrain clearance and stable foot placement? Test includes 14 windows from three held-out recordings.
+- `augmented_interaction_kinematics` (0.30): Can demonstrated interactions transfer when box dimensions and initial poses or platform heights change? Test includes 24 box windows and 14 climbing windows. This exposes errors that copying nominal-scene motion cannot resolve.
 
-Establishes whether a method can carry a held object for a demonstrator of a
-different size and build while also negotiating terrain (a ramp up to a
-platform): both hands must stay on the box sides, no body part may enter the box
-or the ground, planted feet must neither slide nor leave the ground, the robot
-must not touch surfaces the demonstrator kept clear of, and the motion should
-follow the demonstration at the robot's scale. Measures the constraint side
-(penetration, skating, spurious contact) and the interaction side (contact
-preservation) together with motion fidelity.
-
-## terrain_interaction_kinematics (weight 0.35)
-
-Same question for scene contact: stepping up a ramp onto a platform and bracing
-a hand on a tall column, with terrain penetration, foot skating, spurious
-contact, contact of the bracing hand and planted feet, and motion fidelity
-measured.
-
-## augmented_interaction_kinematics (weight 0.30)
-
-Establishes whether demonstrated interactions transfer to a modified scene: the
-robot acts in a scene where the box has been resized and starts displaced, or
-where the platform and column heights differ from the nominal scene. Contacts,
-clearances and the pelvis height are judged against the modified scene, so
-copying the demonstrated motion is not enough.
+The benchmark evaluates kinematic quality, not downstream control success or physical stability. Test results are computed from raw trajectories; there are no agreement-with-paper metrics.

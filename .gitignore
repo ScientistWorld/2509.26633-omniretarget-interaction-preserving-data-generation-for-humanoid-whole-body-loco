@@ -244,3 +244,13 @@ redteam/hardening/results/.train_tampered
 !eval/test/data/*.npz
 # audit raw outputs (large; reproducible with scripts/run.sh)
 redteam/hardening3d/results/**/outputs/
+
+# Final hardening: private runtime trajectories and generated audit artifacts
+eval/test/runtime/
+eval/test/local_tmp/
+eval/test/audit_results/**/outputs/
+eval/test/diagnostics_latest.json
+# Historical tracked evidence is explicitly retained; large old raw outputs stay local.
+eval/test/archive_redteam/
+
+eval/test/audit_results/**/*.log
