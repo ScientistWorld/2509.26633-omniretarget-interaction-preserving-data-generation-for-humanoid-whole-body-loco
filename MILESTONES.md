@@ -44,3 +44,6 @@
 
 ### [2026-11-17] - method_runs
 - The earlier planar benchmark is historical. Final 3D hardening and paper-procedure restoration are implemented; numerical verification is pending one combined job. No final core-claim or headroom result is asserted before it finishes.
+
+### [2026-11-17] - method_runs
+- Expanded 325-input verification has completed the reference, baseline, nine scientific variants and exact-repeat run. The scientific manifest is unchanged and all 11 stage receipts were verified after scheduler interruption. Shortcut replay and paired recording confidence intervals remain pending; the next job resumes them with independent replay checkpoints.

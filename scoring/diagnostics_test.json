@@ -1,24 +1,24 @@
 {
   "split": "test",
-  "num_instances": 100,
+  "num_instances": 325,
   "instances_per_experiment": {
-    "object_interaction_kinematics": 48,
+    "object_interaction_kinematics": 99,
     "terrain_interaction_kinematics": 14,
-    "augmented_interaction_kinematics": 38
+    "augmented_interaction_kinematics": 212
   },
   "cpu_budget_per_instance_s": 30.0,
   "methods": {
     "keypoint_ik": {
       "status": "ok",
       "reason": "",
-      "cpu_s": 32.3,
-      "cpu_budget_s": 3000.0
+      "cpu_s": 102.6,
+      "cpu_budget_s": 9750.0
     },
     "omniretarget": {
       "status": "ok",
       "reason": "",
-      "cpu_s": 156.1,
-      "cpu_budget_s": 3000.0
+      "cpu_s": 773.9,
+      "cpu_budget_s": 9750.0
     }
   }
 }

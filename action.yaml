@@ -2,4 +2,4 @@ action: submit
 gpus: 0
 test: false
 milestone: method_runs
-notes: "Enlarge paired real-motion verification to all 99 held-out OMOMO clips, up to 600 frames and two scene variations each (325 test instances); rerun reference, baseline, honest variants, repeat and fixed shortcuts sequentially. Optimizer, metrics and weights unchanged."
+notes: "Resume expanded 325-input audit ae348dd707e3 after scheduler preemptions; reference, baseline, nine scientific variants and repeat are complete. Replay remaining shortcuts with independent checkpoints, then paired analysis and validation. Scientific sources, data and scoring unchanged."

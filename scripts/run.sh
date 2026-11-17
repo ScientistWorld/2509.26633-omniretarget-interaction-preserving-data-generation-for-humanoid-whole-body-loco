@@ -1,6 +1,7 @@
 #!/bin/bash
-# Extend held-out real motions, then run all scientific and shortcut comparisons
-# in one sequential job. No optimizer or scoring definition changes in this run.
+# Resume the combined audit from exact scientific-source checkpoints. The completed
+# reference, baselines, variants and repeat are reused; shortcut replays checkpoint
+# independently. No optimizer, data or scoring definition changes in this run.
 # Finalization restores this entrypoint to reference reproduction.
 set -euo pipefail
 cd /home/user

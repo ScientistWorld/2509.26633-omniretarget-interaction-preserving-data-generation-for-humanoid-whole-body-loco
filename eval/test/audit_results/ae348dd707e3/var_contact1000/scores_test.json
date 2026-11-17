@@ -1,0 +1,49 @@
+{
+  "experiments": {
+    "object_interaction_kinematics": {
+      "results": {
+        "var_contact1000": {
+          "penetration_duration": 0.1880877730996815,
+          "max_penetration_cm": 12.081164433365498,
+          "foot_skating_duration": 0.0008009153318077803,
+          "max_foot_skating_cm_s": 0.5281456868657014,
+          "contact_preservation": 0.5577517383466392,
+          "spurious_contact_duration": 0.5624416554299346,
+          "support_failure_duration": 0.015045766590389016,
+          "pelvis_path_error_cm": 6.457673136132494,
+          "pose_error_cm": 10.769575481773042
+        }
+      }
+    },
+    "terrain_interaction_kinematics": {
+      "results": {
+        "var_contact1000": {
+          "penetration_duration": 0.15047619047619049,
+          "max_penetration_cm": 4.241844733620783,
+          "foot_skating_duration": 0.003531489111241907,
+          "max_foot_skating_cm_s": 0.6302270124490319,
+          "contact_preservation": 0.7563527653213752,
+          "spurious_contact_duration": 0.15252707581227437,
+          "support_failure_duration": 0.1877575044143614,
+          "pelvis_path_error_cm": 6.524104702248827,
+          "pose_error_cm": 14.014732160458504
+        }
+      }
+    },
+    "augmented_interaction_kinematics": {
+      "results": {
+        "var_contact1000": {
+          "penetration_duration": 0.19668610340095508,
+          "max_penetration_cm": 12.035878959593525,
+          "foot_skating_duration": 0.0011184156687307346,
+          "max_foot_skating_cm_s": 0.5337349210545984,
+          "contact_preservation": 0.582347641605394,
+          "spurious_contact_duration": 0.5279671407552722,
+          "support_failure_duration": 0.01598516053356611,
+          "pelvis_path_error_cm": 10.44972093400215,
+          "pose_error_cm": 11.594193333604045
+        }
+      }
+    }
+  }
+}

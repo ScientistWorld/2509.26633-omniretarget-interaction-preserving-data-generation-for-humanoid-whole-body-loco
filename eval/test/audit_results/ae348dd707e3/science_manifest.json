@@ -1,0 +1,184 @@
+{
+  "baseline/__init__.py": "b463709abdb8d4e4cc39ca8276210b7713133eb5b80bf52cebaacf407b2d1a32",
+  "baseline/keypoint_ik.py": "38f9c628b86519dc8f879aefd993cb4533e3929b1e17c7f0a8ec36b7c05c0ca9",
+  "data/__init__.py": "ea8022f904a1c0c4617822ad6a254132209fd44f84a957ab9e5f6e453b4c7493",
+  "data/omomo_io.py": "8606b477511e98daeb751048cdd096799e589a91bea6d77e1b4ffd8b08e07f59",
+  "data/robot/build_g1_model.py": "781c50654cff7a1919330a9f6e01844371726f6972a277bf34881f95db5cac88",
+  "data/scene.py": "c7f5c5720ba5e477a29725128936dcc6462284445d9b223ab2aee18ac261a97a",
+  "data/tasks.py": "e5d2bacaa55dd55740917fa9279428be6608a2c9c07fc31ed793bbfe53261f51",
+  "eval/train/__init__.py": "2bfd5980ceb0bac80a3d6c2efc268425b1f3ebc897810235866c4885b312e6bd",
+  "eval/train/evaluate_train.py": "6b196d892cf968ba1a6566210e139a2bee90cf3f56ca3220a2554c0c6a5efb59",
+  "eval/train/scoring_core.py": "9c18cecdc0ff5c98682ba0410434a6755ca67cd42f0f3501d038cc96bebf573e",
+  "method/__init__.py": "7265f64430ac1b4e5b5b5207aa8dd47a42530d7f968f32bfcb20c5d9ba7f4b56",
+  "method/audit_variants.py": "7b43152bf39632a1f68e39185acfa777c76250cddb210fb2ad20ba089e86c3ee",
+  "method/check_geometry.py": "07d19ab67e5945c35523cbdf7e0f7efb01eb9dbd1aaa63f036e5511159530899",
+  "method/omniretarget.py": "c7b15e805be12906efa85fd2d205a23081f8be60a0acaf0d0bcd10a0236076d7",
+  "redteam/shortcuts.py": "430b947eaba1a9fea9664dc88f0dedf63490695f400fa0d4f014a1289808c5d4",
+  "eval/test/scoring_core.py": "cc1c1e01bd35867c86bff9e25182e67dc23816ff0d89a7d6fe760fd699a6c42c",
+  "eval/test/hidden_tasks.py": "4ce07899d4c4ad32fee4025467da340f81317576e9298ed61b8529215d3968c3",
+  "eval/test/summarize.py": "47d37d64c6e2cd743175f77703d11cdb16cb2dd79e314926a05da6f6ee9b6547",
+  "eval/test/audit_plan.json": "30f4f6fd9aab1f87c5d53adffcf54c45d1f25068a281954d8267626836465a93",
+  "scripts/evaluate_train.sh": "a2bef323368cb159f48c0a022d9144830a760d66dbce10df68eb1cd816bb0af8",
+  "scripts/evaluate_test.sh": "07c1b9e456db6fd52719bcbd118317ee609da8eb343c7fb7e9a9b36cc4c9eff5",
+  "environment/setup.sh": "658ff06549976123cdd2d28d17c014aa740d190c5288a0a6af0b2522fe8ba306",
+  "eval/test/assets/g1_29dof_spherehand_hull.xml": "aaf1a9b4f78c1e518bdfde8ccb1c939cb903d60cba8e5a45b2b432b9d51e9748",
+  "eval/test/assets/g1_limits.json": "aa1c0acb7e256b67df127978b092b6555b7041e2d608ec75e54395879e2167c3",
+  "eval/test/data/test_demonstrations.npz": "6e4ea85b5de4663b50342deb8763020fdbba59a308f08f3cd27b5b0e3ba04a91",
+  "eval/train/assets/g1_29dof_spherehand_hull.xml": "aaf1a9b4f78c1e518bdfde8ccb1c939cb903d60cba8e5a45b2b432b9d51e9748",
+  "eval/train/assets/g1_limits.json": "aa1c0acb7e256b67df127978b092b6555b7041e2d608ec75e54395879e2167c3",
+  "_scoring_definitions": {
+    "object_interaction_kinematics": {
+      "weight": 0.35,
+      "primary_metric": "contact_preservation",
+      "metrics": {
+        "penetration_duration": {
+          "higher_is_better": false,
+          "coefficient": 1.0,
+          "description": "Mean per-window fraction of frames with robot-scene penetration deeper than 1 cm."
+        },
+        "max_penetration_cm": {
+          "higher_is_better": false,
+          "coefficient": 0.5,
+          "description": "Mean per-window maximum robot-scene penetration depth in cm; cap 30."
+        },
+        "foot_skating_duration": {
+          "higher_is_better": false,
+          "coefficient": 0.8,
+          "description": "Fraction of demonstrated stance-foot events with robot horizontal foot speed above 1 cm/s."
+        },
+        "max_foot_skating_cm_s": {
+          "higher_is_better": false,
+          "coefficient": 0.4,
+          "description": "Mean per-window maximum horizontal stance-foot speed in cm/s, including speeds below the skating threshold; cap 300."
+        },
+        "contact_preservation": {
+          "higher_is_better": true,
+          "coefficient": 1.0,
+          "description": "Fraction of demonstrated interaction contacts within 3 cm of a target surface: hands for objects, hands/feet for terrain. Deep penetration does not count as contact."
+        },
+        "spurious_contact_duration": {
+          "higher_is_better": false,
+          "coefficient": 0.8,
+          "description": "Fraction of clear hand or swing-foot events with robot hand contact or foot support within 1 cm, including penetration."
+        },
+        "support_failure_duration": {
+          "higher_is_better": false,
+          "coefficient": 0.8,
+          "description": "Fraction of demonstrated stance-foot events for which the robot foot is farther than 3 cm from the supporting surface, including deep penetration."
+        },
+        "pelvis_path_error_cm": {
+          "higher_is_better": false,
+          "coefficient": 0.3,
+          "description": "Mean horizontal pelvis-position error against the scaled human path, cm; cap 100."
+        },
+        "pose_error_cm": {
+          "higher_is_better": false,
+          "coefficient": 0.3,
+          "description": "Mean body-relative 15-keypoint pose error against the scaled demonstration, cm; cap 100."
+        }
+      }
+    },
+    "terrain_interaction_kinematics": {
+      "weight": 0.35,
+      "primary_metric": "contact_preservation",
+      "metrics": {
+        "penetration_duration": {
+          "higher_is_better": false,
+          "coefficient": 1.0,
+          "description": "Mean per-window fraction of frames with robot-scene penetration deeper than 1 cm."
+        },
+        "max_penetration_cm": {
+          "higher_is_better": false,
+          "coefficient": 0.5,
+          "description": "Mean per-window maximum robot-scene penetration depth in cm; cap 30."
+        },
+        "foot_skating_duration": {
+          "higher_is_better": false,
+          "coefficient": 0.8,
+          "description": "Fraction of demonstrated stance-foot events with robot horizontal foot speed above 1 cm/s."
+        },
+        "max_foot_skating_cm_s": {
+          "higher_is_better": false,
+          "coefficient": 0.4,
+          "description": "Mean per-window maximum horizontal stance-foot speed in cm/s, including speeds below the skating threshold; cap 300."
+        },
+        "contact_preservation": {
+          "higher_is_better": true,
+          "coefficient": 1.0,
+          "description": "Fraction of demonstrated interaction contacts within 3 cm of a target surface: hands for objects, hands/feet for terrain. Deep penetration does not count as contact."
+        },
+        "spurious_contact_duration": {
+          "higher_is_better": false,
+          "coefficient": 0.8,
+          "description": "Fraction of clear hand or swing-foot events with robot hand contact or foot support within 1 cm, including penetration."
+        },
+        "support_failure_duration": {
+          "higher_is_better": false,
+          "coefficient": 0.8,
+          "description": "Fraction of demonstrated stance-foot events for which the robot foot is farther than 3 cm from the supporting surface, including deep penetration."
+        },
+        "pelvis_path_error_cm": {
+          "higher_is_better": false,
+          "coefficient": 0.3,
+          "description": "Mean horizontal pelvis-position error against the scaled human path, cm; cap 100."
+        },
+        "pose_error_cm": {
+          "higher_is_better": false,
+          "coefficient": 0.3,
+          "description": "Mean body-relative 15-keypoint pose error against the scaled demonstration, cm; cap 100."
+        }
+      }
+    },
+    "augmented_interaction_kinematics": {
+      "weight": 0.3,
+      "primary_metric": "contact_preservation",
+      "metrics": {
+        "penetration_duration": {
+          "higher_is_better": false,
+          "coefficient": 1.0,
+          "description": "Mean per-window fraction of frames with robot-scene penetration deeper than 1 cm."
+        },
+        "max_penetration_cm": {
+          "higher_is_better": false,
+          "coefficient": 0.5,
+          "description": "Mean per-window maximum robot-scene penetration depth in cm; cap 30."
+        },
+        "foot_skating_duration": {
+          "higher_is_better": false,
+          "coefficient": 0.8,
+          "description": "Fraction of demonstrated stance-foot events with robot horizontal foot speed above 1 cm/s."
+        },
+        "max_foot_skating_cm_s": {
+          "higher_is_better": false,
+          "coefficient": 0.4,
+          "description": "Mean per-window maximum horizontal stance-foot speed in cm/s, including speeds below the skating threshold; cap 300."
+        },
+        "contact_preservation": {
+          "higher_is_better": true,
+          "coefficient": 1.0,
+          "description": "Fraction of demonstrated interaction contacts within 3 cm of a target surface: hands for objects, hands/feet for terrain. Deep penetration does not count as contact."
+        },
+        "spurious_contact_duration": {
+          "higher_is_better": false,
+          "coefficient": 0.8,
+          "description": "Fraction of clear hand or swing-foot events with robot hand contact or foot support within 1 cm, including penetration."
+        },
+        "support_failure_duration": {
+          "higher_is_better": false,
+          "coefficient": 0.8,
+          "description": "Fraction of demonstrated stance-foot events for which the robot foot is farther than 3 cm from the supporting surface, including deep penetration."
+        },
+        "pelvis_path_error_cm": {
+          "higher_is_better": false,
+          "coefficient": 0.3,
+          "description": "Mean horizontal pelvis-position error against the scaled human path, cm; cap 100."
+        },
+        "pose_error_cm": {
+          "higher_is_better": false,
+          "coefficient": 0.3,
+          "description": "Mean body-relative 15-keypoint pose error against the scaled demonstration, cm; cap 100."
+        }
+      }
+    }
+  }
+}

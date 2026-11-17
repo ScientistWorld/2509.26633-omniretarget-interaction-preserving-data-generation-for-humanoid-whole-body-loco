@@ -76,7 +76,31 @@ def stage(name, methods, splits):
             raise RuntimeError(f'incompatible stage checkpoint: {dest}')
         print(name,'resumed completed stage',flush=True)
         return
-    dest.mkdir(exist_ok=True)
+    dest.mkdir(parents=True,exist_ok=True)
+    if name == 'shortcuts':
+        # Audit orchestration only: the evaluator still discovers every registration.
+        # Checkpoint each replay independently so worker preemption cannot repeatedly
+        # discard a nearly complete batch. Each uses the same full hidden split.
+        for method,body in methods.items():
+            stage(f'{name}/methods/{method}',{method:body},splits)
+        for split in splits:
+            merged_scores={'experiments':{}}
+            merged_diags=None
+            for method in methods:
+                child=dest/'methods'/method
+                scores=json.loads((child/f'scores_{split}.json').read_text())
+                diagnostics=json.loads((child/f'diagnostics_{split}.json').read_text())
+                if merged_diags is None:
+                    merged_diags={**diagnostics,'methods':{}}
+                merged_diags['methods'].update(diagnostics['methods'])
+                for experiment,row in scores['experiments'].items():
+                    merged_scores['experiments'].setdefault(experiment,{'results':{}})['results'].update(row['results'])
+            atomic_json(dest/f'scores_{split}.json',merged_scores)
+            atomic_json(dest/f'diagnostics_{split}.json',merged_diags)
+        atomic_json(dest/'done.json',{'fingerprint':fingerprint,'science_digest':science_digest})
+        restore()
+        print(name,'completed independent checkpoints',flush=True)
+        return
     for p in REG.glob('*.sh'): p.unlink()
     for n,body in methods.items():
         (REG/(n+'.sh')).write_text('#!/bin/bash\nset -e\ncd /home/user\n'+body+'\n')
