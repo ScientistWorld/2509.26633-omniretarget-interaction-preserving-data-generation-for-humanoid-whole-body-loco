@@ -1,0 +1,18 @@
+{
+  "split": "test",
+  "num_instances": 325,
+  "instances_per_experiment": {
+    "object_interaction_kinematics": 99,
+    "terrain_interaction_kinematics": 14,
+    "augmented_interaction_kinematics": 212
+  },
+  "cpu_budget_per_instance_s": 30.0,
+  "methods": {
+    "sc_joint": {
+      "status": "failed",
+      "reason": "test_object_sub16_largebox_029: joint position limit violated",
+      "cpu_s": 3.1,
+      "cpu_budget_s": 9750.0
+    }
+  }
+}

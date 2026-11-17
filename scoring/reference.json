@@ -57,27 +57,27 @@
       "results": {
         "keypoint_ik": {
           "type": "baseline",
-          "penetration_duration": 1.0,
-          "max_penetration_cm": 16.390900973635006,
-          "foot_skating_duration": 0.7078407392308738,
-          "max_foot_skating_cm_s": 20.644729484339393,
-          "contact_preservation": 0.008934803853134162,
-          "spurious_contact_duration": 0.6237251402345741,
-          "support_failure_duration": 0.6551161842641663,
-          "pelvis_path_error_cm": 1.763510482442127,
-          "pose_error_cm": 4.815231557343868
+          "penetration_duration": 0.9981388068511127,
+          "max_penetration_cm": 16.514298781885532,
+          "foot_skating_duration": 0.7251716247139588,
+          "max_foot_skating_cm_s": 20.837422399788583,
+          "contact_preservation": 0.011395827968065929,
+          "spurious_contact_duration": 0.5755367700446011,
+          "support_failure_duration": 0.64662471395881,
+          "pelvis_path_error_cm": 1.7843216633691188,
+          "pose_error_cm": 4.668411181612006
         },
         "omniretarget": {
           "type": "proposed",
-          "penetration_duration": 0.23719637088571333,
-          "max_penetration_cm": 12.42567294531177,
-          "foot_skating_duration": 0.00040766408479412964,
-          "max_foot_skating_cm_s": 0.4492225596258957,
-          "contact_preservation": 0.5010470473265392,
-          "spurious_contact_duration": 0.6165221825599184,
-          "support_failure_duration": 0.002174208452235358,
-          "pelvis_path_error_cm": 7.287975999326607,
-          "pose_error_cm": 11.749001109709766
+          "penetration_duration": 0.19648367005339562,
+          "max_penetration_cm": 12.123565007504912,
+          "foot_skating_duration": 0.00040045766590389014,
+          "max_foot_skating_cm_s": 0.47795753839191035,
+          "contact_preservation": 0.5307107906258048,
+          "spurious_contact_duration": 0.5647754382325485,
+          "support_failure_duration": 0.0014874141876430205,
+          "pelvis_path_error_cm": 6.647289767795785,
+          "pose_error_cm": 10.972963298078497
         }
       },
       "_paper_reported_results": {
@@ -283,27 +283,27 @@
       "results": {
         "keypoint_ik": {
           "type": "baseline",
-          "penetration_duration": 0.8397816065377406,
-          "max_penetration_cm": 14.226316815736789,
-          "foot_skating_duration": 0.7161405865233937,
-          "max_foot_skating_cm_s": 21.00183035078468,
-          "contact_preservation": 0.03862465919418358,
-          "spurious_contact_duration": 0.4056460020851712,
-          "support_failure_duration": 0.6272666218938885,
-          "pelvis_path_error_cm": 2.578502888218701,
-          "pose_error_cm": 7.042873986206515
+          "penetration_duration": 0.9667406282578603,
+          "max_penetration_cm": 15.975778347069177,
+          "foot_skating_duration": 0.7183502004964675,
+          "max_foot_skating_cm_s": 20.53316357997215,
+          "contact_preservation": 0.07413758028422797,
+          "spurious_contact_duration": 0.5485777341834233,
+          "support_failure_duration": 0.647044382007147,
+          "pelvis_path_error_cm": 1.9188616011950383,
+          "pose_error_cm": 5.096014720237588
         },
         "omniretarget": {
           "type": "proposed",
-          "penetration_duration": 0.14315273182224048,
-          "max_penetration_cm": 7.965699955684564,
-          "foot_skating_duration": 0.00022386389075442132,
-          "max_foot_skating_cm_s": 0.3708424005989335,
-          "contact_preservation": 0.6941835807331111,
-          "spurious_contact_duration": 0.38150613521533405,
-          "support_failure_duration": 0.09447056189836579,
-          "pelvis_path_error_cm": 8.676109060796549,
-          "pose_error_cm": 12.16608713277096
+          "penetration_duration": 0.2027644871777827,
+          "max_penetration_cm": 12.34521777337249,
+          "foot_skating_duration": 0.00024550587850186856,
+          "max_foot_skating_cm_s": 0.45808778058141225,
+          "contact_preservation": 0.5562207561975064,
+          "spurious_contact_duration": 0.5291932319764591,
+          "support_failure_duration": 0.014484846831610245,
+          "pelvis_path_error_cm": 10.509127666586652,
+          "pose_error_cm": 11.599550920953007
         }
       },
       "_paper_note": "No kinematic augmentation table was reported. Downstream RL success: nominal 82.2%, augmented 79.1%. Earlier planar measured rows were not paper results.",
