@@ -1,5 +1,7 @@
 #!/bin/bash
-# Final combined audit. Finalization restores this entrypoint to reference reproduction.
+# Corrective combined audit: author-release initialization, numerical geometry check,
+# reference/baselines, honest headroom variants, paired repeat and shortcut replay.
+# Finalization restores this entrypoint to reference reproduction.
 set -euo pipefail
 cd /home/user
 export PYTHONPATH=/home/user:${PYTHONPATH:-}

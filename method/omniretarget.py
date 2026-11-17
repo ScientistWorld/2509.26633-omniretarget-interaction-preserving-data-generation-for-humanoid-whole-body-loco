@@ -13,7 +13,9 @@ For every frame t:
   * (3) is solved by an SQP-style loop (App. D): up to 10 iterations (50 at the
     first frame), each an SOCP with the objective quadratised and the
     constraints linearised around the current iterate and a trust region
-    ||dq|| <= 0.2 (15g), warm-started from the previous frame.
+    ||dq|| <= 0.2 (15g), warm-started from the previous frame. As in the
+    authors' release, an infeasible first-frame subproblem is retried without
+    that step-size bound; all physical constraints remain hard.
 Augmented scenes (Sec. III-B) are solved after the nominal scene, anchoring
 the base and legs to the nominal solution (Eq. 4) and starting from its first
 frame so that the initial feet match (Eq. 5); with terrain augmentation a grid
@@ -267,16 +269,16 @@ class Retargeter:
             dist = mujoco.mj_geomDistance(m, d, gr, gs, COLLISION_THRESHOLD, fromto)
             if dist > COLLISION_THRESHOLD:
                 continue
-            # The witness-point order of mj_geomDistance is not reliable for mesh geoms, so the
-            # robot point is the one off the scene surface and the normal is the scene geom's
-            # signed-distance gradient there (scene geoms are boxes and the ground plane).
+            # The release differentiates signed separation using the two ordered
+            # witnesses returned by mj_geomDistance, including during penetration.
             pa, pb = fromto[:3].copy(), fromto[3:].copy()
-            sa, na = self._scene_sdf_grad(gs, pa)
-            sb, nb = self._scene_sdf_grad(gs, pb)
-            pr, n = (pa, na) if abs(sa - dist) <= abs(sb - dist) else (pb, nb)
-            Jr = self._point_jac(int(m.geom_bodyid[gr]), pr)
+            v = pa - pb
+            length = np.linalg.norm(v)
+            n = np.sign(dist) * v / length if length > 1e-12 else self._scene_sdf_grad(gs, pa)[1]
+            Jr = self._point_jac(int(m.geom_bodyid[gr]), pa)
+            Js = self._point_jac(int(m.geom_bodyid[gs]), pb)
             phis.append(dist)
-            rows.append(n @ Jr)
+            rows.append(n @ (Jr - Js))
         if not rows:
             return np.zeros(0), np.zeros((0, self.nv))
         return np.array(phis), np.array(rows)
@@ -429,6 +431,11 @@ class Retargeter:
         h_soft = np.concatenate(h_rows) if h_rows else np.zeros(0)
         G, h = np.vstack([G_soft, G_hard]), np.concatenate([h_soft, h_hard])
         dq, val = self._qp(2 * H, 2 * g, None, (G, h), trust=True)
+        if dq is None and first:
+            # Author release: interaction_mesh_retargeter.py's init_t retry
+            # removes only the SOC. A crouched source pelvis can put the initial
+            # zero-joint robot farther than 0.2 m inside the ground.
+            dq, val = self._qp(2 * H, 2 * g, None, (G, h), trust=False)
         if dq is None:
             # Reject an infeasible SQP subproblem: never replace hard rows with penalties.
             # The previous feasible iterate is retained, as with a rejected trust-region step.

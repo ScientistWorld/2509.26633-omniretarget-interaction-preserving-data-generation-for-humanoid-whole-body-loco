@@ -78,3 +78,8 @@ Final verification rejected an attempted object-contact equality constraint: CPU
 ## Final hardening, 2026-11-17
 
 Read the paper and both reports. Completed the 3D/public-real-motion evaluator boundary and metadata fixes together before computation. Removed the penalty-slack solver fallback, corrected stance/skating units, separated support/contact constraints, protected hidden assets with Landlock, and built a single sequential official/variant/shortcut audit. The incoming stored reference was failed; final scientific headroom remains to be verified in the submitted job. Earlier planar summaries are historical.
+# Corrective verification after job c3e7e967-826
+
+The combined 3D audit completed and validation passed. Mesh versus no-mesh is now distinguishable beyond paired recording noise; deterministic repeat is exact. All tested major shortcuts lose and invalid runs have complete worst vectors. However, the best honest variant's +0.04326 interval includes zero, so headroom is not yet demonstrated. Reference penetration is also too high in clips frozen at infeasible initial poses.
+
+Source inspection found a missing author-release first-frame retry without the SOC trust bound. Restored that retry with all hard physical constraints, and the release's ordered-witness collision Jacobian. The next combined job checks its derivatives numerically on public data, then reruns reference, baseline, ablation, contact/support/smaller-step variants, repeat, and shortcut cases. No scaled result is presented as matching the unchanged paper table. Milestone remains method_runs until this scientific check succeeds.

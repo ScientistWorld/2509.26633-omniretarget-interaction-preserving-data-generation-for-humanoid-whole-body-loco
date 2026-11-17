@@ -66,6 +66,8 @@ def m(flags=''):
 try:
     restore()
     subprocess.run([sys.executable,'-m','data.tasks','--out','data/downloads/tasks/train'],cwd=ROOT,check=True)
+    subprocess.run([sys.executable,'-m','method.check_geometry','data/downloads/tasks/train/inputs',
+                    str(OUT/'collision_derivatives.json')],cwd=ROOT,check=True)
     stage('official', {Path(n).stem:s.split('cd /home/user\n')[-1] for n,s in SHIPPED.items()}, ('train','test'))
     honest = {
       'var_no_mesh':m('--objective keypoint'),
@@ -74,6 +76,9 @@ try:
       'var_contact1000':m('--contact-weight 1000'),
       'var_keypoint_contact':m('--objective keypoint --contact-weight 100'),
       'var_private_search':'python -m method.audit_variants private_search "$1" "$2"',
+      'var_support10':'python -m method.audit_variants contact_support10 "$1" "$2"',
+      'var_support100':'python -m method.audit_variants contact_support100 "$1" "$2"',
+      'var_small_steps':'python -m method.audit_variants contact_small_steps "$1" "$2"',
     }
     for n,body in honest.items(): stage(n,{n:body},('test','train'))
     stage('repeat',{'var_repeat':m()},('test',))
