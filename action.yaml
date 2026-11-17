@@ -2,4 +2,4 @@ action: submit
 gpus: 0
 test: false
 milestone: method_runs
-notes: "Correct author-release first-frame initialization and witness Jacobian; check numerical derivatives, then rerun reference/baselines, honest headroom variants, deterministic repeat and fixed shortcuts in one sequential audit."
+notes: "Fix pinned MuJoCo convex distance witness ordering; retain finite-difference tolerances and rerun the combined reference, baseline, headroom, paired repeat and shortcut audit sequentially."
